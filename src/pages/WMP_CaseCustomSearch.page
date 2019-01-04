@@ -1,0 +1,208 @@
+<apex:page standardController="Case" extensions="wmp_CaseCustomSearch_Ctrl" >
+    <!-- docType="html-5.0" -->
+
+    <style>
+        .cntr{
+            width:40%;
+            margin: 0 auto;
+        }
+    </style>
+
+    <apex:form id="main">
+        <apex:outputPanel id="empty" />
+        <apex:pageMessages id="errMsgs" />
+        <apex:pageBlock id="detail" title="Custom Search">
+            <apex:actionRegion >
+                <apex:pageBlockSection id="picklist" rendered="{!renderPicklist}">
+                    <apex:selectList value="{!picklistSelection}" size="1" multiselect="false">
+                        <apex:selectOptions value="{!PicklistOptions}" />
+                        <apex:actionSupport event="onchange" reRender="detail,member,provider,buttons,memberSearchResults,providerSearchResults,memberResults,providerResults" action="{!renderDetail}" />
+                    </apex:selectList>
+                </apex:pageBlockSection>
+            </apex:actionRegion>
+
+    
+            <apex:actionRegion >
+                <apex:outputPanel id="member" rendered="{!renderMemberSection}">
+                    <apex:pageBlockSection columns="1">
+                        <apex:outputText value="{!$Label.Member_Help_Text}" /> <!-- MODIFIED THIS LABEL -->
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection title="Member Search" columns="2">
+                        <apex:inputText value="{!memberId}" label="Member ID" />
+                        <apex:inputField value="{!acct.birth_date__c}" label="Date of Birth" />
+                        <apex:inputText value="{!memberFirstName}" label="Member First Name" />
+                        <apex:inputText value="{!memberLastName}" label="Member Last Name" />
+                        <apex:inputField value="{!acct.phone}" label="Phone" />
+                        <apex:inputText value="{!billingStreet}" label="Billing Street" />
+                        <apex:inputText value="{!billingCity}" label="Billing City" />
+                        <apex:inputText value="{!billingState}" label="Billing State" />
+                        <apex:inputText value="{!billingZip}" label="Billing Zip" />
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+            </apex:actionRegion>
+
+            <apex:actionRegion >
+                <apex:outputPanel id="provider" rendered="{!renderProviderSection}">
+                    <apex:pageBlockSection columns="1">
+                        <apex:outputText value="{!$Label.Provider_Help_Text}" />
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection title="Provider Search" columns="2">
+                        <apex:inputText value="{!businessName}" label="Service Location Name" />
+                        <apex:inputText value="{!providerName}" label="Provider Name" />
+                        <apex:inputText value="{!npi}" label="NPI" />
+                        <apex:inputText value="{!tin}" label="Tax ID Number" />
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Account.fields.Phone.InlineHelpText}">
+                            <apex:outputLabel value="Service Location Phone"/>
+                            <apex:inputField value="{!acct.phone}" label="Service Location Phone" />
+                        </apex:pageBlockSectionItem>
+                        <!-- <apex:inputField value="{!acct.phone}" label="Service Location Phone" /> -->
+                        <apex:inputText value="{!billingStreet}" label="Service Location Street" />
+                        <apex:inputText value="{!billingCity}" label="Service Location City" />
+                        <apex:inputText value="{!billingState}" label="Service Location State" />
+                        <apex:inputText value="{!billingZip}" label="Service Location Zip" />
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+            </apex:actionRegion>
+
+            <apex:pageBlockButtons id="buttons" location="bottom" rendered="{!renderButtons}">
+                <apex:commandButton value="{!buttonTitle}" action="{!beginSearch}" reRender="main,memberResults,providerResults,errMsgs"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+
+        <apex:outputPanel id="memberResults">
+            <apex:pageBlock id="memberSearchResults" rendered="{!renderMemberResultsSection}">
+                <apex:pageBlockSection title="Contact Records" columns="1">
+                    <apex:pageBlockTable value="{!upvMapFinal}" var="key">
+                        <apex:column headerValue="Select">
+                            <input type="radio" name="selectContactRadio" id="ContactRadio">
+                                <apex:actionSupport event="onclick" action="{!getSelected}" reRender="empty" status="memberButtonStatus">
+                                    <apex:param name="upvID" value="{!upvMapFinal[key].id}"/>
+                                </apex:actionSupport>
+                            </input>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Contact Name</apex:facet>
+                            <apex:outputLabel value="{!upvMapFinal[key].Member_Contact__r.firstName} {!upvMapFinal[key].Member_Contact__r.lastName}" />
+                        </apex:column>                                              
+                        <apex:column >
+                            <apex:facet name="header">Guardian Name</apex:facet>
+                            <apex:outputLabel value="{!guardianMap[upvMapFinal[key].subscriber_id__c+'-'+upvMapFinal[key].plan_id__c]}" />
+                        </apex:column>                      
+                        <apex:column >
+                            <apex:facet name="header">Member ID</apex:facet>
+                            <apex:outputLabel value="{!upvMapFinal[key].Subscriber_ID__c}" />
+                        </apex:column>                      
+                        <apex:column >
+                            <apex:facet name="header">Member Plan Name</apex:facet>
+                            <apex:outputLabel value="{!planIdToName[upvMapFinal[key].Plan_ID__c]}" />
+                        </apex:column>                                          
+                        <apex:column >
+                            <apex:facet name="header">Birth Date</apex:facet>
+                            <apex:outputText value="{0, date, MMMM d','  yyyy}">
+                                <apex:param value="{!upvMapFinal[key].Member_Contact__r.Birthdate}" /> 
+                            </apex:outputText>
+                        </apex:column>
+
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection> 
+            <div class="cntr">
+                <apex:actionStatus id="memberButtonStatus">
+                    <apex:facet name="start">
+                        <apex:image url="{!$Resource.loading_image}" width="100" height="100" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                    </apex:facet>
+                </apex:actionStatus>
+            </div>
+            <apex:pageBlockButtons id="submitButton" location="bottom">
+                <apex:commandButton value="Submit" action="{!submit}" reRender="empty" />
+            </apex:pageBlockButtons>
+        
+            </apex:pageBlock>
+
+        </apex:outputPanel>
+
+
+            
+        <apex:outputPanel id="providerResults" >
+            <apex:pageBlock id="providerSearchResults" rendered="{!renderProviderResultsSection}">
+                <!-- Provider Table -->
+                <apex:pageBlockSection title="Provider Results" columns="1">
+                    <apex:pageBlockTable value="{!pslMap}" var="item">
+                        <apex:column headerValue="Select">
+                            <input type="radio" name="selectRadio" id="radio">
+                                <apex:actionSupport event="onclick" action="{!getSelected}" reRender="empty" status="buttonStatus">
+                                    <apex:param name="pslID" value="{!item}"/>
+                                </apex:actionSupport>
+                            </input>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Provider Name</apex:facet>
+                            <apex:outputLabel value="{!pslMap[item].provider__r.name}" />
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Service Location Name</apex:facet>
+                            <apex:outputLabel value="{!pslMap[item].Service_Location__r.name}" />
+                        </apex:column>              
+                        <apex:column >
+                            <apex:facet name="header">Provider ID</apex:facet>
+                            <apex:outputLabel value="{!pslMap[item].provider__r.windward_guid__c}" />
+                        </apex:column>                          
+                        <apex:column >
+                            <apex:facet name="header">Provider NPI</apex:facet>
+                            <apex:outputLabel value="{!pslMap[item].provider__r.npi__c}" />
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Service Location Address</apex:facet>
+                            <apex:outputLabel rendered="{!if(pslMap[item].Service_Location__r.BillingStreet != '', true, false)}" value="{!pslMap[item].Service_Location__r.BillingStreet}, {!pslMap[item].Service_Location__r.BillingCity}, {!pslMap[item].Service_Location__r.BillingState} {!pslMap[item].Service_Location__r.BillingPostalCode}" />
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Service Phone</apex:facet>
+                            <apex:outputLabel value="{!pslMap[item].Service_Location__r.Phone}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+                <!-- Service Location Table -->
+                <apex:pageBlockSection title="Service Location Results" columns="1">
+                    <apex:pageBlockTable value="{!serviceLocations}" var="item">
+                        <apex:column headerValue="Select">
+                            <input type="radio" name="selectRadio" id="radio">
+                                <apex:actionSupport event="onclick" action="{!getSelected}" reRender="empty" status="buttonStatus">
+                                    <apex:param name="slID" value="{!serviceLocations[item].Service_Location__c}"/>
+                                </apex:actionSupport>
+                            </input>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Service Location Name</apex:facet>
+                            <apex:outputLabel value="{!serviceLocations[item].Service_Location__r.name}" />
+                        </apex:column>              
+                        <apex:column >
+                            <apex:facet name="header">Service Location Address</apex:facet>
+                            <apex:outputLabel rendered="{!if(serviceLocations[item].Service_Location__r.BillingStreet != '', true, false)}" value="{!serviceLocations[item].Service_Location__r.BillingStreet}, {!serviceLocations[item].Service_Location__r.BillingCity}, {!serviceLocations[item].Service_Location__r.BillingState} {!serviceLocations[item].Service_Location__r.BillingPostalCode}" />
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Service Location Phone</apex:facet>
+                            <apex:outputLabel value="{!serviceLocations[item].Service_Location__r.Phone}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            <div class="cntr">
+                <apex:actionStatus id="buttonStatus">
+                    <apex:facet name="start">
+                        <apex:image url="{!$Resource.loading_image}" width="100" height="100" />
+                    </apex:facet>
+                    <apex:facet name="stop">
+                    </apex:facet>
+                </apex:actionStatus>
+            </div>
+            
+            <apex:pageBlockButtons id="submitButton" location="bottom">
+                <apex:commandButton value="Submit" action="{!submit}" reRender="empty" />
+            </apex:pageBlockButtons>
+
+            </apex:pageBlock>
+        </apex:outputPanel>
+
+
+    </apex:form>
+</apex:page>

@@ -1,0 +1,179 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_FileCase
+Purpose						: Submitting a case, you can select the case type and select the address, or describe the issue and add attachments if you want.
+							 
+Created on					: 30th September 2017
+Developed by				: Todd Tompkins
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			30th September 2017		Todd Tompkins				See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component controller="wmp_ctrl_FileCase" implements="forceCommunity:availableForAllPageTypes" access="global">
+	
+	<!--  attribute to display error  --> 
+    <aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    <aura:attribute name="typeError" type="Boolean" description="case description error" />
+    <aura:attribute name="memberError" type="Boolean" description="case description error" />
+    <aura:attribute name="descriptionError" type="Boolean" description="case description error" />
+    <!-- <aura:attribute name="addressError" type="Boolean" description="case description error" /> **POSSIBLY REINSTATED AT A LATER POINT - REMOVAL OF PULLING THE ADDRESSES ** -->
+    <aura:attribute name="resolvedError" type="Boolean" description="case description error" />
+    
+    
+    <aura:attribute name="typeDescriptionList" type="Object[]" description="type description list" />
+    <aura:attribute name="memberList" type="Object[]" description="member list" />
+    <!-- <aura:attribute name="addressList" type="Object[]" description="member address list for the selected member" /> **POSSIBLY REINSTATED AT A LATER POINT - REMOVAL OF PULLING THE ADDRESSES ** -->
+    <aura:attribute name="fileList" type="Attachment[]" description="member address list for the selected member" />
+    
+    
+    <aura:attribute name="typeChosen" type="String" description="type of case that is chosen" default=""/>
+    <aura:attribute name="memberChosen" type="String" description="type of case that is chosen" default=""/>
+    <aura:attribute name="addressChosen" type="Object" description="type of case that is chosen" default=""/>
+    <aura:attribute name="imageUrl" type="String" default="https://dqdev1--dev1.cs17.my.salesforce.com/sfc/servlet.shepherd/version/download/068g0000000YXJXAA4"/>
+	
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}" />
+    <!-- style="{!'background : url('+v.imageUrl+');'}" -->
+	<div class="slds" ><!-- style="{!'background : url('+v.imageUrl+');'}" -->
+		<form>
+			<div class=" fileCaseContainer">
+				<div class="slds-grid slds-wrap slds-col slds-align_absolute-center slds-size_1-of-1 slds-medium-size_4-of-5 slds-large-size_3-of-5">
+					<div class="slds-size_1-of-1 outsideWrapperClass">
+						<div class="slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_2-of-3 innerWrapperClass">
+							<aura:if isTrue="{!v.bln_isError}">
+								<div class="generalErrorContainer ">
+									<div  class="errorInnerContainer ">
+										<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+										<span class="errorMessage">{!v.str_errorMsg}</span>
+										</ui:message>
+									</div>
+								</div>
+							</aura:if>
+							<div class="title slds-p-around--small slds-col slds-size_1-of-1">
+								<h1>{!$Label.c.Create_a_Help_Request}</h1> 
+							</div>
+							<div class="typeHeader slds-p-around--small slds-col slds-size_1-of-1" >
+								<span class="intro">{!$Label.c.Help_Request_Sub_Text}</span>
+							</div>
+							
+							<div class="typeDescription">
+								<ul>
+								<aura:iteration items="{!v.typeDescriptionList}" var="cType">
+									<li class="bodyText ">
+										<span class="boldText">{!cType.Label}</span>&nbsp;{!cType.Description}
+									</li>
+								</aura:iteration>
+								</ul>
+							</div>
+							
+							
+							<div class="typeSelection elementWrap slds-col slds-size_1-of-1">
+								<ui:inputSelect label="{!$Label.c.Request_help_with}" required="true" labelClass="slds-col slds-size_1-of-1 generalLabelForm" 
+												 value="{!v.typeChosen}" class="slds-col slds-size_1-of-1 generalInputForm " change="{!c.changeCurrentMember}">
+									<ui:inputSelectOption label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault" text="" value="true" />
+									<aura:iteration items="{!v.typeDescriptionList}" var="cType">
+										<ui:inputSelectOption label="{!cType.Label}" text="{!cType.Value}" class="picklistOption" />
+									</aura:iteration>
+								</ui:inputSelect>
+							</div>
+							<aura:if isTrue="{!v.typeError}">
+								<div class="validationErrorMessage">
+									{!$Label.c.Required_Error}
+								</div>
+							</aura:if>
+							
+							<div class="memberSelection elementWrap slds-col slds-size_1-of-1">
+								<ui:inputSelect label="{!$Label.c.Affected_Member}" required="true" labelClass="slds-col slds-size_1-of-1 generalLabelForm" 
+												 value="{!v.memberChosen}" class="slds-col slds-size_1-of-1 generalInputForm " change="{!c.changeCurrentMember}">
+									<ui:inputSelectOption label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault" text="" value="true" />
+									<aura:iteration items="{!v.memberList}" var="cType">
+										<ui:inputSelectOption label="{!cType.Label}" text="{!cType.Value}" class="picklistOption" />
+									</aura:iteration>
+								</ui:inputSelect>
+							</div>
+							<aura:if isTrue="{!v.memberError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+							
+							<aura:if isTrue="{!and(v.typeChosen == 'Request ID Card', v.memberChosen != '' )}">							
+								<!-- case is  ID Card-->
+								
+								<!-- Member Addresses -->
+                                <!-- **POSSIBLY REINSTATED AT A LATER POINT - REMOVAL OF PULLING THE ADDRESSES **
+                                <br/>
+                                <div class="slds-col slds-size_1-of-1 generalLabelForm">{!$Label.c.Case_Id_card_address_header}</div>
+								<div class="elementWrap slds-col slds-size_1-of-1 addressContainer">  
+									<aura:iteration items="{!v.addressList}" var="address">
+                                         
+										<ui:inputRadio class="generalInputForm" text="{!address.Value}" 
+                                            label="{!address.Street + ', ' + address.City + ', ' + address.State + ' ' + address.Zip}" 
+                                            labelClass="slds-radio_button__label"
+                                            change="{!c.changeAddressChosen}" name="addressSelectOption" />
+                                       
+									</aura:iteration>
+
+								</div>
+								<aura:if isTrue="{!v.addressError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+								<div class="metaText" style="float:left;">{!$Label.c.File_Case_ID_Card_Footer}</div> -->
+								
+								<div class="elementWrap slds-col slds-size_1-of-1 slds-text-align_center" style="float:left;">
+									<a class="generalButton" onclick="{!c.saveIdCardCase}">{!$Label.c.Submit}</a>
+								</div>
+							</aura:if>
+							<aura:if isTrue="{!and(v.typeChosen != 'Request ID Card' ,v.typeChosen != '')}">
+								<div class="elementWrap slds-col slds-size_1-of-1 ">
+									<ui:inputTextArea aura:Id="casedescription" required="true" placeholder="{!$Label.c.Enter_text}" blur="{!c.checkSpecialCharacters}" maxlength="255"
+												label="{!$Label.c.Case_Description}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea"/>
+								</div>
+								<aura:if isTrue="{!v.descriptionError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+								<div class="elementWrap slds-col slds-size_1-of-1 uploadAttachment">
+									<div class="slds-col slds-size_1-of-1 generalLabelForm">{!$Label.c.Related_Documents}</div>
+									<!-- <lightning:input label="" type="file" files="{!v.fileList}" name="file" multiple="false" aura:id = "upFiles"  />accept="image/png, .zip" -->
+									<input type="file" class="file" aura:id="upFiles" />
+								</div>
+								<div class="elementWrap slds-col slds-size_1-of-1 ">
+									<ui:inputTextArea aura:Id="casedesired"  required="true" placeholder="{!$Label.c.Enter_text}" blur="{!c.checkSpecialCharacters}" maxlength="255"
+												label="{!$Label.c.Case_Desired_Resolution}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea"/>
+								</div>
+								<aura:if isTrue="{!v.resolvedError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+								
+								<div class="elementWrap slds-col slds-size_1-of-1 slds-text-align_center">
+									<a class=" generalButton" onclick="{!c.saveOtherCase}">{!$Label.c.Submit}</a>
+								</div>
+							</aura:if>
+						</div>
+						<div class="slds-spinner_container slds-hide" aura:id="uploadSpinner">
+					      <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="alert">
+					        <div class="slds-spinner__dot-a"></div>
+					        <div class="slds-spinner__dot-b"></div>
+					      </div>
+					    </div>	
+					</div>
+				</div>	
+				{!v.body}
+			</div>
+		</form>
+	</div>
+</aura:component>

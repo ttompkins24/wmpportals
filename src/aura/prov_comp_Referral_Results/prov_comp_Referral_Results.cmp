@@ -1,0 +1,240 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Referral_Results
+Purpose                     : Allows users to view referral results
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             6        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_Referral_Search">
+
+    <aura:attribute name="showResults" type="boolean"/>
+    <aura:attribute name="expandFilter" type="boolean" default="false"/>
+
+    <aura:attribute name="noResults" type="boolean" default="false"/>
+
+    <!-- Attribute Declration For Pagination -->
+    <aura:attribute name="paginationList" type="prov_wrap_Claim.ReferralHeaderResponseWrapper[]"/>
+    <aura:attribute name="startPage" type="Integer" />
+    <aura:attribute name="endPage" type="Integer"/>
+    <aura:attribute name="totalRecords" type="Integer"/>
+    <aura:attribute name="pageSize" type="Integer" default="10"/>
+    <aura:attribute name="totalPages" type="Integer"/>
+    <aura:attribute name="currentPage" type="Integer"/>
+    <!-- Attribute Declration For Pagination End-->
+
+    <aura:attribute name="referralStatusOptionsDisabled" type="boolean" default="false"/>
+    <aura:attribute name="locationOptionsDisabled" type="boolean" default="false"/>
+    <aura:attribute name="providerOptionsDisabled" type="boolean" default="false"/>
+
+    <aura:attribute name="referralStatusOptions" type="String[]" default="[]"/>
+    <aura:attribute name="locationOptions" type="String[]" default="[]"/>
+    <aura:attribute name="providerOptions" type="String[]" default="[]"/>
+
+    <aura:attribute name="selectedReferralStatus" type="String" default=""/>
+    <aura:attribute name="selectedLocation" type="String" default=""/>
+    <aura:attribute name="selectedProvider" type="String" default=""/>
+
+    <aura:attribute name="locationDisplayedValue" type="String" default=""/>
+    <aura:attribute name="providerDisplayedValue" type="String" default=""/> 
+
+    <aura:attribute name="startReceivedDate" type="Date"/>
+    <aura:attribute name="endReceivedDate" type="Date"/>
+
+    <!-- attributes passed in from the search page -->
+    <aura:attribute name="referralStatusOptionsDefault" type="String[]" default="[]"/>
+    <aura:attribute name="locationOptionsDefault" type="String[]" default="[]"/>
+    <aura:attribute name="providerOptionsDefault" type="String[]" default="[]"/>
+
+    <aura:attribute name="selectedReferralStatusFromSearch" type="String" default=""/>
+    <aura:attribute name="selectedLocationFromSearch" type="String" default=""/>
+    <aura:attribute name="selectedProviderFromSearch" type="String" default=""/>
+
+    <aura:attribute name="memberNumber" type="String"/>
+    <aura:attribute name="memberLastName" type="String"/>
+    <aura:attribute name="memberFirstName" type="String"/>
+    <aura:attribute name="referralNumber" type="String"/>
+    <aura:attribute name="memberDOB" type="Date"/>
+    <aura:attribute name="startReceivedDateFromSearch" type="Date" description="start received date from search page used to query initial data"/>
+    <aura:attribute name="endReceivedDateFromSearch" type="Date" description="end received date from search page used to query initial data"/>
+
+    <aura:attribute name="referralSearchHeader" type="prov_wrap_Claim.ReferralHeaderRequestWrapper" />
+    <aura:attribute name="referralSearchResults" type="prov_wrap_Claim.ReferralHeaderResponseWrapper[]" />
+
+    <aura:attribute name="showSpinner" type="boolean"/>
+
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>   
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+
+
+    <div class="slds">
+        <div class="slds-p-bottom_x-large">
+            <nav role="navigation" aria-label="Breadcrumbs">
+                <ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+                    <li class="slds-breadcrumb__item generalLabelForm"><a onclick="{!c.backToSearch}">Referral Search</a></li>
+                    <li class="slds-breadcrumb__item generalLabelForm">&nbsp;&nbsp;&nbsp;&nbsp;Results</li>
+                </ol>
+            </nav>
+        </div>
+        <h1 class="slds-p-bottom_medium">Referral and Transfer Search: Results</h1>
+
+        <div class="slds-border_bottom slds-p-bottom_medium">
+            <aura:if isTrue="{!v.isError}">
+                <div class="headerMessageContainer ">
+                    <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                        <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                        <span class="errorMessage">{!v.str_errorMsg}</span>
+                    </ui:message>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{!v.expandFilter}">
+                <div class="slds-p-bottom_medium">
+                    <a onclick="{!c.showHideFilter}">
+                        <span class="generalLabelForm">Collapse filters -</span>
+                    </a> 
+                </div>
+                <div class="slds-size_1-of-1 slds-grid slds-gutters">
+                    <div class="slds-col">
+                        <ui:inputSelect label="Status" class="generalInputForm testScript_referralStatusInput" value="{!v.selectedReferralStatus}" disabled="{!v.referralStatusOptionsDisabled}" labelClass="generalLabelForm">
+                            <aura:if isTrue="{!v.selectedReferralStatusFromSearch == 'All'}">
+                                <ui:inputSelectOption class="picklistOption" text="Select" label=""/>
+                            </aura:if>
+                            <aura:iteration items="{!v.referralStatusOptions}" var="option">
+                                <ui:inputSelectOption class="picklistOption" text="{!option}" label="{!option}"/>
+                            </aura:iteration>
+                        </ui:inputSelect>
+                    </div>
+                    <div class="slds-col slds-grid slds-grid_vertical-align-end">
+                        <ui:inputDate aura:id="startReceivedDate" class="generalInputForm slds-col testScript_startReceivedDateInput" value="{!v.startReceivedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" label="Submitted Between" labelClass="generalLabelForm"/>
+                        <h5 class="slds-col slds-grow-none ">and</h5>
+                        <ui:inputDate aura:id="endReceivedDate" class="generalInputForm slds-col testScript_endReceivedDateInput" value="{!v.endReceivedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+                    </div>
+                    <div class="slds-col">
+                        <c:wmp_util_MultiSelect optionList="{!v.locationOptions}" fieldLabel="Submitting Service Location" selectedValue="{!v.selectedLocation}" delimiter=";" disabled="{!v.locationOptionsDisabled}" displayValue="{!v.locationDisplayedValue}"/>
+                    </div>
+                    <div class="slds-col">
+                        <c:wmp_util_MultiSelect optionList="{!v.providerOptions}" fieldLabel="Submitting Provider" selectedValue="{!v.selectedProvider}" delimiter=";" disabled="{!v.providerOptionsDisabled}" displayValue="{!v.providerDisplayedValue}"/>
+                    </div>
+                    <div class="slds-col">
+                        <a onclick="{!c.clearFilters}">
+                            <span class="generalLabelForm">Clear</span>
+                        </a>
+                    </div>
+                    <div class="slds-col">
+                        <button class="generalButton testScript_searchButton" onclick="{!c.filterSearch}">Filter Results</button>
+                    </div>
+                </div>
+            <aura:set attribute="else">
+                <div class="slds-grid slds-wrap slds-size_1-of-1">
+                    <a onclick="{!c.showHideFilter}">
+                        <span class="generalLabelForm">Expand filters +</span>
+                    </a> 
+                </div>
+            </aura:set>
+            </aura:if>
+        </div>
+
+        <div class="slds-clearfix">
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-p-top_medium slds-clearfix">
+				<div class="slds-size_1-of-1 slds-align_absolute-center">
+	                <div class="slds-col">
+						<table class="tableClass" id="referralResultsTable">
+							<thead>
+								<tr >
+								    <th class="width12">
+								 		<span class="headerText sortable sorted sortDescend inverse testScript_referralNumberSort" onclick="{!c.updateColumnSorting}" data-fieldname="ClaimNumber" data-col="0" data-tableid="referralResultsTable">Number</span>
+								 	</th>
+								 	<th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_submittedDateSort" onclick="{!c.updateColumnSorting}" data-fieldname="SubmittedDate" data-col="1" data-tableid="referralResultsTable">Submitted Date</span>
+								 	</th>
+								 	<th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_memberIdSort" onclick="{!c.updateColumnSorting}" data-fieldname="MemberId" data-col="2" data-tableid="referralResultsTable">Member ID</span>
+								 	</th>
+                                    <th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_providerSort" onclick="{!c.updateColumnSorting}" data-fieldname="SubmittingProviderLastName" data-col="3" data-tableid="referralResultsTable">Submitting Provider</span>
+								 	</th>
+                                    <th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_locationSort" onclick="{!c.updateColumnSorting}" data-fieldname="SubmittingProviderAddressLine1" data-col="4" data-tableid="referralResultsTable">Submitting Provider Location</span>
+								 	</th>
+                                    <th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_providerSort" onclick="{!c.updateColumnSorting}" data-fieldname="ReferringProviderLastName" data-col="3" data-tableid="referralResultsTable">Referring Provider</span>
+								 	</th>
+                                    <th class="width12">
+								 		<span class="headerText sortable notSorted inverse testScript_statusSort" onclick="{!c.updateColumnSorting}" data-fieldname="Status" data-col="5" data-tableid="referralResultsTable">Status</span>
+								 	</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<aura:if isTrue="{!v.noResults}">
+									<tr>
+										<td class="bodyText dataSpace noResults" colspan="8">{!$Label.c.Referrals_results}
+										</td>	
+									</tr>
+								</aura:if>
+
+								<aura:if isTrue="{!v.referralSearchResults.length > 0}">
+									<aura:iteration items="{!v.paginationList}" var="ref">
+										<tr>
+											<td data-label="Number" class="slds-is-sortable " data-value="{!ref.ClaimNumber}">
+												<span class="bodyText dataSpace"><a onclick="{!c.draftDetail}" data-detailredirectid="{!ref.DetailRedirectId}">{!ref.ClaimNumber}</a></span>
+											</td>
+											<td data-label="Submitted Date" class="slds-is-sortable " data-value="{!ref.SubmittedDate}">
+                                                <!-- <lightning:formattedDateTime class="bodyText dataSpace" value="{!ref.SubmittedDate}" year="numeric" month="2-digit" day="2-digit" timeZone="{!$Locale.timezone}"/> -->
+                                                <ui:outputDate value="{!ref.SubmittedDate}" format="MM/DD/YYYY"/>
+											</td>
+											<td data-label="Member Id" class="slds-is-sortable " data-value="{!ref.MemberId}">
+												<span class="bodyText dataSpace">{!ref.MemberId}</span>
+											</td>
+											<td data-label="Submitting Provider" class="slds-is-sortable" data-value="{!ref.SubmittingProviderLastName}">
+												<span class="bodyText dataSpace">{!ref.SubmittingProviderLastName}, {!ref.SubmittingProviderFirstName}</span>
+											</td>
+											<td data-label="Location" class="slds-is-sortable " data-value="{!ref.SubmittingProviderAddressLine1}">
+												<span class="bodyText dataSpace">{!ref.SubmittingProviderAddressLine1}<br/>{!ref.SubmittingProviderCity}</span>
+											</td>
+											<td data-label="Referring Provider" class="slds-is-sortable" data-value="{!ref.ReferringProviderLastName}">
+												<span class="bodyText dataSpace">{!ref.ReferringProviderLastName}, {!ref.ReferringProviderFirstName}</span>
+											</td>
+											<td data-label="Status Category" class="slds-is-sortable " data-value="{!ref.Status}">
+												<span class="bodyText dataSpace">{!ref.Status}</span>
+											</td>
+										</tr>
+									</aura:iteration>
+								</aura:if>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+            <!--pagination for table-->
+            <aura:if isTrue="{!!v.noResults}">
+            <div class="slds-p-right_large slds-p-top_x-small">
+                <div class="slds-col slds-size_1-of-1 footer ">
+                    <div class="col paginate">
+                        <div class="desktop">
+                            <a class="{!'spacing  bodyLink ' + (v.startPage == 0 ? ' hidden' : '') }"  onclick="{!c.firstPage}" >First&nbsp;</a>
+                            <a class="{!'spacing  bodyLink ' + (v.startPage == 0 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous&nbsp;</a>
+                            <span class="spacing bodyText pageNum">Page&nbsp;{!v.currentPage}&nbsp;of&nbsp;{!v.totalPages}</span>
+                            <a class="{!'spacing  bodyLink ' + (v.currentPage == v.totalPages ? ' hidden ' : '') }" onclick="{!c.nextPage}">&nbsp;Next</a>
+                        </div>
+                    </div>      
+                </div> 
+            </div>
+            </aura:if>
+        </div>
+
+        <div class="slds-col slds-grid slds-size_1-of-1 slds-p-top_medium">
+            <button class="generalButton inverse testScript_backToSearchButton" onclick="{!c.backToSearch}">Back to Search</button>
+        </div> 
+        <iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_vf_ReferralSearch'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+    </div>  
+    
+</aura:component>

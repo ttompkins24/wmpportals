@@ -1,0 +1,155 @@
+<apex:page showHeader="false" sidebar="false" controller="Prov_ctrl_PanelRoster">
+
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}";
+
+		//holds passed in eligiblity information
+		var eligibilityStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+			//console.log('event ' + JSON.stringify(event));
+			//console.log('vf page event origin ' + event.origin);
+			//console.log('vf page correct origin ' + correctOrigin);
+			if(event.origin != correctOrigin){
+				//reject message
+				//console.log('rejected message for incorrect origin');
+				return;	
+			}
+
+			// eligibilityStr = event.data;
+
+			//call function to pass data to apex controller
+			getPanelRoster(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			////console.log('panel roster page complete');
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getPanelRoster(data) {
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.Prov_ctrl_PanelRoster.getPanelRosterResults}',
+				data,
+				function(result, event){
+					if(event.status){
+						var panelRosterString = result;
+						//console.log('panelRosterString ' + panelRosterString );
+						if(JSON.parse(panelRosterString).FirstName != 'Error'){
+							afterLogic(panelRosterString, data);
+						} else {
+							var timeoutList= {
+                            	timeout: {}
+                            };
+                        	sendToComponent(timeoutList);
+						}
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        sendToComponent(timeoutList);
+
+					} else {
+						//console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 100000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function afterLogic(panelRosterString, data) { 
+			//console.log('panel roster after time');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.Prov_ctrl_PanelRoster.afterResponseLogic}',
+				panelRosterString,
+				function(result, event){	
+					if(event.status){
+						//console.log('after response	result ' + JSON.stringify(result ));
+						
+						if(result != null){
+							var panelRosterMap = JSON.parse(panelRosterString);
+							//console.log('panelRosterMap.recs::'+ panelRosterMap.Total);
+							
+
+							////console.log('results: ' + JSON.stringify(result));
+							////console.log('time out ' + result.hasOwnProperty('timeout'));
+							if(!result.hasOwnProperty('timeout')){
+
+								//dates are being returned in as UTC number, need to convert back to date
+								result.forEach(function(element) {
+									element.effectiveDate = convertDate(element.effectiveDate);
+									element.birthDate = convertDate(element.birthDate);
+									//console.log('effective date after convertion' + element.effectiveDate);
+									//console.log('birth date after convertion' + element.birthDate);
+								});
+
+
+
+							}
+							var dataObj = JSON.parse(data);
+							var newObj = new Object();
+							newObj['PanelRosterRecords'] = result;
+							newObj['Total'] = panelRosterMap.Total;
+							newObj['PageNumber'] = panelRosterMap.PageNumber;
+							newObj['TotalPages'] = panelRosterMap.TotalPages;
+                            
+                            if(dataObj.hasOwnProperty('download')){
+                                newObj['download'] = 'true';
+                            }
+						}
+
+						sendToComponent(JSON.stringify(newObj));
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					} else {
+						//console.log('message ' + event.message);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					}
+					
+				},
+				{buffer: false, escape: true, timeout:60000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+</apex:page>

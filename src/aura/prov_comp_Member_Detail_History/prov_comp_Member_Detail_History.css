@@ -1,0 +1,24 @@
+.THIS.memberHistoryContainer.lighter{
+    margin-top: 44px;
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.memberHistoryContainer .slds-spinner:before, 
+.THIS.memberHistoryContainer .slds-spinner:after, 
+.THIS.memberHistoryContainer .slds-spinner__dot-a:before, 
+.THIS.memberHistoryContainer .slds-spinner__dot-b:before, 
+.THIS.memberHistoryContainer .slds-spinner__dot-a:after, 
+.THIS.memberHistoryContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}
+
+.THIS.memberHistoryContainer .paginate{
+	text-align:right;
+}
+.THIS.memberHistoryContainer  .spacing{
+	margin:0px 10px;
+}
+.THIS.memberHistoryContainer .footer{
+	margin-top:25px;
+}

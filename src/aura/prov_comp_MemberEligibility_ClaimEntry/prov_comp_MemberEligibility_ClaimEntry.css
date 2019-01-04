@@ -1,0 +1,61 @@
+.THIS .claimEntryMemberEligibility .field{
+   		width: 90%;
+   }
+
+.THIS .claimEntryMemberEligibility .generalOutOfNetwork svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+
+.THIS .claimEntryMemberEligibility .generalIneligible svg{
+	fill: #F6C32F;
+	padding-right:5px;
+}
+
+.THIS .claimEntryMemberEligibility .generalNotFound svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+
+.THIS .claimEntryMemberEligibility .generalEligible svg{
+	fill: #008355;
+	padding-right:5px;
+}
+
+.THIS .claimEntryMemberEligibility .radioButton {
+	background-color: #A9B0BD;
+	padding:10px;
+}
+
+.THIS .claimEntryMemberEligibility .cardDetail {
+	background-color: #F4F6F9;
+	padding:10px;
+}
+
+.THIS .claimEntryMemberEligibility .bold {
+    font-weight: bold;
+}
+
+.THIS  .claimEntryMemberEligibility .cardBorder {
+    border-width: thin;
+    border-spacing: 2px;
+    border-style: solid;
+    border-color: #A9B0BD;
+}
+
+.THIS  .claimEntryMemberEligibility .slds-modal__container {
+	max-width: 70rem !important;
+	min-width: 33rem !important;
+	width: 33% !important;
+
+}
+
+.THIS .claimEntryMemberEligibility .claimsEntryContainer .frame {
+	border-radius: 4px;
+  	background-color: rgba(135, 135, 135, 0.05);
+  	border: solid 1px #dfdfdf;
+  	padding: 20px;
+
+}
+
+/*Added ny */

@@ -1,0 +1,207 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" readOnly="true" lightningStylesheets="false" docType="html-5.0" applyBodyTag="false" applyHtmlTag="false" controller="prov_ctrl_Panel_Roster_Print">
+
+<html>
+	<title>Panel Roster Print</title>
+<head>
+    <apex:stylesheet value="{!URLFOR($Resource.GOV_Provider_Print_CSS, 'providerPrintCSS.css')}"/>
+    
+    <style>
+    	.tableClass th{ 
+    		text-align:left;
+    	}
+    </style>
+</head>
+
+<script type="text/javascript">
+	var hasRan = false;
+	
+	 //passes the data to apex controller
+	function startContinuation() {
+	
+       //console.log('startContinuation...');
+	   var businessId = '{!businessId}';
+       var locationId = '{!locationId}';
+       var providerId = '{!providerId}';
+       var firstName  = '{!firstName}';
+       var lastName   = '{!lastName}';
+       var sortDirection = '{!sortDirection}';
+       var sortField = '{!sortField}';
+       var routeId = '{!routeId}';
+       var hasError = {!hasError};
+       //console.log('params set...');
+       
+		Visualforce.remoting.Manager.invokeAction(
+			'{!$RemoteAction.prov_ctrl_Panel_Roster_Print.panelRosterSearchRemote}',
+			businessId,locationId,providerId,firstName,lastName,sortDirection,sortField,routeId,hasError,
+			function(result, event){
+				if(event.status){
+					
+					result.forEach(function(element) {
+								element.birthDate = convertDate(element.birthDate);
+								element.effectiveDate = convertDate(element.effectiveDate);
+								
+							});
+					var panelRosterString = result;
+					//console.log('panelRosterString ' + JSON.stringify(panelRosterString) );
+					setRecordList(JSON.stringify(panelRosterString));
+					//console.log('record list set');
+					//afterLogic(panelRosterString, data);
+				} else if(event.type === 'exception'){
+					//console.log('exception message ' + event.message);
+					//console.log('exception where ' + event.where);
+                       var timeoutList= {
+                           timeout: {}
+                           };
+                       //console.log('timeout ' + JSON.stringify(timeoutList));
+                       //sendToComponent(timeoutList);
+
+				} else {
+					//console.log('message ' + event.message);
+				}
+			},
+			{buffer: false, escape: false, timeout: 60000}
+		);
+	}
+	
+	function convertDate(dateStr) {
+		var d = new Date(dateStr);
+		var dYear = d.getUTCFullYear();
+		var dMonth = d.getUTCMonth()+1;
+		var dDate = d.getUTCDate();
+
+	    //add leading zeros
+	    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+	    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+	    //create date string
+		var dStr = dYear + '-' + dMonth + '-' + dDate;
+		
+		return dStr;
+	}
+
+</script>
+<body onload="startContinuation();" >
+	<apex:form >
+	<!-- <apex:actionFunction name="getPanelRosterResults" action="{!retrievePanelRoster}" reRender="tableOutputPanel" /> -->
+	<apex:actionFunction name="setRecordList" action="{!recordSetListCon}" reRender="tableOutputPanel" oncomplete="window.print();" > 
+		<apex:param name="panelList" value="" assignTo="{!renderStr}" />
+	</apex:actionFunction>
+	
+	
+    <h1 class="floatLeft">Panel Roster</h1>
+    <h1 class="floatRight">
+        <apex:outputText value="{0,date,MM/dd/yyyy}">
+            <apex:param value="{!TODAY()}"/>
+        </apex:outputText>
+    </h1>
+    <apex:outputText rendered="{!showMessage}">
+    	<h3 style="clear:both;">Loading...</h3>
+    </apex:outputText>
+    <apex:outputText rendered="{!hasError}">
+        <h3 style="clear: both;">{!errorMessageString}</h3>
+    </apex:outputText>
+    <apex:outputPanel id="tableOutputPanel">
+    
+    <div style="clear: both;" class="panelRosterPrint">
+        <table class="tableClass" >
+            <thead>
+                <tr >
+                    <th class="width8">
+                        <span class="headerText">Member Number</span>
+                    </th>
+                    <th class="width8">
+                        <span class="headerText">Birth Date</span>
+                    </th>
+                    <th class="width8">
+                        <span class="headerText">First Name</span>
+                    </th>
+                    <th class="width8">
+                        <span class="headerText">Last Name</span>
+                    </th>
+                    <th class="width8">
+                        <span class="headerText">Effective Date</span>
+                    </th>
+                    <th class="width8">
+                        <span class="headerText">Phone Number</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Address</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Language</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Plan Type</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Provider</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Service Location Address</span>
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <apex:repeat value="{!panelRosterResults}" var="member"> 
+                    <tr>
+                        <td class="width8">
+                            <span class="bodyText dataSpace">{!member.memberNumber}</span>
+                        </td>
+
+                        <td class="width8">
+                            <span class="bodyText dataSpace">
+                                <apex:outputText value="{0,date,MM/dd/yyyy}">
+                                    <apex:param value="{!member.birthDate}"/>
+                                </apex:outputText>
+                            </span>
+                        </td>
+                        
+                        <td class="width8">
+                            <span class="bodyText dataSpace">{!member.firstName}</span>
+                        </td>
+
+                        <td class="width8">
+                            <span class="bodyText dataSpace">{!member.LastName}</span>
+                        </td>
+                        
+                        <td class="width8">
+                            <span class="bodyText dataSpace">
+                                <apex:outputText value="{0,date,MM/dd/yyyy}">
+                                    <apex:param value="{!member.effectiveDate}"/>
+                                </apex:outputText>
+                            </span>
+                        </td>
+
+                        <td class="width8">
+                            <span class="bodyText dataSpace">{!member.phone}</span>
+                        </td>
+
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!member.address}</span>
+                        </td>
+
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!member.language}</span>
+                        </td>
+
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!member.planName}</span>
+                        </td>
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!member.ProviderName}</span>
+                        </td>
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!member.ServiceOfficeAddress}</span>
+                        </td>                               
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </div>
+    </apex:outputPanel>
+    </apex:form>
+</body>
+</html>
+	
+</apex:page>

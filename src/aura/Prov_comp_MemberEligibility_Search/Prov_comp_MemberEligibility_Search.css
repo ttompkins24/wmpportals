@@ -1,0 +1,20 @@
+.THIS .memberSearch .deleteCol{
+   		text-align: center;
+   }
+   .THIS .memberSearch .elementWrap{
+   		padding:10px 0px;
+   }
+   .THIS .memberSearch .footerEle{
+   		padding: 20px 0px; 
+   }
+   
+   .THIS .memberSearch .errorOutput{
+   		font-size:14px;
+   		color:#652b1e;
+   		padding:5px 5px 5px 0px;
+   }
+
+   
+   .THIS .memberSearch .horizontalSpacing{
+   		padding:0px 20px;
+   }

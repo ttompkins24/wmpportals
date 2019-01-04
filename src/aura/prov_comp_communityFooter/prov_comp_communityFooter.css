@@ -1,0 +1,62 @@
+.THIS.footerContainer .firstColumn{
+	padding-top:15px;
+	padding-left:0px;
+}
+	
+.THIS.footerContainer {
+	width: 95%;
+   	margin: auto;
+}
+
+.THIS.footerContainer .secondColumn{
+	float:right;
+}
+.THIS.footerContainer .topDiv{
+	display:inline-block;
+	width:100%;
+}
+
+.THIS.footerContainer .footerLinkSpacing a{
+	color: #003d6a;
+}
+
+
+.THIS.footerContainer .footerLinkSpacing{
+	margin-top:10px;
+}
+
+.THIS.footerContainer .liveAgentContainer{
+	display:block;
+	width:100%;
+	text-align:right;
+	padding-right: 3%;
+}
+.THIS.footerContainer .overallContainer{
+	padding-top:20px;
+	margin-left:2%;
+	margin-bottom:2%;
+}
+
+.THIS.footerContainer .footerText{	  
+  text-align: left;
+}
+
+.THIS.footerContainer .increaseOpacity{
+	opacity:0.5;
+}
+
+.THIS.footerContainer .DQVlogo{
+	 width: 143px;
+ 		height: 28px;
+}
+
+.THIS.footerContainer .planLogo{
+	width: 246px;
+ 	height: 44px;
+}
+
+.THIS.footerContainer .otherColumns{
+	padding-left:0px;
+	padding-top:0px;
+	width:100%;
+}

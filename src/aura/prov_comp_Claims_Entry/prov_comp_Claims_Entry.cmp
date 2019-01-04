@@ -1,0 +1,1459 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+	extends="c:prov_comp_Provider_Common" 
+	access="global"
+	controller="prov_ctrl_Claims_Entry">
+	
+	<!-- Fields -->
+	<aura:attribute access="public" name="claim" type="Claim__c" default="{}" />
+	<aura:attribute access="public" name="claimItems" type="List" default="[]" />
+	<aura:attribute access="public" name="cobPayerClaims" type="List" default="[]" />
+	<aura:attribute access="public" name="memberCoverage" type="Object" />
+	<aura:attribute access="public" name="eligData" type="Object" />
+	<aura:attribute access="public" name="availableCobPayers" type="List"  />
+	<aura:attribute access="public" name="availableCodes" type="List" default="[]" />
+	<aura:attribute access="public" name="availableHistory" type="List" default="[]" />
+	<aura:attribute access="public" name="memberCoverageEligibile" type="Object" default="{}" /> 
+	<aura:attribute access="public" name="historySearchWrapper" type="Object" default="{}" />
+	<aura:attribute access="public" name="icdSearchWrapper" type="Object" default="{}" />
+	<aura:attribute access="public" name="icdSearchFoundResults" type="Boolean" default="true" />
+	<aura:attribute access="public" name="cobSearchWrapper" type="Object" default="{}" />
+	<aura:attribute access="public" name="selected_icd_index" type="Integer" default="1"  />
+	<aura:attribute access="public" name="selected_cob_index" type="Integer" default="1"  />
+
+	<!-- Picklist Values -->
+	<aura:attribute access="public" name="service_offices" type="List" default="[]" />
+	<aura:attribute access="public" name="treating_dentists" type="List" default="[]" />
+	<aura:attribute access="public" name="statePicklists" type="List" default="[]"/>
+	<aura:attribute access="public" name="codeSetTypes" type="List"  default="[]"/>
+	<aura:attribute access="public" name="filterCodeTypes" type="List" default="[]" />
+	<aura:attribute access="public" name="placeOfServicePicklist" type="List" default="[]" />
+	<aura:attribute access="private" name="surfacePicklist" type="List" />
+  
+	<!-- Other maintenance -->
+	<aura:attribute access="public" name="initialLoadComplete" type="Boolean" default="false" />
+	<aura:attribute access="public" name="addCOB" type="Boolean" default="false" />
+	<aura:attribute access="public" name="addICD" type="Boolean" default="false" />
+	<aura:attribute access="public" name="hideDisclaimer" type="Boolean" default="true" />
+	<aura:attribute access="public" name="isAccident" type="Boolean" default="false" />
+	<aura:attribute access="public" name="isEligible" type="Boolean" default="false" />
+	<aura:attribute access="public" name="eligibilityHasRun" type="Boolean" default="false" />
+	<aura:attribute access="public" name="hasEligibilityError" type="Boolean" default="false" />
+	<aura:attribute access="public" name="eligibilityErrorMessage" type="String" default=""/>
+	<aura:attribute access="public" name="claimSubmitErrorMessage" type="String" default=""/>
+	<aura:attribute access="public" name="claimIsSubmitted" type="Boolean" default="false" />
+	<aura:attribute access="public" name="claimSuccessfullySubmitted" type="Boolean" default="false" />
+	<aura:attribute access="public" name="hasCobError" type="Boolean" default="false" />
+	<aura:attribute access="public" name="cobErrorMessage" type="String" default="" />
+	<aura:attribute access="public" name="claimNotFound" type="Boolean" default="false" />
+	<aura:attribute access="public" name="icdSearchError" type="Boolean" default="false" />
+	<aura:attribute access="public" name="loadDraft" type="Boolean" default="false" />
+	<aura:attribute access="public" name="claimItemsErrorMessage" type="String" default="" />
+	<aura:attribute access="public" name="hasClaimItemsError" type="Boolean" default="false" />
+	<aura:attribute access="public" name="finishedInit" type="Boolean" default="false" />
+	<aura:attribute access="private" name="draftSaved" type="Boolean" default="false" />
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true"  />
+
+	<!-- ADDED BY MIKE -->
+	<aura:attribute name="showClaimsPage" type="Boolean" default="false" description="determines if the claims page should be shown" />
+	<aura:attribute name="memCovSelected" type="Object" description="holds the selected member coverage value" />
+	<aura:attribute name="serviceLocationId" type="String" description="holds the selected SFDC Service Location Id" />
+	<aura:attribute name="providerId" type="String" description="holds the selected SFDC Provider ID" />
+	<aura:attribute name="eligibilityChecked" type="Boolean" default="false" description="determines if the eligiblity component should be in search or show mode" />
+	<aura:attribute name="runCheckAgain" type="Boolean" default="false" description="when this equals true, run eligibility check again"/>
+	<!-- end added by mike -->
+
+	<aura:handler name="change" value="{!v.showClaimsPage}" action="{!c.handleValueChange}"/>
+
+	<!-- Define Event Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+	<div class="claimsEntryContainer generalOuterDiv">
+		<!-- Breadcrumbs -->
+		<div class="slds-col slds-size_1-of-1 slds-grid">
+			<aura:if isTrue="{!v.showClaimsPage}">
+				<div class="breadCrumbWrapper">
+					&#60;&nbsp;
+					<a class="bodyLink" onclick="{!c.swapComponents}">Edit Eligibility Information</a>
+				</div>
+			</aura:if>
+		</div>
+		
+		<aura:if isTrue="{!v.claimNotFound}">
+			<div class="slds-grid">
+				<div class="slds-col slds-size_1-of-1">
+					<div  class="headerMessageContainer ">
+						<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+							<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+							<span class="errorMessage">We could not find a draft claim with Id {!v.params.id}. Please start a new claim.</span>
+						</ui:message>
+					</div>
+				</div>
+			</div>
+		</aura:if>
+
+		<aura:if isTrue="{!v.draftSaved}">
+			<div class="slds-grid">
+				<div class="slds-col slds-size_1-of-1">
+					<div  class="headerMessageContainer ">
+						<ui:message class="successMessageWrap slds-size_1-of-1" severity="success" closable="true">
+							<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+							<span class="successMessage">Draft Saved.</span>
+						</ui:message>
+					</div>
+				</div>
+			</div>
+		</aura:if>
+
+		
+		<div class="slds-grid">
+
+			<div class="slds-col">
+				<h1>Claim Entry</h1>
+				<aura:if isTrue="{!v.showClaimsPage}">
+					<h3>Step 2 of 2</h3>
+					<aura:set attribute="else">
+						<h3>Step 1 of 2</h3>
+					</aura:set>
+				</aura:if>
+				<aura:if isTrue="{!v.claim &amp;&amp; v.claim.Id}">
+					<p>Draft saved on <ui:outputDateTime value="{!v.claim.LastModifiedDate}"/></p>
+				</aura:if>
+			</div>
+
+		</div>
+
+		
+
+		<div class="slds-grid">
+			<div class="slds-col">
+				<aura:if isTrue="{!v.hideDisclaimer}">
+					<a  class="header4" href="javascript:void(0);" onclick="{!c.showDisclaimer}">Show Disclaimer</a>
+					<aura:set attribute="else">
+						<p class="header5">{!$Label.c.Claim_Entry_Disclaimer}</p>
+						<a class="header4" href="javascript:void(0);" onclick="{!c.hideDisclaimer}">Hide Disclaimer</a>
+					</aura:set>
+				</aura:if>
+			</div>
+		</div>
+
+		<aura:if isTrue="{!v.finishedInit}" >
+			<c:prov_comp_MemberEligibility_ClaimEntry runCheckAgain="{!v.runCheckAgain}"
+				claim="{!v.claim}" 
+				claimType="CLAIM"
+				serviceLocationId="{!v.serviceLocationId}" 
+				providerId="{!v.providerId}" 
+				serviceDate="{!v.claim.Service_Date__c}"
+				birthdate="{!v.claim.Patient_Birth_Date__c}"
+				memberNumber="{!v.claim.Subscriber_ID__c}"
+				lastName="{!v.claim.Patient_Last_Name__c}"
+				firstName="{!v.claim.Patient_First_Name__c}"
+				lastCheckedEligibility="{!v.claim.Last_Eligibility_Check__c}" 
+				useServiceDate="true" 
+				showClaimsPage="{!v.showClaimsPage}" 
+				eligibilityChecked="{!v.eligibilityChecked}" 
+				memCovSelected="{!v.memberCoverage}" /> 
+		</aura:if>
+
+		<aura:if isTrue="{!v.showClaimsPage}" >
+
+			<div class="slds-m-bottom_medium frame slds-clearfix">
+				<div class="slds-grid slds-size_1-of-1  slds-clearfix">
+					<div class="slds-col slds-size_5-of-6">
+						<div class="slds-size_1-of-1">						
+							<span>
+							<span class="nameText bold">
+								{!v.claim.Patient_First_Name__c}&nbsp;{!v.claim.Patient_Last_Name__c}&nbsp; &nbsp;
+							</span>
+							<span class="bodyText headerText">
+								<a href="" onclick="{!c.serviceLookupOpen}">Search Service History</a>
+							</span>
+							</span>
+						</div>
+						<div class="slds-grid">
+						
+							<div>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Eligible'}">
+									<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Eligible"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Out of Network'}">
+									<lightning:icon size="medium" class="generalOutOfNetwork" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Ineligible'}">
+									<lightning:icon size="medium" class="generalIneligible" variant="inverse" iconName="utility:error" alternativeText="Not Eligible"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Not Found'}">
+									<lightning:icon size="medium" class="generalNotFound" variant="inverse" iconName="utility:clear" alternativeText="Not Found"/>
+								</aura:if>
+							</div>
+							<div class="slds-col slds-size_10-of-12">
+								
+
+								<ui:outputText aura:Id="detailText" class="bold" value="{!v.claim.Last_Eligibility_Check_Information__c}"/>
+								<div>
+									<aura:unescapedHtml aura:Id="planName" value="{!v.claim.Plan_Text__c}"/>
+								</div>
+							</div>
+						</div>
+						</div>
+
+					<div class="slds-col slds-size_1-of-6 slds-clearfix slds-p-right_small slds-float_right slds-text-align_right">
+						<div>
+				        	<button class="generalButton testScript_searchButton" onclick="{!c.refreshCheck}">Refresh</button>
+						</div>
+						<aura:if isTrue="{!v.claim.Last_Eligibility_Check__c}">
+							<div class="">
+								<span class="bodyText dataSpace"> Checked on </span>
+		                    	<lightning:formattedDateTime class="bodyText dataSpace" value="{!v.claim.Last_Eligibility_Check__c}" year="numeric" month="2-digit" day="2-digit"/>						
+		                	</div>
+						</aura:if>
+				    </div>
+				</div>
+
+			</div>
+		
+			<!-- END ADDED BY MIKE -->
+
+
+
+
+
+
+
+
+
+
+
+			<!-- BASIC INFO START -->
+			<div class="slds-grid slds-m-bottom_small">
+
+				<div class="slds-col">
+					<h3>Claim Details</h3>
+				</div>
+
+				<!-- <div class="slds-col slds-grid_vertical-align-bottom">
+					<a class="slds-float_right slds-grid_vertical-align-bottom testScript_claim_e_comp_clear" href="javascript:void(0);" onclick="{!c.clearBasicInformation}">Clear</a>
+				</div> -->
+			</div>
+
+			<aura:if isTrue="{!v.claimIsSubmitted &amp;&amp; v.claimSubmitErrorMessage}">
+				<div class="slds-grid">
+					<div class="slds-col slds-size_1-of-1">
+						<div  class="headerMessageContainer ">
+							<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+								<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+								<span class="errorMessage">{!v.claimSubmitErrorMessage}</span>
+							</ui:message>
+						</div>
+					</div>
+				</div>
+			</aura:if>
+
+			<div class="slds-m-bottom_medium">
+				<div class="slds-grid slds-gutters">
+					<div class="slds-col slds-size_2-of-12">
+						<div class="slds-form-element">
+						  	<div class="slds-form-element__control">
+
+						  		<ui:inputSelect class="generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_pos"
+										label="P.O.S."
+										required="true"
+										aura:id="pos_input"
+										labelClass="generalLabelForm required" 
+										value="{!v.claim.Place_of_Treatment__c}" >
+									<option class="picklistOption " value="" text="-- NONE --"/>
+									<aura:iteration items="{!v.placeOfServicePicklist}" var="value">
+										<option class="picklistOption " value="{!value.Code__c}" selected="{!value.Code__c==v.claim.Place_of_Treatment__c}" text="{!value.Description__c}"/>
+									</aura:iteration>
+				    			</ui:inputSelect>
+						  	</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<!-- BASIC INFO END -->
+
+
+			<!-- BASIC INFO END -->
+			<div class="slds-grid">
+				<div class="slds-col">
+					<div class="slds-form-element">
+						<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+						    <span class="slds-form-element__label slds-m-bottom--none">{!$Label.c.Is_Accident_Claim}</span>
+						</label>
+					</div>
+
+					<div class="slds-form--inline">
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								class="inline-checkboxes testScript_claim_e_acc"
+								label="Yes" 
+								name="accident"
+								labelClass="radio-label"
+								value="{!v.claim.Is_Accident__c}" 
+								click="{!c.isAccident}" 
+								aura:id="accidentSelect" />
+						</div>
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								name="accident"
+								class="inline-checkboxes testScript_claim_e_acc_no"
+								label="No" 
+								labelClass="radio-label"
+								value="{!!v.claim.Is_Accident__c}" 
+								click="{!c.isAccident}" 
+								aura:id="notAccidentSelect" />
+
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+
+			<aura:if isTrue="{!v.claim.Is_Accident__c}">
+				<div class="slds-grid slds-gutters">
+					<div class="slds-col slds-size_2-of-12">
+						<ui:inputSelect class="generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_acc_type"
+									label="Accident Type"
+									required="true"
+									labelClass="generalLabelForm required" 
+									value="{!v.claim.Accident_Type__c}" >
+							<option class="picklistOption " value="" text="-- NONE --"/>
+							<option class="picklistOption " 
+								selected="{!v.claim.Accident_Type__c=='Auto Accident'}" 
+								value="Auto Accident" text="Auto Accident"/>
+							<option class="picklistOption " selected="{!v.claim.Accident_Type__c=='Employment'}" value="Employment" text="Employment"/>
+							<option class="picklistOption " selected="{!v.claim.Accident_Type__c=='Other Accident'}" value="Other Accident" text="Other Accident"/>
+		    			</ui:inputSelect>
+					</div>
+
+					<div class="slds-col slds-size_2-of-12">
+						<div class="slds-form-element">
+						  	<div class="slds-form-element__control basic-inline-input">
+						  		<ui:inputSelect label="Accident State"
+									required="true"
+									labelClass="generalLabelForm required" 
+						  			class="generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_accident_state"
+									value="{!v.claim.Accident_State__c}" >
+									<option class="picklistOption " value="" text="-- NONE --"/>
+									<aura:iteration items="{!v.statePicklists}" var="state">
+										<option 
+											class="picklistOption " 
+											value="{!state.abbreviation}" 
+											text="{!state.abbreviation}" 
+											selected="{!v.claim.Accident_State__c==state.abbreviation}"/>
+									</aura:iteration>
+				    			</ui:inputSelect>
+						  	</div>
+						</div>
+					</div>
+
+					<div class="slds-col slds-size_2-of-12">
+						<div class="slds-form-element">
+						  	<div class="slds-form-element__control">
+						  		<ui:inputDate 
+						  			label="Accident Date"
+									required="true"
+									labelClass="generalLabelForm required" 
+						  			blur="{!c.fixDate}" 
+						  			displayDatePicker="true" 
+						  			class="slds-item_detail slds-truncate generalInputForm testScript_claim_e_comp_acc_date" 
+						  			format="MM/DD/YYYY" 
+						  			value="{!v.claim.Accident_Date__c}"/>
+						  	</div>
+						</div>
+					</div>
+
+					<div class="slds-col slds-size_6-of-12">
+					</div>
+				</div>
+			</aura:if>
+
+			<!-- COB START -->
+			<div class="slds-grid slds-m-bottom_small slds-m-top_medium">
+				<div class="slds-col"  id="cob-header">
+					<div class="slds-form-element">
+						<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+						    <span class="slds-form-element__label slds-m-bottom--none">{!$Label.c.Is_COB}</span>
+						</label>
+
+					</div>
+
+
+					<div class="slds-form--inline">
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								class="inline-checkboxes testScript_claim_e_rad_cob"
+								label="Yes" 
+								name="other"
+								labelClass="radio-label"
+								value="{!v.claim.Has_Other_Coverage__c}" 
+								click="{!c.isCOB}" 
+								aura:id="cobSelect" />
+						</div>
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								class="inline-checkboxes testScript_claim_e_rad_cob_no"
+								label="No" 
+								name="other"
+								labelClass="radio-label"
+								value="{!!v.claim.Has_Other_Coverage__c}" 
+								click="{!c.isCOB}" 
+								aura:id="notCobSelect" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<aura:if isTrue="{!v.claim.Has_Other_Coverage__c}">
+				<div class="slds-m-bottom_medium frame">
+					<aura:if isTrue="{!v.hasCobError}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+								<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+								<span class="errorMessage">{!v.cobErrorMessage}</span>
+							</ui:message>
+						</div>
+					</aura:if>
+
+
+					<aura:iteration items="{!v.cobPayerClaims}" var="cob">
+
+						<div class="slds-grid slds-gutters slds-m-bottom_medium">
+							<div class="slds-col slds-size_12-of-12">
+								<aura:if isTrue="{!cob.hasError}">
+									<div  class="headerMessageContainer ">
+										<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+											<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+											<span class="errorMessage">{!cob.errorLabel}</span>
+										</ui:message>
+									</div>
+								</aura:if>
+							</div>
+						</div>
+
+
+						<div class="slds-grid slds-gutters slds-m-bottom_medium">
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+								  	<label class="slds-form-element__label generalLabelForm">Payer Name <span class="required-asterisk">*</span></label>
+								  	<div class="slds-form-element__control" data-value="{!cob.index}">
+								  		<input id="{!'cob' + cob.index}"  type="text" class="generalInputForm testScript_claim_e_comp_cob_payer" value="{!cob.Payer_Name__c}" onfocus="{!c.cobLookupOpen}" ></input>
+								  	</div>
+								</div>
+							</div>
+
+							
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+									    <ui:inputText label="Group Number"
+											required="true"
+											labelClass="generalLabelForm required"
+									    	class="{!'generalInputForm testScript_claim_e_comp_cob_group_number cob-group-' + cob.index}"
+									    	value="{!cob.Group_ID__c}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+							
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+									    <ui:inputText label="Policy Number"
+											required="true"
+											labelClass="generalLabelForm required"
+									    	class="{!'generalInputForm testScript_claim_e_comp_cob_policy_number cob-policy-' + cob.index}"
+									    	value="{!cob.Subscriber_ID__c}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+									    <ui:inputText label="Member First Name"
+											required="true"
+											labelClass="generalLabelForm required"
+									    	class="generalInputForm testScript_claim_e_comp_cob_first_name" 
+									    	value="{!cob.Subscriber_First_Name__c}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+									    <ui:inputText label="Member Last Name"
+											required="true"
+											labelClass="generalLabelForm required"
+									    	class="generalInputForm testScript_claim_e_comp_cob_last_name" 
+									    	value="{!cob.Subscriber_Last_Name__c}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+								  	<div class="slds-form-element__control">
+								  		<ui:inputDate label="D.O.B."
+											required="true"
+											labelClass="generalLabelForm required"
+								  			blur="{!c.fixDate}" 
+								  			displayDatePicker="true" 
+								  			class="generalInputForm slds-item_detail slds-truncate testScript_claim_e_comp_cob_dob" 
+								  			format="MM/DD/YYYY" 
+								  			value="{!cob.Subscriber_Birth_Date__c}"/>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12" data-value="{!cob.index}">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+										<a href="" class="{!'testScript_deleteCOBItem'+cob.index}" onclick="{!c.deleteCOBLineItem}"><lightning:icon class="generalDeleteIcon cobDeleteIcon" iconName="utility:delete" alternativeText="Delete"/></a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</aura:iteration>
+
+					<div class="slds-grid">
+						<div class="slds-col">
+							<a href="" onclick="{!c.addCOBLineItem}">Add another COB</a>
+						</div>
+					</div>
+
+				</div>
+			</aura:if>
+			<!-- COB END -->
+
+
+			<!-- ICD START -->
+			<div class="slds-grid slds-m-bottom_small slds-m-top_medium">
+				<div class="slds-col">
+					<div class="slds-form-element">
+						<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+						    <span class="slds-form-element__label slds-m-bottom--none">{!$Label.c.Is_ICD} </span>
+						</label>
+
+					</div>
+
+					<div class="slds-form--inline">
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								class="inline-checkboxes testScript_claim_e_rad_icd"
+								label="Yes" 
+								name="icdCheckBox"
+								labelClass="radio-label"
+								value="{!v.claim.Has_ICD__c}" 
+								click="{!c.isICD}" 
+								aura:id="icdSelect" />
+						</div>
+						<div class="slds-form-element">
+							<ui:inputRadio 
+								class="inline-checkboxes testScript_claim_e_rad_icd_no"
+								label="No" 
+								name="icdCheckBox"
+								labelClass="radio-label"
+								value="{!!v.claim.Has_ICD__c}" 
+								click="{!c.isICD}" 
+								aura:id="notIcdSelect" />
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<aura:if isTrue="{!v.claim.Has_ICD__c &amp;&amp; !v.isLoading}">
+				<div class="slds-m-bottom_medium frame">
+					<div class="slds-grid slds-gutters">
+						<div class="slds-col slds-size_3-of-12">
+							<div class="slds-form-element">
+								<label class="slds-form-element__label">Primary Diagnosis Code<span class="required-asterisk">*</span></label>
+							  	<div class="slds-form-element__control inlineBlock">
+							  		<ui:inputText 
+							  			class="generalInputForm testScript_claim_e_comp_icda icd-input" 
+							  			value="{!v.claim.Diagnosis_Code_A_Lookup__r.Description__c}" 
+							  			focus="{!c.icdLookupOpen1}" />
+							  		<a href="" title="Delete" onclick="{!c.deleteIcdA}" id="icdADelete"><lightning:icon class="generalDeleteIcon left" iconName="utility:delete" alternativeText="Delete"/></a>
+
+							  	</div>
+							</div>
+						</div>
+
+						<div class="slds-col slds-size_3-of-12">
+							<div class="slds-form-element">
+								<label class="slds-form-element__label">Secondary Diagnosis Code</label>
+								<div class="slds-form-element__control inlineBlock">
+								    <ui:inputText class="generalInputForm testScript_claim_e_comp_icdb icd-input" disabled="{!!v.claim.Diagnosis_Code_A_Lookup__r.Description__c}" focus="{!c.icdLookupOpen2}" value="{!v.claim.Diagnosis_Code_B_Lookup__r.Description__c}"></ui:inputText>
+								    <a href="" onclick="{!c.deleteIcdB}" id="icdBDelete"><lightning:icon class="generalDeleteIcon left  " iconName="utility:delete" alternativeText="Delete"/></a>
+								</div>
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_3-of-12">
+							<div class="slds-form-element">
+								<label class="slds-form-element__label">Third Diagnosis Code</label>
+								<div class="slds-form-element__control inlineBlock">
+								    <ui:inputText class="generalInputForm testScript_claim_e_comp_icdc icd-input" disabled="{!!v.claim.Diagnosis_Code_B_Lookup__r.Description__c}" focus="{!c.icdLookupOpen3}" value="{!v.claim.Diagnosis_Code_C_Lookup__r.Description__c}"></ui:inputText>
+								    <a href="" onclick="{!c.deleteIcdC}" id="icdCDelete"><lightning:icon class="generalDeleteIcon left" iconName="utility:delete" alternativeText="Delete"/></a>
+								</div>
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_3-of-12">
+							<div class="slds-form-element">
+								<label class="slds-form-element__label">Fourth Diagnosis Code</label>
+								<div class="slds-form-element__control inlineBlock">
+								    <ui:inputText class="generalInputForm testScript_claim_e_comp_icdd icd-input" disabled="{!!v.claim.Diagnosis_Code_C_Lookup__r.Description__c}"  focus="{!c.icdLookupOpen4}" value="{!v.claim.Diagnosis_Code_D_Lookup__r.Description__c}"></ui:inputText>
+								    <a href="" onclick="{!c.deleteIcdD}" id="icdDDelete"><lightning:icon class="generalDeleteIcon left  " iconName="utility:delete" alternativeText="Delete"/></a>
+								</div>
+				    		</div>
+						</div>
+					</div>
+				</div>
+			</aura:if>
+			<!-- ICD END -->
+
+
+
+			<!-- SERVICES START -->
+			<aura:if isTrue="{!v.claim.Id}">
+				<div class="slds-grid slds-m-bottom_small">
+					<div class="slds-col" id="services-header">
+						<h3>Services</h3>
+					</div>
+				</div>
+
+				<aura:if isTrue="{!v.hasClaimItemsError}">
+					<div class="slds-grid">
+						<div class="slds-col slds-size_1-of-1">
+							<div  class="headerMessageContainer ">
+								<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+									<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+									<span class="errorMessage">{!v.claimItemsErrorMessage}</span>
+								</ui:message>
+							</div>
+						</div>
+					</div>
+				</aura:if>
+
+				<aura:iteration items="{!v.claimItems}" var="item">
+
+					<div class="slds-m-bottom_medium frame">
+
+						<aura:if isTrue="{!item.hasError}">
+							<div  class="headerMessageContainer ">
+								<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+									<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+									<span class="errorMessage">{!item.errorLabel}</span>
+								</ui:message>
+							</div>
+						</aura:if>
+
+
+						<div class="slds-grid">
+							<div class="slds-col slds-size_1-of-1">
+								<div class="slds-float_right" data-target-index="{!item.index}">
+									<a href="" onclick="{!c.deleteServiceLineItem}">Delete</a>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="slds-grid slds-gutters">
+							<div class=" ">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label" >
+										&nbsp;
+									</label>
+								  	<div class="slds-form-element__control" >
+										<ui:outputText class="header3" value="{!item.index*1 + 1}" />
+									</div>
+								</div>
+							</div>
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+								  	<label class="slds-form-element__label" for="{!'code' + item.index}">
+								  		Procedure Code <span class="required-asterisk">*</span>
+
+								  		<aura:if isTrue="{!item.Procedure_Code_Lookup__r &amp;&amp; item.Procedure_Code_Lookup__r.Description__c}">
+								  			<lightning:helptext content="{!item.Procedure_Code_Lookup__r.Description__c}" />
+								  		</aura:if>
+								  	</label>
+								  	<div class="slds-form-element__control" 
+								  		data-target-id="{!'code-' + item.index + '-' + item.Procedure_Code__c}">
+								  		
+								  		<input 
+								  			id="{!'code' + item.index}"
+								  			class="generalInputForm input uiInput uiInputText uiInput--default uiInput--input   testScript_claim_e_comp_service_proc"
+								  			value="{!item.Procedure_Code__c}"
+								  			onblur="{!c.queryProcedureCode}" 
+						        			maxlength="5"></input>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control" data-value="{!item.index}">
+										<ui:inputDate label="Service Date"
+											required="true"
+											labelClass="generalLabelForm required"
+											blur="{!c.fixDate}" 
+											displayDatePicker="true" 
+											class="{!'slds-item_detail slds-truncate generalInputForm testScript_claim_e_comp_service_s_date serv-date-' + item.index}" 
+											format="MM/DD/YYYY" 
+											value="{!item.Service_Date__c}"/>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+									    <ui:inputText 
+									    	label="Tooth"
+											required="{!item.Procedure_Code_Lookup__r &amp;&amp; item.Procedure_Code_Lookup__r.Is_Tooth_Required__c}"
+											blur="{!c.checkNextRequired}"
+											labelClass="generalLabelForm required"
+									    	class="{!'generalInputForm testScript_claim_e_comp_service_tooth tooth-' + item.index}" 
+									    	value="{!item.Tooth_Number__c}"></ui:inputText>
+									</div>
+					    		</div>
+							</div> 
+
+							<div class="{! 'slds-col slds-size_1-of-12 ' + item.index}">
+								<ui:inputSelect 
+									required="{!item.Procedure_Code_Lookup__r &amp;&amp; item.Procedure_Code_Lookup__r.Is_Quad_Required__c}"
+									labelClass="generalLabelForm required" 
+						  			class="{!'generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_service_quad quad-' + item.index}"
+						  			blur="{!c.checkNextRequired}"
+									label="Quad"
+									value="{!item.Quad__c}" 
+									>
+									<option class="picklistOption" value="" text=""/>
+									<option class="picklistOption" 
+										selected="{!item.Quad__c=='UR'}" value="UR" text="UR"/>
+									<option class="picklistOption" selected="{!item.Quad__c=='UL'}" value="UL" text="UL"/>
+									<option class="picklistOption" selected="{!item.Quad__c=='LL'}" value="LL" text="LL"/>
+									<option class="picklistOption" selected="{!item.Quad__c=='LR'}" value="LR" text="LR"/>
+				    			</ui:inputSelect>
+							</div>
+
+							<div class="{! 'slds-col slds-size_1-of-12 ' + item.index}">
+
+								<ui:inputSelect 
+									required="{!item.Procedure_Code_Lookup__r &amp;&amp; item.Procedure_Code_Lookup__r.Is_Arch_Required__c}"
+									labelClass="generalLabelForm required" 
+						  			class="{!'generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_service_arch arch-' + item.index}"
+						  			blur="{!c.checkNextRequired}"
+									label="Arch"
+									value="{!item.Arch__c}" 
+									>
+									<option class="picklistOption" value="" text=""/>
+									<option class="picklistOption" selected="{!item.Arch__c=='UA'}"  value="UA" text="UA"/>
+									<option class="picklistOption" selected="{!item.Arch__c=='LA'}"  value="LA" text="LA"/>
+				    			</ui:inputSelect>
+							</div>
+
+							<div class="{! 'slds-col slds-size_1-of-12 ' + item.index}">
+								<c:wmp_util_MultiSelect optionList="{!v.surfacePicklist}" 
+									fieldLabel="{!item.Surface_Label}" 
+									selectedValue="{!item.Surfaces__c}" 
+									delimiter=";"                   
+									classList="{!'surface-' + item.index}"
+									displayValue="{!item.Surfaces__c}"/>
+							</div>
+
+
+							<div class="{! 'slds-col slds-size_1-of-12 ' + item.index}">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+										<ui:inputNumber label="Quantity"
+											required="true"
+											labelClass="generalLabelForm required"
+											class="{!'generalInputForm testScript_claim_e_comp_service_quantity quantity-' + item.index}" 
+											value="{!item.Quantity__c}"/>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+										<ui:inputCurrency label="Billed Amount"
+											required="true"
+											labelClass="generalLabelForm required"
+											aura:id="amount" 
+											focus="{!c.selectBilledAmount}"
+											class="field generalInputForm" 
+											value="{!item.Billed_Amount__c}"/>
+									</div>
+					    		</div>
+							</div>
+
+							<aura:if isTrue="{!v.claim.Has_ICD__c || v.claim.Has_Other_Coverage__c}">
+								<div class=" slds-size_1-of-12">
+									<div class="slds-form-element menu_button_claim_entry">
+										<lightning:buttonMenu variant="border-filled" iconSize="large" iconName="utility:chevrondown" alternativeText="Settings" onselect="{!c.addIcdCobFromMenu}">
+										    <aura:if isTrue="{!v.claim.Has_ICD__c}"><lightning:menuItem label="Add ICD" value="{!item.index + ':ICD'}" /></aura:if>
+										    <aura:if isTrue="{!v.claim.Has_Other_Coverage__c}"><lightning:menuItem label="Add COB" value="{!item.index + ':COB'}"/></aura:if>
+										</lightning:buttonMenu>
+									</div>
+								</div>
+							</aura:if>
+						</div>
+
+						<aura:if isTrue="{!item.addICD}">
+							<br/>
+							<div class="slds-grid slds-gutters">
+
+								<aura:if isTrue="{!v.claim.Diagnosis_Code_A_Lookup__c}">
+									<div class="slds-col slds-size_1-of-12">
+										<div class="slds-form--inline">
+											<div class="slds-form-element">
+												<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+												    <span class="slds-form-element__label slds-m-bottom--none">{!v.claim.Diagnosis_Code_A_Lookup__r.Code__c} - {!v.claim.Diagnosis_Code_A_Lookup__r.Description__c}</span>
+												    <ui:inputCheckbox class="testScript_claim_e_comp_epsdt"  value="{!item.has_code_a}"/>
+												    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</aura:if>
+
+								<aura:if isTrue="{!v.claim.Diagnosis_Code_B_Lookup__c}">
+									<div class="slds-col slds-size_1-of-12">
+										<div class="slds-form--inline">
+											<div class="slds-form-element">
+												<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+												    <span class="slds-form-element__label slds-m-bottom--none">{!v.claim.Diagnosis_Code_B_Lookup__r.Code__c} - {!v.claim.Diagnosis_Code_B_Lookup__r.Description__c}</span>
+												    <ui:inputCheckbox class="testScript_claim_e_comp_epsdt"  value="{!item.has_code_b}"/>
+												    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</aura:if>
+
+								<aura:if isTrue="{!v.claim.Diagnosis_Code_C_Lookup__c}">
+									<div class="slds-col slds-size_1-of-12">
+										<div class="slds-form--inline">
+											<div class="slds-form-element">
+												<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+												    <span class="slds-form-element__label slds-m-bottom--none">{!v.claim.Diagnosis_Code_C_Lookup__r.Code__c} - {!v.claim.Diagnosis_Code_C_Lookup__r.Description__c}</span>
+												    <ui:inputCheckbox class="testScript_claim_e_comp_epsdt"  value="{!item.has_code_c}"/>
+												    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</aura:if>
+
+								<aura:if isTrue="{!v.claim.Diagnosis_Code_D_Lookup__c}">
+									<div class="slds-col slds-size_1-of-12">
+										<div class="slds-form--inline">
+											<div class="slds-form-element">
+												<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+												    <span class="slds-form-element__label slds-m-bottom--none">{!v.claim.Diagnosis_Code_D_Lookup__r.Code__c} - {!v.claim.Diagnosis_Code_D_Lookup__r.Description__c}</span>
+												    <ui:inputCheckbox class="testScript_claim_e_comp_epsdt"  value="{!item.has_code_d}"/>
+												    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+												</label>
+											</div>
+										</div>
+									</div>
+								</aura:if>
+							</div>
+						</aura:if>
+
+						<aura:if isTrue="{!item.addCOB &amp;&amp; item.COB_Payer_Details__r.length > 0}">
+
+							<br/>
+
+							<aura:iteration items="{!item.COB_Payer_Details__r}" var="cob">
+								<div class="slds-grid slds-gutters cob_line_item">
+									<div class="slds-col slds-size_4-of-12">
+										
+
+
+						    			<ui:inputSelect class="generalInputPicklist uiInput_select generalLabelForm testScript_claim_e_comp_cob_item_payment"
+												label="COB Payer"
+												required="true"
+												aura:id="cob_item"
+												labelClass="generalLabelForm required"
+												value="{!cob.COB_Other_Payer__c}" >
+
+											<option class="picklistOption " value="" text="None"/>
+											<aura:iteration items="{!v.cobPayerClaims}" var="cobPayerClaim">
+												<option class="picklistOption " 
+													selected="{!cobPayerClaim.Payer_Name__c==cob.COB_Other_Payer__c}"
+													value="{!cobPayerClaim.Payer_Name__c}" 
+													text="{!cobPayerClaim.Payer_Name__c}"/>
+											</aura:iteration>
+
+						    			</ui:inputSelect>
+
+
+									</div>
+
+									<div class="slds-col slds-size_3-of-12">
+										<div class="slds-form-element">
+										  	<div class="slds-form-element__control">
+										  		<ui:inputDate 
+										  			label="Payment Date"
+													required="true"
+													labelClass="generalLabelForm required" 
+										  			blur="{!c.fixDate}" 
+										  			displayDatePicker="true" 
+										  			class="slds-item_detail slds-truncate generalInputForm testScript_claim_e_comp_acc_date" 
+										  			format="MM/DD/YYYY" 
+										  			value="{!cob.Payment_Date__c}"/>
+
+										  	</div>
+										</div>
+
+									</div>
+
+									<div class="slds-col slds-size_3-of-12">
+										<div class="slds-form-element">
+											<div class="slds-form-element__control">
+												<ui:inputCurrency label="Paid Amount"
+													required="true"
+													labelClass="generalLabelForm required"
+													aura:id="amount" 
+													class="field generalInputForm" 
+													value="{!cob.Paid_Amount__c}"/>
+											</div>
+							    		</div>
+									</div>
+
+									<div class="slds-col slds-size_2-of-12" data-item-value="{!item.index}" data-value="{!cob.index}">
+										<a href="" onclick="{!c.deleteCOBLineItemClaim}" class="{!'testScript_DeleteCOB'+item.index}"><lightning:icon class="generalDeleteIcon  cobDeleteIcon" iconName="utility:delete" alternativeText="Delete"/></a>
+									</div>
+								</div>
+							</aura:iteration>
+						</aura:if>
+					
+					</div>
+				</aura:iteration>
+
+				<div class="slds-grid slds-m-bottom_small">
+					<div class="slds-col">
+						<a href="" onclick="{!c.addServiceLineItem}" class="testScript_newServicebutton">Add another service</a>
+					</div>
+				</div>
+				<!-- SERVICES END -->
+			</aura:if>
+
+
+
+			<div class="slds-grid slds-m-bottom_small">
+
+				<div class="slds-col">
+					<h3>Optional Information</h3>
+				</div>
+			</div>
+
+			<div class="slds-m-bottom_medium">
+				<div class="slds-grid slds-gutters slds-m-bottom_small">
+					<div class="slds-col slds-size_3-of-12">
+						<div class="slds-form--inline">
+
+							<div class="slds-form-element">
+								<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+								    <span class="slds-form-element__label slds-m-bottom--none">This service qualifies as EPSDT.</span>
+								    <ui:inputCheckbox aura:id="epsdt" class="testScript_claim_e_comp_epsdt"  value="{!v.claim.Is_EPSDT__c}"/>
+								    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+								</label>
+							</div>
+						</div>
+					</div>
+
+					<div class="slds-col slds-size_3-of-12">
+						<div class="slds-form--inline">
+							<div class="slds-form-element">
+								<label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+								    <span class="slds-form-element__label slds-m-bottom--none">This was an emergency service.</span>
+								    <ui:inputCheckbox aura:id="emergency_check" class="testScript_claim_e_comp_emergency"  value="{!v.claim.Is_Emergency__c}" />
+								    <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+								</label>
+							</div>
+						</div>
+					</div>
+					<div class="slds-col slds-size_6-of-12">
+					</div>
+				</div>
+
+				<div class="slds-grid slds-gutters slds-m-bottom_small">
+					<div class="slds-col slds-size_3-of-12">
+						<div class="slds-form-element">
+							<div class="slds-form-element__control">
+							    <ui:inputText 
+							    	label="Office Reference Number"
+									labelClass="generalLabelForm"
+							    	class="generalInputForm testScript_claim_e_comp_office_ref" 
+							    	value="{!v.claim.Office_Reference_Number__c}" 
+							    	change="{!c.checkAlphasOffice}"></ui:inputText>
+							</div>
+			    		</div>
+					</div>
+
+					<div class="slds-col slds-size_3-of-12">
+						<div class="slds-form-element">
+							<div class="slds-form-element__control">
+							    <ui:inputText 
+							    	label="Referral Number"
+									labelClass="generalLabelForm"
+							    	class="generalInputForm testScript_claim_e_comp_referral" 
+							    	value="{!v.claim.Referral_Number__c}" 
+							    	maxlength="40" 
+							    	change="{!c.checkAlphas}"></ui:inputText>
+							</div>
+			    		</div>
+					</div>
+					<div class="slds-col slds-size_6-of-12">
+					</div>
+				</div>
+
+
+				<div class="slds-grid slds-gutters slds-m-bottom_small">
+					<div class="slds-col slds-size_6-of-12">
+						<div class="slds-form-element">
+							<div class="slds-form-element__control">
+								<ui:inputTextArea 
+									placeholder="Please enter your NEA Attachment ID, if needed." maxlength="2500" 
+									label="Notes"
+									labelClass="generalLabelForm"
+									class="generalInputForm slds-align_absolute-center slds-m-bottom_small testScript_claim_notes" 
+									cols="20" 
+									rows="2" 
+									value="{!v.claim.Remarks2__c}"></ui:inputTextArea>
+							</div>
+			    		</div>
+					</div>
+
+					<div class="slds-col slds-size_6-of-12">
+					</div>
+				</div>
+			</div>
+
+
+
+
+
+			<!-- File Uploader -->
+
+			<aura:if isTrue="{!v.claim.Id}">
+				<div class="slds-m-bottom_medium frame">
+					<c:prov_comp_File_Upload parentId="{!v.claim.Id}" type="Claim" />
+				</div>
+			</aura:if>
+
+			<div class="slds-grid">
+				<div class="slds-col slds-align_absolute-center">
+					<aura:if isTrue="{!v.claim &amp;&amp; v.claim.Id}">
+				        <button onclick="{!c.saveDraft}" class="slds-button inverse generalButton testScript_claim_e_comp_save_draft" aria-describedby="help" title="Save Draft">
+							Save Draft
+						</button>
+
+						<button onclick="{!c.submitClaim}" class="slds-button generalButton testScript_claim_e_comp_submit" aria-describedby="help" title="Submit Claim">
+							Submit Claim
+						</button>
+
+				        <aura:set attribute="else">
+				        	<button disabled="true" class="slds-button inverse generalButton testScript_claim_e_comp_save_draft" aria-describedby="help" title="Save Draft">
+								Save Draft
+							</button>
+
+							<button disabled="true" class="slds-button generalButton testScript_claim_e_comp_submit" aria-describedby="help" title="Submit Claim">
+								Submit Claim
+							</button>
+				        </aura:set>
+				    </aura:if>
+
+
+				</div>
+			</div>
+
+
+			<!-- Add COB and ICD Modals -->
+			<div id="modal-backdrop" class="slds-backdrop"></div>
+
+			<!-- COB MODAL-->
+	        <div aura:id="cob-modal" id="cob-modal" role="dialog" tabindex="-1" aria-labelledby="cob-search" class="slds-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	<button class="slds-button slds-button--icon-inverse slds-modal__close" id="cob-close" onclick="{!c.cobLookupClose}">
+	                        <span>Close</span>
+	                    </button>
+	                    <h2 class="slds-text-heading--medium">Look Up COB Payers</h2>
+	                </div>
+	                <div class="slds-modal__content slds-p-around--medium">
+
+	                	<div class="slds-grid slds-gutters">
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">ID Number</label>
+									<div class="slds-form-element__control">
+									    <ui:inputText aura:id="id-number" class="generalInputForm testScript_claim_e_comp_cob_id_number" value="{!v.cobSearchWrapper.policy}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_6-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">Insurance Company Name</label>
+									<div class="slds-form-element__control">
+									    <ui:inputText class="generalInputForm testScript_claim_e_comp_cob_ins" value="{!v.cobSearchWrapper.payerName}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12">
+								<div class="slds-form-element clear_button">
+									<a onclick="{!c.clearCob}" class="testScript_claim_e_comp_icd_clear" title="Clear">
+										Clear
+									</a>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+
+									<button 
+										onclick="{!c.searchCob}" 
+										class="slds-button generalButton testScript_claim_e_comp_submit" aria-describedby="help" 
+										onblur="{!c.cobSearchTab}"
+										title="Submit Claim">
+										Search
+									</button>
+					    		</div>
+							</div>
+						</div>
+
+
+						<aura:if isTrue="{!v.availableCobPayers &amp;&amp; v.availableCobPayers.length > 0}">
+		                	<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_small">
+								<table class="tableClass" id="cob">
+									<thead>
+										 <tr >
+										 	<th class="headerText" data-tableid="cob">
+										 		<span class="bodyText">ID Number</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="cob">
+										 		<span class="bodyText">Insurance Company Name</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="cob">
+										 	</th>
+										 </tr>
+									</thead>
+
+									<tbody>
+										<aura:iteration items="{!v.availableCobPayers}" var="cob">
+											<tr>
+												<td data-label="Name" class="slds-is-sortable" data-value="{!cob.Code__c}">
+							        				<span class="bodyText dataSpace">{!cob.Code__c}</span>
+							      				</td>
+							      				<td data-label="Insurance Company Name" class="slds-is-sortable" data-value="{!cob.Description__c}">
+							      					<span class="bodyText dataSpace" >{!cob.Description__c}</span>
+							      				</td>
+
+							      				<td data-label="Select" class="slds-is-sortable" data-value="{!cob.Id}">
+							      					<span class="bodyText dataSpace" ><a href="" onclick="{!c.selectCOB}">Select</a></span>
+							      				</td>
+
+											</tr>
+										</aura:iteration>
+									</tbody>
+								</table>
+							</div>
+
+							<aura:set attribute="else">
+								<aura:if isTrue="{!v.availableCobPayers &amp;&amp; v.availableCobPayers.length == 0}">
+									{!$Label.c.Enter_in_an_ID_Number_or_Insurance_Company_Name_prior_to_performing_a_COB_Search}
+								</aura:if>
+							</aura:set>
+						</aura:if>
+	                </div>
+	            </div>
+	        </div>
+	        <!-- COB MODAL END -->
+
+
+	        <!-- ICD MODAL-->
+	        <div aura:id="icd-modal" id="icd-modal" role="dialog" tabindex="-1" aria-labelledby="icd-search" class="slds-modal icd-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	<button class="slds-button slds-button--icon-inverse slds-modal__close" id="icd-close" onclick="{!c.icdLookupClose}">
+	                        <span>Close</span>
+	                    </button>
+	                    <h2 class="slds-text-heading--medium">Look Up ICD Diagnosis Codes</h2>
+	                </div>
+
+	                <div class="slds-modal__content slds-p-around--medium">
+
+	                	<aura:if isTrue="{!v.icdSearchError}">
+							<div class="slds-grid">
+								<div class="slds-col slds-size_1-of-1">
+									
+									<div  class="headerMessageContainer ">
+			                            <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+											<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+			                                 <span class="errorMessage">{!$Label.c.Enter_an_ICD_Code_or_an_ICD_Code_Description}</span>
+			                           </ui:message>
+			                     </div>
+
+								</div>
+							</div>
+						</aura:if>
+
+	                	<div class="slds-grid slds-gutters">
+	                		<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<div class="slds-form-element__control">
+										<lightning:select class="generalInputPicklist uiInput--select generalLabelForm testScript_claim_e_comp_icd_code_type"
+											label="Code Type"
+											value="{!v.icdSearchWrapper.codeType}" >
+											<option class="picklistOption " value="ICD10" text="ICD10"/>
+						    			</lightning:select>
+									</div>
+					    		</div>
+							</div>			
+
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">Code<span class="required-asterisk">*</span></label>
+									<div class="slds-form-element__control">
+									    <ui:inputText class="generalInputForm testScript_claim_e_comp_icd_code" aura:id="codeLookup" value="{!v.icdSearchWrapper.code}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_5-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">Description</label>
+									<div class="slds-form-element__control">
+									    <ui:inputText class="generalInputForm testScript_claim_e_comp_icd_desc" value="{!v.icdSearchWrapper.description}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12">
+								<div class="slds-form-element clear_button">
+									<a onclick="{!c.clearIcd}" class="testScript_claim_e_comp_icd_clear" title="Clear">
+										Clear
+									</a>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<button onclick="{!c.searchIcd}" onblur="{!c.icdSearchTab}" class="slds-button generalButton testScript_claim_e_comp_icd_submit" aria-describedby="help" title="Search ICD">
+										Search
+									</button>
+					    		</div>
+							</div>
+						</div>
+
+
+						<aura:if isTrue="{!v.availableCodes &amp;&amp; v.availableCodes.length > 0}">
+		                	<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_small">
+								<table class="tableClass" id="code">
+									<thead>
+										 <tr>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Code</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Code Set</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Description</span>
+										 	</th>
+										 	<th class=" headerText width15" data-tableid="code">
+										 	</th>
+										 </tr>
+									</thead>
+
+									<tbody>
+										<aura:iteration items="{!v.availableCodes}" var="code">
+											<tr>
+												<td data-label="Name" class="slds-is-sortable " data-value="{!code.Code__c}">
+							        				<span class="bodyText dataSpace">{!code.Code__c}</span>
+							      				</td>
+							      				<td data-label="Insurance Company Name" class="slds-is-sortable " data-value="{!code.Code_Type__c}">
+							      					<span class="bodyText dataSpace" >{!code.Code_Type__c}</span>
+							      				</td>
+
+							      				<td data-label="Insurance Company Name" class="slds-is-sortable " data-value="{!code.Description__c}">
+							      					<span class="bodyText dataSpace" >{!code.Description__c}</span>
+							      				</td>
+
+							      				<td data-label="Insurance Company Name" class="slds-is-sortable " data-value="{!code.Id}">
+							      					<span class="bodyText dataSpace" ><a href="" onclick="{!c.selectICD}">Select</a></span>
+							      				</td>
+
+											</tr>
+										</aura:iteration>
+									</tbody>
+								</table>
+							</div>
+
+							<aura:set attribute="else">
+								<aura:if isTrue="{!!v.icdSearchFoundResults}">
+									{!$Label.c.Select_Valid_ICD_Code}
+								</aura:if>
+							</aura:set>
+						</aura:if>
+	                </div>
+	            </div>
+	        </div>
+	        <!-- ICD MODAL END -->
+
+
+
+
+	        <!-- SERVICE HISTORY MODAL-->
+	        <div aura:id="service-modal" id="service-modal" role="dialog" tabindex="-1" aria-labelledby="service-search" class="slds-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	<button class="slds-button slds-button--icon-inverse slds-modal__close" onclick="{!c.serviceLookupClose}">
+	                        <span>Close</span>
+	                    </button>
+
+	                    <h2 class="slds-text-heading--medium">Search Member Service History</h2>
+	                </div>
+	                <div class="slds-modal__content slds-p-around--medium">
+	                	
+	                	<div class="slds-grid slds-gutters">
+							<div class="slds-col slds-size_3-of-12">
+				    			<div class="slds-form-element">
+								  	<label class="slds-form-element__label">Service Date From</label>
+								  	<div class="slds-form-element__control">
+								  		<ui:inputDate displayDatePicker="true" aura:id="service-from" class="slds-item_detail slds-truncate testScript_claim_e_comp_hist_from" blur="{!c.fixDate}" format="MM/DD/YYYY" value="{!v.historySearchWrapper.startDate}"/>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+								  	<label class="slds-form-element__label">Service Date To</label>
+								  	<div class="slds-form-element__control">
+								  		<ui:inputDate displayDatePicker="true" class="slds-item_detail slds-truncate testScript_claim_e_comp_hist_to" blur="{!c.fixDate}" format="MM/DD/YYYY" value="{!v.historySearchWrapper.endDate}"/>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">Procedure Code</label>
+									<div class="slds-form-element__control">
+									    <ui:inputText class="generalInputForm testScript_claim_e_comp_serv_proc" value="{!v.historySearchWrapper.procedureCode}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12">
+								<div class="slds-form-element clear_button">
+									<a onclick="{!c.clearServiceHistory}" class="testScript_claim_e_comp_serv_hist_clear" title="Clear">
+										Clear
+									</a>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<button onclick="{!c.searchServiceHistory}" class="slds-button generalButton testScript_claim_e_comp_serv_hist_sub" aria-describedby="help" title="Search ICD">
+										Search
+									</button>
+					    		</div>
+							</div>
+						</div>
+
+
+
+						<aura:if isTrue="{!v.availableHistory &amp;&amp; v.availableHistory.length == 0 &amp;&amp; !v.isLoading }">
+							No service history.
+						</aura:if>
+
+
+
+						<aura:if isTrue="{!v.availableHistory &amp;&amp; v.availableHistory.length > 0 }">
+		                	<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_small">
+								<table class="tableClass" id="history">
+									<thead>
+										 <tr >
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Service Date</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Procedure Code</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Tooth/Quad/Arch/Surface</span>
+										 	</th>
+										 </tr>
+									</thead>
+
+									<tbody>
+										<aura:iteration items="{!v.availableHistory}" var="history">
+											<tr>
+												<td data-label="Service Date" class="slds-is-sortable " data-value="{!history.ProcedureDate__c}">
+							        				<span class="bodyText dataSpace"><ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!history.ProcedureDate__c}"/></span>
+							      				</td>
+							      				<td data-label="Procedure Code" class="slds-is-sortable " data-value="{!history.ProcedureCode__c}">
+							      					<span class="bodyText dataSpace" >{!history.ProcedureCode__c}</span>
+							      				</td>
+
+							      				<td data-label="Tooth/Quad/Arch/Surface" class="slds-is-sortable " data-value="{!history.Description__c}">
+							      					<span class="bodyText dataSpace" >{!history.ToothCode__c}/{!history.OralCavityQuadCode__c}/{!history.OralCavityArchCode__c}/{!history.ToothSurfaces__c}</span>
+							      				</td>
+											</tr>
+										</aura:iteration>
+									</tbody>
+								</table>
+							</div>
+
+						</aura:if>
+	                </div>
+	            </div>
+	        </div>
+	        <!-- SERVICE HISTORY MODAL END -->
+
+	        
+	        <!-- CLAIM SUBMIT MODAL-->
+	        <div aura:id="claim-submit-modal" id="claim-submit-modal" role="dialog" tabindex="-1" aria-labelledby="claim-submit-modal" class="slds-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	
+	                    <h2 class="slds-text-heading--medium">Claim Submitted</h2>
+	                </div>
+	                <div class="slds-modal__content slds-p-around--medium">
+	                	<p>Your claim has been successfully submitted. Your claim number is: {!v.claim.Claim_Number__c}</p>
+	                </div>
+
+	                <footer class="slds-modal__footer">
+	                	<button onclick="{!c.submitAnotherClaim}" id="submit_another_claim" class="slds-button generalButton testScript_claim_success_button">Submit Another Claim</button>
+				        <button onclick="{!c.dismissClaimSuccessModal}" class="slds-button generalButton testScript_claim_success_button">OK</button>
+				    </footer>
+	            </div>
+	        </div>
+
+
+			<div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-hide">
+		        <div class="slds-spinner_container">
+		            <div role="status" class="slds-spinner slds-spinner--medium">
+		                <span class="slds-assistive-text">Loading</span>
+		                <div class="slds-spinner__dot-a"></div>
+		                <div class="slds-spinner__dot-b"></div>
+		            </div>
+		        </div>    
+		    </div>	
+		</aura:if>
+	</div>
+	
+
+</aura:component>

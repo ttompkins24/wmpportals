@@ -1,0 +1,431 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Electronic_Funds_Transfer
+Purpose                     : Allows users to set up EFT
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             7        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Electronic_Funds_Transfer">
+	<aura:attribute name="isReqFieldError" type="Boolean"/>
+	<aura:attribute name="requiredFieldMsg" type="String" />
+	<aura:attribute name="isEFTSuccess" type="Boolean"/>
+	<aura:attribute name="EFTSuccessHeader" type="String" default="Electronic Fund Transfer Enrollment Request Submitted "/>
+	<aura:attribute name="EFTSuccessMsg" type="String" />
+	<aura:attribute name="business" type="Account"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="pslList" type="Providers_Service_Locations__c[]"/>
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="isEnrolled" type="Boolean"/>
+	<aura:attribute name="isSuccess" type="Boolean"/>
+	<aura:attribute name="successMsg" type="String"/>	
+	<aura:attribute name="isCancelled" type="Boolean"/>
+	<aura:attribute name="businessTin" type="String"/>
+	<aura:attribute name="businessName" type="String"/>
+	<aura:attribute name="anotherContact" type="Boolean"/>
+	<aura:attribute name="contactFirstName" type="String"/>
+	<aura:attribute name="contactLastName" type="String"/>
+	<aura:attribute name="contactPhone" type="String"/>
+	<aura:attribute name="contactEmail" type="String"/>
+	<aura:attribute name="bankName" type="String"/>
+	<aura:attribute name="accountType" type="String"/>
+	<aura:attribute name="accountHolderName" type="String"/>
+	<aura:attribute name="accountNumber" type="String"/>
+	<aura:attribute name="routingNumber" type="String"/>
+	<aura:attribute name="caseId" type="String"/>
+	<aura:attribute name="isSelectAll" type="Boolean"/>
+	<aura:attribute name="showProviderDropdown" type="Boolean" default="true"/>
+	<aura:attribute name="contact" type="Contact"/>
+
+	<aura:attribute name="eft_Gid_updates" type="Map" />
+
+	<aura:attribute name="newCaseSaved" type="Boolean" default="false"  />
+	<aura:attribute name="newCaseWrapper" type="Case"/>
+
+	<!-- file attachment attributes -->
+	<aura:attribute name="fileName" type="String" default="No File Selected." />
+	<aura:attribute name="fileNames" type="List"/>
+
+	<aura:attribute name="isNewEft" type="Boolean"/>
+	<aura:attribute name="isModEft" type="Boolean"/>
+	<aura:attribute name="isCancelEft" type="Boolean" default="false"/>
+	<aura:attribute name="eFTModificationType" type="String"/>
+
+	<aura:attribute name="hasEFTMods" type="Boolean" default="false" description="does the business have any active EFTS?"/>
+
+	<aura:attribute name="bankPhone" type="String"/>
+	<aura:attribute name="desiredStartDate" type="String"/>
+	<aura:attribute name="serviceLocationGuid" type="String"/>
+	<aura:attribute name="businessGuid" type="String"/>
+	<aura:attribute name="eftFieldsForCase" type="Map" />
+	<aura:attribute name="showSpinner" type="Boolean"/>
+
+	<aura:attribute name="portalConfig"
+					type="Provider_Portal_Configuration__mdt"
+					description="the portalconfig determines what faqs are displayed on the page"
+	/>
+
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+<div class="slds generalOuterDiv electronicFundsTransferDiv">
+	<div class="slds-col slds-size_1-of-1">
+        <aura:if isTrue="{!v.isEFTSuccess}">
+    	<div  class="headerMessageContainer ">
+			<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+				<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+                <span class="successMessage">{!v.EFTSuccessHeader} </span><br/>
+				<span>{!v.EFTSuccessMsg}</span>
+			</ui:message>
+		</div>
+    	</aura:if>
+    	<aura:if isTrue="{!v.isReqFieldError}">
+			<div  class="headerMessageContainer">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!v.requiredFieldMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+	</div>
+	<div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1">
+
+
+		
+				<aura:if isTrue="{!v.isEnrolled}">
+				<div class="slds-col slds-size_2-of-4 ">
+					<p>Your Practice is Enrolled for Electronic Funds Transfer</p>
+				</div>
+				</aura:if>
+			<div class="slds-col slds-size_1-of-1">
+
+
+                       
+	                		
+	                    <ul>
+	                    	<li>
+	                    		<h1 class="slds-align_absolute-center">Fast. Convenient. Secure.</h1>
+	                    	</li>
+	                    	<li>
+	                        <p>Save yourself a trip to the bank – DentaQuest can directly deposit payment to the financial institution  </p>
+	                    	</li>
+	                    	<li>
+	                        <p>of your choice with secure electronic funds transfer (EFT). It’s easy to sign up. Just follow these steps.</p>
+	                    	</li>
+	                    </ul>
+		                
+
+			</div>
+
+				<div class="slds-col slds-size_1-of-4">
+				</div>
+
+                <div class="slds-col slds-size_2-of-4">
+                	
+
+                	<div class="slds-tabs_default eftTabsDiv">
+                        
+                        
+					  	<ul class="slds-tabs_default__nav" aura:id="path" role="tablist">
+						    <li class="slds-tabs_default__item new-eft-tab slds-active" title="New " role="presentation">
+						    	<a class="slds-tabs_default__link eftTabsLink" href="javascript:void(0);" onclick="{!c.newEftTab}" role="tab" tabindex="0" aria-selected="true" aria-controls="new-tab" id="new-tab__item">
+						    		Create an EFT Account
+						    	</a>
+						    </li>
+						    <aura:if isTrue="{!v.hasEFTMods}">
+							    <li class="slds-tabs_default__item mod-eft-tab"  title="Modify" role="presentation">
+							    	<a class="slds-tabs_default__link eftTabsLink" href="javascript:void(0);" onclick="{!c.modEftTab}" role="tab" tabindex="-1" aria-selected="false" aria-controls="modify-tab" id="modify-tab__item">
+							    		Cancel/Modify Account Information
+							    	</a>
+							    </li>
+						    </aura:if>
+					  	</ul>
+					</div>
+
+
+                    <div class="slds-size_1-of-1">
+                    	<aura:if isTrue="{!v.isModEft}">
+	                    	<h3>Cancel or Modify</h3>
+	                    	<div class="formDiv">
+	                    		<ui:inputSelect aura:id="bankAcctType" class="generalInputForm testScript_EftModInput" value="{!v.eFTModificationType}"  blur="{!c.cleanUpInput}" change="{!c.setModType}">
+								    <ui:inputSelectOption text="Modify" label="Modify" value="true"/>
+								    <ui:inputSelectOption text="Cancel" label="Cancel"/>
+								</ui:inputSelect>
+	                    	</div>
+	                    </aura:if>
+
+
+
+                    	<h3>1. Confirm Business Information</h3>
+                    	<div class="formDiv">
+                    		<dl class="slds-list_horizontal slds-wrap edit-table-general">
+								<dt class="slds-item_label bodyText boldText" title="TIN">TIN:</dt>
+								<dd class="slds-item_detail generalLabelForm" title="TIN" data-value="TIN">{!v.businessTin}</dd>
+
+								<dt class="slds-item_label bodyText boldText" title="Business Name">Business Name:</dt>
+								<dd class="slds-item_detail generalLabelForm" title="Business Name" data-value="businessName">{!v.businessName}</dd>
+							</dl>
+                    	</div>
+
+                    	<h3>2. Contact Information</h3>
+                    	<div class="formDiv">
+                    		<fieldset >
+										<div class="slds-form-element__control slds-float_left slds-text-align_left slds-size_1-of-2">
+											<span class="slds-radio">
+												<input type="radio" id="radio-1" class="testscript_radio-1 slds-p-left--medium" name="options" value="Use My Contact Information" checked="true" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="radio-1">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Use My Contact Information</span>
+												</label>
+											</span>
+										</div>
+										<div class="slds-form-element__control slds-float_left slds-text-align_left slds-p-left--medium">
+											<span class="slds-radio">
+												<input type="radio" id="radio-2" class="testscript_radio-2" name="options" value="Another Person is the Contact" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="radio-2">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Another Person is the Contact</span>
+												</label>
+											</span>
+										</div>
+									</fieldset>
+
+                    			<div class="slds-grid slds-gutters">
+		                    		<div class="slds-form-element  slds-col slds-size_1-of-2 slds-p-top--small">
+			                            <ui:inputText aura:id="contactFirstName" class="generalInputForm testScript_contactFirstNameInput" value="{!v.contactFirstName}" label="First Name" disabled="{!!v.anotherContact}" labelClass="generalLabelForm required"  required="true" blur="{!c.cleanUpInput}"/>
+			                            <span class="bodyText dataSpace errorText"></span>
+			                        </div>
+			                        <div class="slds-form-element slds-col slds-size_1-of-2 slds-p-top--small">
+			                            <ui:inputText aura:id="contactLastName" class="generalInputForm testScript_contactLastNameInput" value="{!v.contactLastName}" label="Last Name"  disabled="{!!v.anotherContact}" labelClass="generalLabelForm required"  required="true" blur="{!c.cleanUpInput}"/>
+			                            <span class="bodyText dataSpace errorText"></span>
+			                        </div>
+			                        
+			                        
+		                    	</div>
+		                    	<div class="slds-grid slds-gutters">
+			                        <div class="slds-form-element slds-col slds-size_1-of-2">
+			                            <ui:inputText aura:id="contactPhone"  class="generalInputForm testScript_contactPhoneInput" value="{!v.contactPhone}" label="Phone" labelClass="generalLabelForm required"  required="true" blur="{!c.fixConPhone}"/>
+			                            <span class="bodyText dataSpace errorText"></span>
+			                        </div>
+			                        <div class="slds-form-element slds-col slds-size_1-of-2">
+			                            <ui:inputText aura:id="contactEmail"  class="generalInputForm testScript_contactEmailInput" value="{!v.contactEmail}" label="Email" labelClass="generalLabelForm required"  required="true" blur="{!c.cleanUpInput}"/>
+			                            <span class="bodyText dataSpace errorText"></span>
+			                        </div>
+		                    	</div>
+
+                    	</div>
+                    	
+                    	<h3>3. Enter Business Account Information</h3>
+                    	<div class="formDiv">
+                    		<div class="slds-form-element"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Account_Holder_Name_Help}" />
+							  	<div class="slds-form-element__control basic-inline-input">
+
+							  		<ui:inputText aura:id="accountHolderName" label="Account Holder Name" class="generalInputForm testScript_accountHolderNameInput" value="{!v.accountHolderName}"  labelClass="generalLabelForm required"  required="true" blur="{!c.cleanUpInput}"/>
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>
+
+		                    </div>
+
+
+		                    <div class="slds-form-element"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Bank_Name_Help}" />
+							  	<div class="slds-form-element__control basic-inline-input">
+
+							  		<ui:inputText aura:id="bankName" label="Bank Name" class="generalInputForm testScript_bankNameInput" value="{!v.bankName}"  labelClass="generalLabelForm required"  required="true" blur="{!c.cleanUpInput}"/>
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>
+		                        
+		                    </div>   
+
+		                    <div class="slds-form-element">
+							  	<div class="slds-form-element__control basic-inline-input"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Bank_Account_Type_Help}"/>
+
+
+							  	<ui:inputSelect aura:id="bankAcctType" label="Choose Checking or Savings" labelClass="generalLabelForm required"  required="true" class="generalInputForm testScript_bankAcctTypeInput" value="{!v.accountType}"  blur="{!c.cleanUpInput}">
+								    <ui:inputSelectOption text="Checking" label="Checking" value="true"/>
+								    <ui:inputSelectOption text="Savings" label="Savings"/>
+								</ui:inputSelect>
+								<span class="bodyText dataSpace errorText"></span>
+
+		                       </div>
+		                    </div> 
+
+
+
+		                    <div class="slds-form-element"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Account_Number_Help}" />
+							  	<div class="slds-form-element__control basic-inline-input">
+
+							  		<ui:inputText maxlength="20" label="Account Number" aura:id="accountNumber" class="generalInputForm testScript_accountNumberInput" value="{!v.accountNumber}" labelClass="generalLabelForm required"  required="true" placeholder="0000000000" blur="{!c.fixAcctNum}"/>
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>
+							</div>
+
+		                    <div class="slds-form-element"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Routing_Number_Help}" />
+							  	<div class="slds-form-element__control basic-inline-input">
+
+							  		<ui:inputText maxlength="9" label="Routing Number"  aura:id="routingNumber" class="generalInputForm testScript_routingNumberInput" value="{!v.routingNumber}" labelClass="generalLabelForm required"  required="true" placeholder="0000000000" blur="{!c.fixRoutingNum}"/>
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>
+		                        
+		                    </div>   
+
+		                    <div class="slds-grid slds-gutters">
+  								<div class="slds-col slds-size_1-of-2">
+							  	<div class="slds-form-element__control basic-inline-input">
+
+							  		<ui:inputText aura:id="bankPhone" label="Bank Phone Number" class="generalInputForm testScript_bankPhoneInput" value="{!v.bankPhone}"  labelClass="generalLabelForm required"  required="true"  blur="{!c.fixBankPhone}" updateOn="change" placeholder="***-***-****" />
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>
+		                            
+		                        </div>
+		                        <lightning:helptext class="slds-float_right slds-p-right--medium" content="{!$Label.c.EFT_Bank_Phone_Help}" />
+		                        <div class="slds-col slds-size_1-of-2">
+							  	<div class="slds-form-element__control basic-inline-input" >
+
+							  		<ui:inputDate aura:id="desiredStartDate" label="Requested EFT Start Date" labelClass="generalLabelForm required"  required="true" class="generalInputForm testScript_desiredStartDateInput" value="{!v.desiredStartDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+							  		<span class="bodyText dataSpace errorText"></span>
+							  	</div>  
+		                        </div>
+		                        <lightning:helptext class="slds-float_right slds-p-right--medium" content="{!$Label.c.EFT_Desired_Start_Date_Help}"/>
+		                    </div>
+
+		                    
+		                <!-- if cancel don't show -->
+
+		                <aura:if isTrue="{!!v.isCancelEft}">
+		                <div class="slds-p-around--medium slds-col slds-size_1-of-1"><lightning:helptext class="slds-float_right" content="{!$Label.c.EFT_Attachment_Help_Text}" />
+							<div class="slds-float_left">
+								<h3>Attach Image to Verify Bank Account
+								</h3>
+							</div>
+						</div>
+		                
+						<!-- Attachment Div -->
+						<div class="slds-p-around--medium slds-col slds-size_1-of-1" >
+
+
+							<aura:if isTrue="{!v.newCaseWrapper.Id}">
+								<div class="slds-page-header slds-m-bottom_medium">
+								  	<div class="slds-media">
+									    <div class="slds-media__body">
+											<c:prov_comp_File_Upload parentId="{!v.newCaseWrapper.Id}" type="Case" />
+										</div>
+									</div>
+								</div>
+
+								<aura:set attribute="else">
+									<div class="demo-only slds-size_1-of-2">
+									  	<div class="slds-form-element">
+										    <label class="slds-checkbox_toggle slds-grid">
+										      	<span class="slds-form-element__label slds-m-bottom_none">Upload Attachments</span>
+										      	<input type="checkbox" name="checkbox" aria-describedby="toggle-desc" value="on" onclick="{!c.submitWrapperCase}" />
+											    <span id="toggle-desc" class="slds-checkbox_faux_container" aria-live="assertive">
+											        <span class="slds-checkbox_faux"></span>
+											    </span>
+										    </label>
+									  	</div>
+									</div>
+								</aura:set>
+							</aura:if>
+                    	</div>
+                    	</aura:if>
+                    </div>
+
+                    	<h3>4. Select a Service Location</h3>
+                    	<div class="formDiv">
+		                    <div class="slds-form-element">
+				                <ui:inputSelect aura:id="locAccts" label="Location" disabled="{!if(v.locList.length == 1, true, false)}" class="slds-col slds-size_1-of-1 generalInputForm testscript_servLoc" change="{!c.updateLocSearch}" labelClass="generalLabelForm required"  required="true">
+				           			<aura:if isTrue="{!v.locList.length > 1}">
+				                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="All" label="All"/>
+				                	</aura:if>
+			        				<aura:iteration items="{!v.locList}" var="locAcct">
+			             				<ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" label="{!locAcct.Service_Location_Name__c}"/>
+				        			</aura:iteration>
+				    			</ui:inputSelect>
+							</div>
+                    	</div>
+                    	<aura:if isTrue="{!v.showProviderDropdown}">
+                    		
+                    	<h3>5. Select Providers</h3>
+                    	<div class="formDiv">
+		                    <div class="slds-form-element">
+				                <table class="tableClass" id="eftPslResultsTable">
+			                        <thead>
+			                            <tr >
+			                                <th class="">
+			                                    <ui:inputCheckbox label="" labelClass="generalLabelForm" class="testScript_selectRowInput" value="{!v.isSelectAll}" change="{!c.handleSelectAllPSLs}" aura:id="selectAll"/>
+			                                </th>
+			                                <th class="">
+			                                    <span class="headerText testScript_lastSavedSort" data-fieldname="LastModifiedDate" data-col="1" data-tableid="eftPslResultsTable">Provider</span>
+			                                </th>
+			                                <th class="">
+			                                    <span class="headerText" data-fieldname="Service_Date__c" data-col="2" data-tableid="eftPslResultsTable">NPI</span>
+			                                </th>
+			                                
+			                            </tr>
+			                        </thead>
+
+			                        <tbody>
+			                            <aura:if isTrue="{!v.noResults}">
+			                                <tr>
+			                                    <td class="bodyText dataSpace noResults" colspan="8">{!$Label.c.No_Results_Found}
+			                                    </td>	
+			                                </tr>
+			                            </aura:if>
+
+			                            <aura:if isTrue="{!v.pslList.length > 0}">
+			                                <aura:iteration items="{!v.pslList}" var="prov" indexVar="index">
+			                                    <tr id="{!index}">
+			                                        <td>
+			                                            <ui:inputCheckbox aura:id="checkPSL" value="" text="{!index}" name="providerLocation" change="{!c.handleSelectSingleRow}"/>
+			                                        </td>
+			                                        <td data-label="Last Modified Date"  data-value="{!prov.Provider__r.Name}">
+			                                            <span class="bodyText dataSpace">{!prov.Provider__r.Name}</span>
+			                                        </td>
+			                                        <td data-label="Service Date"  data-value="{!prov.Provider__r.npi__c}">
+			                                            <span class="bodyText dataSpace">{!prov.Provider__r.npi__c}</span>
+			                                        </td>
+			                                        
+			                                    </tr>
+			                                </aura:iteration>
+			                            </aura:if>
+			                        </tbody>
+			                    </table>
+							</div>
+                    	</div>
+                    	</aura:if>
+
+                    	<div class="slds-grid slds-size_1-of-1 slds-align_absolute-center slds-p-around_x-small">
+                    		<h3>{!$Label.c.Five_Business_Days}</h3>
+                    	</div> 
+                    	<div class="slds-grid slds-size_1-of-1 slds-align_absolute-center slds-p-around_x-small">
+                        <button class="generalButton testScript_searchButton" onclick="{!c.submitNewEft}">Submit</button>
+                    	</div>
+
+                    	<div class="slds-grid slds-size_1-of-1 slds-align_absolute-center slds-p-around_x-small">
+                    		<h3>{!$Label.c.Have_additional_questions}</h3>
+                    	</div>
+                    	<div class="slds-grid slds-size_1-of-1 slds-align_absolute-center slds-p-around_x-small">
+                        <button class="generalButton testScript_FAQ inverse" onclick="{!c.redirectToFAQ}"
+                        	data-articleName="{!v.portalConfig.EFT_FAQs__c}"
+		    				data-datacategory="{!v.portalConfig.Data_category_mapping__c}">View FAQs</button>
+                    	</div>
+                    </div>
+                </div>
+
+                
+                <div class="slds-col slds-size_1-of-4">
+				</div>
+
+				
+            </div>
+</div>
+
+	
+</aura:component>

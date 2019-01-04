@@ -1,0 +1,148 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_EOB_Search">
+	
+	<script type="text/javascript">
+		var correctOrigin = "{!PortalURL}";
+
+		var eobStr = '';
+
+		window.addEventListener("message", function(event) {
+			// //console.log(('event ' + JSON.stringify(event));
+			// //console.log(('vf page event origin ' + event.origin);
+			// //console.log(('vf page correct origin ' + correctOrigin);
+
+			if(event.origin != correctOrigin){
+				//reject message
+				//console.log(('rejected message for incorrect origin');
+				return;
+			}
+
+			if(event.data.type == 'eobList'){
+				//call function to pass data to apex controller
+				getEOBList(event.data.str);
+			} else if(event.data.type == 'eob'){
+				//call function to pass data to apex controller
+				getEOB(event.data.str, event.data.name);
+			}
+
+		}, false);
+
+		//function for REST call to get EOB List
+		function getEOBList(data) {
+			// //console.log(('in getEOBList');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_EOB_Search.getEOBListRemote}',
+				data,
+				function(result, event){
+					if(event.status){
+
+						if(result == null){
+							// //console.log(('time out error');
+	                        var errorList= {
+	                            error: {}
+	                            };
+	                        // //console.log(('error ' + JSON.stringify(errorList));
+	                        sendToComponent(errorList);
+						} else {							
+							//holds the results object
+							var resultObj = JSON.parse(result);
+				
+					        var message = {type:"eobList", result:resultObj};
+	                        sendToComponent(message);	
+						}
+					} else if(event.type === 'exception'){
+						//handle errors
+						//console.log(('exception message ' + event.message);
+						//console.log(('exception where ' + event.where);
+                        var errorList= {
+                            error: {}
+                            };
+                        // //console.log(('error ' + JSON.stringify(errorList));
+                        sendToComponent(errorList);
+					} else {
+						//console.log(('message ' + event.message);
+					}
+				}, {buffer: false, escape: false, timeout:100000}
+			);
+		}
+
+		//function for REST call to get single EOB
+		function getEOB(data, name) {
+			// //console.log(('in getEOB');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_EOB_Search.getEOBRemote}',
+				data,
+				function(result, event){
+					//console.log(('RESULT  ' + result);
+					if(event.status){
+						
+						if(result == null){
+							// //console.log(('time out error');
+							//console.log(('null result ');
+	                        var errorList= {
+	                            error: {}
+	                            };
+	                        sendToComponent(errorList);
+						} else if (JSON.parse(result).code != null || JSON.parse(result).code != undefined){
+							//console.log(('result code ' + result);
+	                        var errorList= {
+	                            error: JSON.parse(result).code
+	                            };
+	                        sendToComponent(errorList);
+						} else {		
+						//console.log(('pass results back')					
+							//pass result back to lightning component
+					        var message = {type:"eob", result:JSON.parse(result), name:name};
+	                        sendToComponent(message);	
+						}
+					} else if(event.type === 'exception'){
+						//handle errors
+						//console.log(('exception message ' + event.message);
+						//console.log(('exception where ' + event.where);
+                        var errorList= {
+                            error: {}
+                            };
+                        sendToComponent(errorList);
+					} else {
+						//console.log(('message ' + event.message);
+					}
+				}, {buffer: false, escape: false, timeout:100000}
+			);
+		}
+
+
+		function onLoadComplete(){
+			////console.log(('panel roster page complete');
+	        var message = {type:"load", result:"pageLoaded"};
+
+			sendToComponent(message);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+	</script>
+
+	<body onload="onLoadComplete();">	</body>
+
+
+
+</apex:page>

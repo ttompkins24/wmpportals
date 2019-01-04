@@ -1,0 +1,214 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" 
+	extends="c:prov_comp_Provider_Common" 
+  	access="global"
+  	controller="prov_ctrl_Homepage">
+	
+	<aura:attribute name="bannerDisplay" type="String" description="variable stores on what banner message we should show" default="intervention" />
+	<aura:attribute name="taskStarter" type="String" description="variable stores on task starter to show. values are Eligibility, claimSearch, preauthSearch"  />
+	<aura:attribute name="bannerWrapper" type="prov_ctrl_HomePage.BannerWrapper" description="has a bannerType and a bannerMessage attributes" />
+	<aura:attribute name="notifList" type="List" description="list of the notifications that they can view" />
+	<aura:attribute name="eventList" type="List" description="list of the notifications that they can view" />
+	
+	<aura:attribute name="notifLoading" type="Boolean" />
+	<aura:attribute name="eventLoading" type="Boolean" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	
+	<div class="homepageWrapper slds homeBackImage">
+		<div class="slds-grid slds-wrap">
+			<!-- HOME BANNER -->
+			<div class="bannerWrapper slds-size_1-of-1">
+				<div class="bannerInner ">
+					<div class="header1">{!$Label.c.Homepage_Greeting}&nbsp;{!v.currentContact.FirstName}</div>
+				</div>
+				<div class="messageInfo slds-size_4-of-5">
+					<aura:if isTrue="{!v.bannerWrapper.bannerType == 'Intervention'}">
+						<div class="descriptionBanner header4">
+							You have {!v.bannerWrapper.bannerMessage} Member Intervention(s) that require attention
+						</div>
+					</aura:if>
+					<aura:if isTrue="{!v.bannerWrapper.bannerType == 'Notification'}">
+						<div class="descriptionBanner header4 ">
+							<aura:unescapedHtml value="{!v.bannerWrapper.bannerMessage}" />
+						</div>
+					</aura:if>
+					
+				</div>
+			</div>
+			
+			<!-- TASK STARTERS -->
+			<aura:if isTrue="{!v.permissions.memberEligibility != 'none' || v.permissions.claims != 'none' || v.permissions.preAuth != 'none'}">
+			<div class="taskStarterWrapper slds-size_1-of-1 slds-large-size_3-of-4">
+				<!-- <h3>Task Starters</h3> -->
+				<div class="taskTabWrapper  slds-size_1-of-1">
+					<ul class="desktop navList ">
+                            <aura:if isTrue="{!v.permissions.memberEligibility != 'none'}">
+                                <li class="{!' tab-item tabMenu testScript_eligibility '+ (v.taskStarter == 'Eligibility' ?'activeTab ':'inactiveTab ')}"   data-tabname="Eligibility" onclick="{!c.switchTaskStarter}">
+                                    <a class="{!'noDecoration ' + (v.taskStarter == 'Eligibility' ?'bodyColor ':'tabMenuLink ')}">
+                                        <h4 class="{!'homeIconContainer slds-grid ' + (v.taskStarter == 'Eligibility'? ' ':' inverse ') }">
+                                        	<lightning:icon size="medium" class="homeIcon" variant="inverse" iconName="custom:custom30" alternativeText="Member Eligibility"/>
+                                            <div class=" planContainer  slds-p-left_xx-small slds-p-top_xx-small">Member Eligibility</div>
+                                        </h4>
+                                    </a>
+                                </li>
+                            </aura:if>
+                            <aura:if isTrue="{!v.permissions.claims != 'none'}">
+                              <li class="{!' tab-item tabMenu  testScript_claimSearch '+ (v.taskStarter == 'claimSearch' ?'activeTab ':'inactiveTab ')}"  data-tabname="claimSearch" onclick="{!c.switchTaskStarter}">
+                                <a class="{!'noDecoration ' + (v.taskStarter == 'claimSearch' ?'bodyColor ':'tabMenuLink ')}" >
+                                    <h4 class="{!'homeIconContainer slds-grid ' + (v.taskStarter == 'claimSearch'? '':' inverse') }">
+                                    	<lightning:icon size="medium" class="homeIcon" variant="inverse" iconName="custom:custom86" alternativeText="Claim Search"/>
+                                        <div class="planContainer  slds-p-left_xx-small slds-p-top_xx-small">Claim Search</div>
+                                    </h4>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!v.permissions.preAuth != 'none'}">
+                              <li class="{!' tab-item preAuth tabMenu testScript_preAuthSearch  '+ (v.taskStarter == 'preauthSearch' ?'activeTab ':'inactiveTab ')}"  data-tabname="preauthSearch" onclick="{!c.switchTaskStarter}">
+                                <a class="{!'noDecoration ' + (v.taskStarter == 'preauthSearch' ?'bodyColor ':'tabMenuLink ')}" >
+                                    <h4 class="{!'homeIconContainer slds-grid ' + (v.taskStarter == 'preauthSearch'? '':' inverse') }">
+                                    	<lightning:icon size="medium" class="homeIcon" variant="inverse" iconName="custom:custom68" alternativeText="Pre-Auth Search"/>
+                                        <div class="planContainer  slds-p-left_xx-small slds-p-top_xx-small">Pre-Authorization Search</div>
+                                    </h4>
+                                </a>
+                              </li>
+                            </aura:if>
+					</ul>
+				</div>
+				<div class="taskBodyContainer slds-size_1-of-1 slds-grid slds-wrap">
+					<!-- eligibility task starter -->
+					<aura:if isTrue="{!if(v.taskStarter == 'Eligibility', true, false)}" >
+						<c:Prov_comp_MemberEligibility isHomepage="true" taskStarter="{!v.taskStarter}"/>
+						<aura:set attribute="else">
+                            <span>
+                                <!-- claims task starter -->
+                                <aura:if isTrue="{!if(v.taskStarter == 'claimSearch', true, false)}" >
+                                    <c:prov_comp_Claim_Search isHomepage="true" taskStarter="{!v.taskStarter}"/>
+                                    
+                                    <aura:set attribute="else">
+                                        <span>
+                                            <!-- pre auths task starter -->
+                                            <aura:if isTrue="{!if(v.taskStarter == 'preauthSearch', true, false)}" >
+                                                <c:prov_comp_PreAuth_Search isHomepage="true"/>
+                                            </aura:if>
+                                        </span>
+                                    </aura:set>
+                                </aura:if>
+                            </span>
+						</aura:set>
+					</aura:if>
+
+				</div>
+			</div>
+			</aura:if>
+			<div class="slds-size_1-of-1 slds-col slds-large-size_1-of-4 slds-p-left_medium rightPanel">
+				<!-- RECENT MESSAGES-->
+				<div class="messageWrapper">
+					<div class="headerContainer slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-1  inlineBlock">
+						<h3 class="inlineBlock">{!$Label.c.Homepage_Notification_Header}</h3>
+						<h5 class="floatRight inlineBlock"><a class="" onclick="{!c.redirectUrl}" data-pagename="message-center" href="message-center">View All ></a></h5>
+					</div>
+					<aura:if isTrue="{!v.notifLoading == false}">
+						<aura:if isTrue="{!v.notifList.length > 0}">
+							<div class="messageInnerWrapper">
+								<aura:iteration items="{!v.notifList}" var="nObj">
+									<div class="notif_item">
+										<div class="notif_header slds-size_1-of-1 slds-grid">
+											<div class="slds-col header5">{!nObj.targetAudience}</div>
+											<div  class=""><ui:outputDate value="{!nObj.notif.Effective_Date__c}" /></div>
+										</div>
+										<div class="notif_body clear">
+											<aura:if isTrue="{!nObj.redirectUrl == ''}">
+												<div class="slds-size_1-of-1 header3 ">{!nObj.notif.Message_Header__c}</div>
+												
+												<aura:set attribute="else">
+													<div class="slds-size_1-of-1 ">
+														<a class="{!'header3 linkColor noDecoration testScript_notif_' +nObj.notif.Id}" onclick="{!c.redirectUrl}" data-pagename="{!nObj.redirectUrl}">{!nObj.notif.Message_Header__c}</a>
+													</div>
+												</aura:set>
+											</aura:if>
+											<aura:unescapedHtml value="{!nObj.notif.Message__c}" />
+										</div>
+									</div>
+								</aura:iteration>
+							</div>
+							<aura:set attribute="else">
+								<div class="messageInnerWrapper zeroStateWrapper">
+									<lightning:icon iconName="utility:opened_folder" size="large" class="zeroStateIcon" />
+									<div class="zeroStateMessage">
+										{!$Label.c.Homepage_No_Messages}
+									</div>
+								</div>
+							</aura:set>
+						</aura:if>
+						<aura:set attribute="else">
+							<div class="messageInnerWrapper zeroStateWrapper">
+								<img src="/img/loading32.gif" style="display: block;margin:auto;padding:20px;"/>
+							</div>							
+						</aura:set>
+					</aura:if>
+				</div>
+				<!-- Upcoming Events -->
+				<div class="eventWrapper">
+					<div class="headerContainer slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-1  inlineBlock">
+						<h3 class="inlineBlock">{!$Label.c.HomePage_Event_Header}</h3>
+						<h5 class="floatRight inlineBlock"><a class="testScript_event_All" onclick="{!c.redirectUrl}" data-pagename="event-calendar" href="/event-calendar">View All ></a></h5>
+					</div>
+					<aura:if isTrue="{!v.eventLoading == false}">
+						<aura:if isTrue="{!v.eventList.length > 0}">
+							<div class="eventInnerWrapper">
+								<aura:iteration items="{!v.eventList}" var="event">
+									<div class="event_wrap slds-size_1-of-1 slds-grid">
+										<div class="slds-size_1-of-3 event_left">
+											<div class="header5">
+												<ui:outputDate value="{!event.eventDate}" format="MMM" />
+											</div>
+											<div class="header2">
+												<ui:outputDate value="{!event.eventDate}" format="dd" />
+											</div>
+										</div>
+										<div class="slds-size_2-of-3 event_right">
+											<div class="slds-size_1-of-1 metaText">
+												<aura:if isTrue="{!event.startTime != null}">
+	                                            	{!event.startTime} - {!event.endTime + ' ' + event.timezone}
+	                                                <aura:set attribute="else">
+	                                                	All Day
+	                                                </aura:set>
+	                                            </aura:if>
+											</div>
+											<div class="slds-size_1-of-1 littleSpacing_V">
+												<aura:if isTrue="{!event.messageContent != ''}">
+													<a onclick="{!c.launchEventModal}" data-value="{!event.eventId}" class="{!'testScript_event_'+ event.eventId}">
+														{!event.messageHeader}
+													</a>
+													<aura:set attribute="else">											
+														{!event.messageHeader}
+													</aura:set>
+												</aura:if>
+											</div>
+										</div>
+									</div>
+								</aura:iteration>
+							</div>
+							<aura:set attribute="else">
+								<div class="eventInnerWrapper zeroStateWrapper">
+									<lightning:icon iconName="utility:opened_folder" size="large" class="zeroStateIcon" />
+									<div class="zeroStateMessage">
+										{!$Label.c.Homepage_No_Events}
+									</div>
+								</div>
+							</aura:set>
+						</aura:if>
+						<aura:set attribute="else">
+							<div class="eventInnerWrapper zeroStateWrapper">
+								<img src="/img/loading32.gif" style="display: block;margin:auto;padding:20px;"/>
+							</div>							
+						</aura:set>
+					</aura:if>
+				</div>
+			</div>
+            <lightning:spinner variant="brand" size="large" aura:id="searchSpinnerId_home" class="slds-hide " alternativeText="Page loading"/>   
+	    
+			{!v.body}
+		</div>
+	</div>
+</aura:component>

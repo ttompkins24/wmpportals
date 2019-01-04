@@ -1,0 +1,47 @@
+.THIS.billedAmountContainer .business-entity {
+	background: rgb(244, 246, 249) !important; 
+}
+
+/*.THIS.billedAmountContainer  {
+	margin-top: 72px !important;
+}
+*/
+.THIS.billedAmountContainer .slds-icon-action-close {
+    background-color: transparent !important;
+}
+.THIS.billedAmountContainer .addIcon svg {
+	padding-right:5px;
+}
+
+.THIS.billedAmountContainer .hoverChange:hover .addIcon svg{
+	fill: #3A445C;
+}
+.THIS.billedAmountContainer .lighter{
+    margin-top: 44px; 
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.billedAmountContainer .slds-spinner:before, 
+.THIS.billedAmountContainer .slds-spinner:after, 
+.THIS.billedAmountContainer .slds-spinner__dot-a:before, 
+.THIS.billedAmountContainer .slds-spinner__dot-b:before, 
+.THIS.billedAmountContainer .slds-spinner__dot-a:after, 
+.THIS.billedAmountContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}
+
+.THIS.billedAmountContainer .deleteLink{
+	padding-left:10px;
+}
+
+
+.THIS.billedAmountContainer .paginate{
+	text-align:right;
+}
+.THIS.billedAmountContainer  .spacing{
+	margin:0px 10px;
+}
+.THIS.billedAmountContainer .footer{
+	margin-top:25px;
+}

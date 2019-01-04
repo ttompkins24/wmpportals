@@ -1,0 +1,155 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+	extends="c:prov_comp_Provider_Common" 
+    controller="prov_ctrl_Reports"
+	access="global">
+
+    <aura:attribute name="messages" type="List" />
+
+    <!--  attributes required for the page  -->
+    <aura:attribute name="bln_isError" type="boolean" description="used to depict if there is an error condition" />
+    <aura:attribute name="str_errorMsg" type="string" description="Error message that will be displayed on the screen" />
+
+    <!-- PAGINATION VARIABLES -->
+    <aura:attribute name="pageSize" type="Integer" default="20"/>
+    <aura:attribute name="pageNum" type="Integer" default="1"/>
+    <aura:attribute name="totalResults" type="Integer" default="0"/>
+    <aura:attribute name="totalPages" type="Integer" default="1"/>
+    <aura:attribute name="fieldNameSorted" type="String" default="LastModifiedDate"/>
+    <aura:attribute name="sortDirection" type="String" default="DESC"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+	
+	<div class="slds">
+        <div class="generalOuterDiv messageCenterContainer slds-grid slds-wrap">
+            <!--  error container -->
+            <aura:if isTrue="{!v.bln_isError}">
+                <div class="generalErrorContainer ">
+                    <div class="errorInnerContainer">
+                        <ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+                        <span class="errorMessage">{!v.str_errorMsg}</span>
+                        </ui:message>
+                    </div>
+                </div>
+            </aura:if>
+            <!--  spinner for loading scenarios -->
+            <div class="spinnerContainer">
+                <lightning:spinner variant="brand" size="large" alternativeText="{!$Label.c.loading}" aura:id="loadingSpinner"  class="spinnerClass "/>
+            </div>   
+            
+            <div class="helpRequestHeader slds-col slds-size_1-of-1">
+                <h1>Reports</h1>
+            </div>
+            <!--  surrounding text -->
+            <!-- <div class="helpRequestSurroundingText slds-col slds-size_1-of-1">
+                <span class="intro">{!$Label.c.Message_Center_Surround_Text}</span> 
+            </div>
+             -->
+            
+            <!--  the table for displaying the information -->
+            <aura:if isTrue="{!v.messages.length > 0}">
+                <!--  pagination div -->
+                <div class="paginationContainer topContainer slds-col slds-size_1-of-1 slds-float_right">
+                    <!--  should not show the next button when reached the last page -->
+                    <aura:if isTrue="{!v.pageNum != v.totalPages}">
+                        <div class=" mobileDesign slds-float_right">
+                            <a class="bodyLink" onclick="{!c.clickNext}">
+                            {!$Label.c.Next}
+                            </a>
+                        </div>
+                    </aura:if>
+                    <!--  page text -->
+                    <div class="bodyText slds-float_right">
+                        {!$Label.c.Page} &nbsp; {!v.pageNum} &nbsp; {!$Label.c.of}&nbsp; {!v.totalPages}&nbsp;&nbsp;&nbsp;&nbsp;
+                    </div>
+                    
+                    <!--  should not show the previous button when reached the first page page -->
+                    <aura:if isTrue="{!v.pageNum > 1}">
+                        <div class="mobileDesign slds-float_right">
+                            <a class="bodyLink" onclick="{!c.clickPrevious}">
+                            {!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                        </div>
+                    </aura:if>
+                    
+                    <!--  should not show the next button when reached the last page -->
+                    <aura:if isTrue="{!v.pageNum > 1}">
+                        <div class="bodyLink slds-float_right">
+                             <a class="bodyLink" onclick="{!c.clickFirst}">
+                            {!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                        </div>
+                    </aura:if>
+                </div>
+                <div class="slds-align_absolute-center fullWidth">
+                    <table class="tableClass" id="helpRequestTable">
+                        <thead>
+                            <tr>
+                                <th class="width30 sortable notSorted headerText"  onclick="{!c.updateColumnSorting}" data-col="0" data-fieldname="Message_Header__c">Title</th>
+                                <th class="width20 sortable notSorted headerText"  onclick="{!c.updateColumnSorting}" data-col="3" data-fieldname="Effective_Date__c">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <aura:iteration items="{!v.messages}" var="message">
+                                <tr>
+                                    <td scope="row" data-label="Title" class="width30">
+                                        <span class="bodyText dataSpace" >
+                                            <a href="" onclick="{!c.downloadAttachment}" data-value="{!message.Id}">{!message.Message_Header__c}</a>
+                                        </span>
+                                    </td>
+
+                                    <!-- <td scope="row" data-label="Message" class="width40">
+                                        <span class="bodyText dataSpace" >
+                                            <span class="metaText descriptionText">
+                                                <aura:unescapedHtml value="{!v.message.Message__c}" />
+                                            </span>
+                                        </span>
+                                    </td> -->
+
+                                    <td scope="row" data-label="Date" class="width20">
+                                        <span class="bodyText dataSpace" >
+                                            <ui:outputDate value="{!message.Effective_Date__c}" format="MM/DD/YYYY" />
+                                        </span>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                        </tbody>
+                    </table>
+                </div>
+                <!--  pagination div -->
+                <div class="paginationContainer slds-col slds-size_1-of-1 slds-float_right">
+                    <!--  should not show the next button when reached the last page -->
+                    <aura:if isTrue="{!v.pageNum != v.totalPages}">
+                        <div class=" mobileDesign slds-float_right">
+                            <a class="bodyLink" onclick="{!c.clickNext}">
+                            {!$Label.c.Next}
+                            </a>
+                        </div>
+                    </aura:if>
+                    <!--  page text -->
+                    <div class="bodyText mobileDesign slds-float_right">
+                        {!$Label.c.Page} &nbsp; {!v.pageNum} &nbsp; {!$Label.c.of}&nbsp; {!v.totalPages}&nbsp;&nbsp;&nbsp;&nbsp;
+                    </div>
+                    
+                    <!--  should not show the previous button when reached the first page page -->
+                    <aura:if isTrue="{!v.pageNum > 1}">
+                        <div class="mobileDesign slds-float_right">
+                            <a class="bodyLink" onclick="{!c.clickPrevious}">
+                            {!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                        </div>
+                    </aura:if>
+                    
+                    <!--  should not show the next button when reached the last page -->
+                    <aura:if isTrue="{!v.pageNum > 1}">
+                        <div class="bodyLink slds-float_right">
+                             <a class="bodyLink" onclick="{!c.clickFirst}">
+                            {!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+                        </div>
+                    </aura:if>
+                </div>
+
+
+                <aura:set attribute="else">
+                    <span>You don't have any messages.</span>
+                </aura:set>
+            </aura:if>
+        </div>
+    </div>
+</aura:component>

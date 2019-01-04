@@ -1,0 +1,16 @@
+<aura:event type="APPLICATION" 
+			description="This event is fired when the community wants to be redirected. Should be handled by the prov_theme_Government" 
+			access="global">
+	
+	<aura:attribute name="pageName" type="String"/>
+	<aura:attribute name="memberProfileGuid" type="String"/>
+	<aura:attribute name="serviceLocationId" type="String"/>
+	<aura:attribute name="providerId" type="String"/>
+	<aura:attribute name="businessId" type="String"/>
+	<aura:attribute name="portalName" type="String"/>
+	<aura:attribute name="serviceDate" type="Date"/>
+	<aura:attribute name="refreshNav" type="Boolean"/>
+	<aura:attribute name="extraParams" type="string"/>
+	<aura:attribute name="searchCriteriaId" type="String"/>
+	<aura:attribute name="newTab" type="Boolean" default="" description="should this redirect pop open a new window"/>
+</aura:event>

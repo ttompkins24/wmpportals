@@ -1,0 +1,39 @@
+<!--  
+/**********************************************************************************************************************
+Name                        : prov_vf_KnowledgeArticle
+Purpose                     : It is the visualforce page that renders as a PDF. The VF page will be displayed  within a
+                                Lightning component - WMP_comp_knowledgeArticleReader
+Created on                  : 8th August 2017
+Developed by                : WMp- S$
+History
+Version#        Sprint#     Date                by                      Comments
+1.0             9.0         June 2018     WMP-S$                  See header - purpose
+
+**********************************************************************************************************************/
+-->
+<apex:page controller="prov_ctrl_KnowledgeArticle"
+           showHeader="false" 
+           sidebar="false"
+           standardStylesheets="false"
+          >    
+    <head>    
+        <!--  stylesheet for the styling -->
+        <!-- <apex:stylesheet value="{!$Resource.IDCardCSS}" />-->
+        <!-- <apex:stylesheet value="{!URLFOR($Resource.IDCardCSSWithImages,'/css/standard.css')}"/>      -->
+    </head>
+    <!--  body of the page -->
+    <body style="font-family:san-serif;font-family:Lato; max-width:1000px;">
+
+        <apex:outputPanel >
+            <apex:repeat value="{!listOfStringsToDisplay}"
+                            var="iterating_field"
+                            id="fieldLooper">
+            
+                <apex:outputtext styleClass="float:left" value="{!iterating_field}" escape="false"/>
+            </apex:repeat>
+        </apex:outputPanel>
+        
+        
+        
+    </body>
+</apex:page>

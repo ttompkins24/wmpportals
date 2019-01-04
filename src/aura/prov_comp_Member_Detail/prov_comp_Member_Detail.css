@@ -1,0 +1,65 @@
+.THIS.memberDetailContainer .slds-col--padded.contentRegion.comm-layout-column {
+    background-color: #fff;
+}
+
+.THIS.memberDetailContainer .eligibilityTitle {
+    margin-left: 4px;
+}
+
+.THIS.memberDetailContainer .eligibilityDetail {
+    margin-left: 38px;
+}
+
+.THIS.memberDetailContainer .slds-dropdown-container {
+    margin-left: auto;
+}
+
+.THIS.memberDetailContainer .plan-panel {
+    border: 1px solid #d8dde6; 
+    margin-left: 10px; 
+    border-radius: 8px; 
+    box-shadow:0 0 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+
+
+.THIS.memberDetailContainer .prov_wrapper {
+    background-color: #fff;
+}
+
+.THIS.memberDetailContainer .success-check {
+    fill : #00c6b7;
+}
+
+
+.THIS.memberDetailContainer .slds-dropdown.slds-dropdown--left.hide {
+    display: none;
+}
+
+.THIS.memberDetailContainer  .dropdown-menu.in{
+    display:block;
+}
+
+.THIS.memberDetailContainer .lighter{
+    margin-top: 44px;
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.memberDetailContainer .slds-spinner:before, 
+.THIS.memberDetailContainer .slds-spinner:after, 
+.THIS.memberDetailContainer .slds-spinner__dot-a:before, 
+.THIS.memberDetailContainer .slds-spinner__dot-b:before, 
+.THIS.memberDetailContainer .slds-spinner__dot-a:after, 
+.THIS.memberDetailContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}
+
+.THIS.memberDetailContainer .optionDropdown{
+	padding: 8px;
+}
+
+.THIS.memberDetailContainer .navDropdown-item{
+	padding:10px 0px 10px 20px;
+	width:150px;
+}

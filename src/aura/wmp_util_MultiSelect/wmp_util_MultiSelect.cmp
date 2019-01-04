@@ -1,0 +1,42 @@
+<!--
+/*******************************************************************************************************
+Name                        : wmp_util_MultiSelect
+Purpose                     : multi select list for lighting
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             4        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component >
+    <aura:attribute name="fieldLabel" type="String" default=""/>
+    <aura:attribute name="optionList" type="String[]" default="[]"/>
+    <aura:attribute name="selectedValue" type="String" default="null"/>
+    <aura:attribute name="displayValue" type="String" default=""/>
+    <aura:attribute name="delimiter" type="String" default=";"/>
+    <aura:attribute name="disabled" type="boolean" default="false"/>
+    <aura:attribute name="cleanedFieldLabel" type="String" default="" description="fieldLabel with any spaces removed, used to set the values"/>
+    <aura:attribute name="actionString" type="String" default=""/>
+    <aura:attribute name="classList" type="String" default=""/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <label class="generalLabelForm" id="multiselectLabel" for="optionSelectMS">{!v.fieldLabel}</label>
+    <ui:menu aura:id="optionSelect" class="{!'slds-clearfix '}"> 
+        <ui:menuTriggerLink aura:id="trigger" disabled="{!v.disabled}" class="{!v.classList}">
+            <div class="general-form-group">
+                <input id="optionSelectMS" aria-labelledby="multiselectLabel " type="text" disabled="{!v.disabled}" placeholder="Select" class="form-control slds-input generalInputForm multiSelectInput " aura:id="{!v.actionString}" readOnly="true" value="{!v.displayValue}" onclick="{!c.updateCheckmark}" /> 
+                <span class="upArrowInput"></span>                                                                 
+            </div>
+        </ui:menuTriggerLink>
+        <ui:menuList class="generalMenuList  " curtain="true" autoPosition="false" >
+            <aura:iteration items="{!v.optionList}" var="option">
+                <li class="generalMenuItem uiMenuItem uiCheckboxMenuItem " role="presentation" data-aura-class="uiMenuItem uiCheckboxMenuItem">
+                    <span class="{!v.actionString}" data-value="{!option.guid__c || option}" data-label="{!v.actionString}" onclick="{!c.multiClick}" data-display="{!option.Name || option}">{!option.Name || option}</span>
+                </li>
+            </aura:iteration>
+        </ui:menuList>
+    </ui:menu>
+</aura:component>

@@ -1,0 +1,6 @@
+<aura:event type="COMPONENT" description="passes modal component parameters back to claim detail component">
+	<aura:attribute name="isSuccess" type="Boolean"/>
+	<aura:attribute name="successMsg" type="string"/>
+	<aura:attribute name="eventType" type="String"/>
+
+</aura:event>

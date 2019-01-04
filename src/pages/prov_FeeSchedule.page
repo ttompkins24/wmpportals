@@ -1,0 +1,135 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_FeeSchedule">
+
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}";
+
+		//holds passed in eligiblity information
+		var eligibilityStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+			// console.log('event ' + JSON.stringify(event));
+			// console.log('vf page event origin ' + event.origin);
+			// console.log('vf page correct origin ' + correctOrigin);
+			if(event.origin != correctOrigin){
+				//reject message
+				console.log('rejected message for incorrect origin');
+				return;	
+			}
+
+			//call function to pass data to apex controller
+			getFeeSchedule(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			//console.log('panel roster page complete');
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getFeeSchedule(data) {
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_FeeSchedule.getFeeScheduleResults}',
+				data,
+				function(result, event){
+					if(event.status){
+						var feeScheduleString = result; 
+						// console.log('result length::' + result.length);
+						// console.log('feeScheduleString ' + feeScheduleString );
+						// console.log('useMockData ' + {!useMockData});
+						if({!useMockData}){
+							sendToComponent(feeScheduleString);
+						} else {
+							afterLogic(feeScheduleString);
+						}
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        // console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function afterLogic(feeScheduleString, data) { 
+			// console.log('panel roster after time');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_FeeSchedule.afterResponseLogic}',
+				feeScheduleString,
+				function(result, event){	
+					if(event.status){
+						// console.log('	result ' + JSON.stringify(result ));
+						
+						if(result != null){
+							if(!result.hasOwnProperty('timeout')){
+
+								//dates are being returned in as UTC number, need to convert back to date
+								/*result.forEach(function(element) {
+									element.EffectiveDate = convertDate(element.EffectiveDate);
+									
+								});*/
+
+							}
+							
+							
+						}
+						// console.log('result final ::' +JSON.stringify(result));
+						sendToComponent(result);
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					} else {
+						console.log('message ' + event.message);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					}
+					
+				},
+				{buffer: false, escape: true, timeout: 10000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+</apex:page>

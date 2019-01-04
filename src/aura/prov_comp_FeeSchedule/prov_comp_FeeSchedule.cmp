@@ -1,0 +1,219 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_FeeSchedule
+Purpose                     : Allows users to search for and view fee schedules
+Created on                  : 13 February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             1.0         13 February 2018        West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="prov_ctrl_FeeSchedule" extends="c:prov_comp_Provider_Common">
+
+    <aura:attribute name="serviceDate" type="Date" description="date of service as selected by user"/>
+    <aura:attribute name="feeScheduleType" type="String" />
+
+    <aura:attribute name="networkList" type="Networks__c[]"/>
+    <aura:attribute name="networkRecId" type="String"/>
+
+    <aura:attribute name="providerRecord" type="Account"/>
+    <aura:attribute name="locationRecord" type="Account"/>
+
+    <aura:attribute name="pCode" type="String"/>
+    <aura:attribute name="pDesc" type="String"/>    
+
+    <aura:attribute name="feeScheduleResults" type="prov_wrap_FeeSchedule.FeeScheduleResponseWrapper[]" description="the list of fee schedules"/>    
+    <aura:attribute name="feeSearchHeader" type="prov_wrap_FeeSchedule.FeeScheduleRequestWrapper"/>    
+    
+    <!-- Attribute Declration For Pagination -->
+    <aura:attribute name="paginationList" type="prov_wrap_FeeSchedule.FeeScheduleResponseWrapper[]"/>        
+    <aura:attribute name="startPage" type="Integer" />
+    <aura:attribute name="endPage" type="Integer"/>
+    <aura:attribute name="totalRecords" type="Integer"/>
+    <aura:attribute name="pageSize" type="Integer" default="10"/>
+    <aura:attribute name="totalPages" type="Integer"/>
+    <aura:attribute name="currentPage" type="Integer"/>
+    <!-- Attribute Declration For Pagination End-->
+
+    <aura:attribute name="noResults" type="Boolean"/>
+    <aura:attribute name="searchMade" type="Boolean" default="false"/>
+
+    <aura:attribute name="showSpinner" type="boolean" default="true"/>
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+    
+	<aura:attribute name="vfHost" type="String" default="{!$Label.c.Member_Eligibility_VF_URL}"/>
+	<aura:attribute name="checkButtonDisabled" type="Boolean" default="true" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <!-- SPINNER -->
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+
+    <div class="slds generalOuterDiv">
+        <div class="slds-size_1-of-1 slds-p-bottom_medium">
+            <h1 class="header1">Fee Schedule Search</h1> 
+        </div>
+            
+        <aura:if isTrue="{!v.isError}">
+            <div class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.str_errorMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <div class="elementWrap slds-size_1-of-1 slds-wrap">
+            <div class="slds-grid slds-size_1-of-1 slds-p-bottom_medium slds-gutters">
+                <div class="slds-size_1-of-2 slds-col">
+                    <div class="" ><span class="header3">1. Select Date of Service</span>
+                        <ui:inputDate aura:id="serviceDate" required="true" label="Date of Service" labelClass="generalLabelForm required" class="generalInputForm testScript_dateInput" value="{!v.serviceDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+                    </div>
+                </div>
+
+                <div class="slds-size_1-of-2 slds-col">
+                    <div class=""><span class="header3">2. Select Fee Schedule Type</span>
+                        <ui:inputSelect aura:id="feeScheduleType" required="true" label="Fee Schedule Type" labelClass="generalLabelForm required" class="generalInputForm testScript_typeInput" value="{!v.feeScheduleType}">
+                            <ui:inputSelectOption text="Network" label="Network" value="true"/>
+                            <ui:inputSelectOption text="Provider" label="Provider"/>
+                        </ui:inputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-size_1-of-1">
+                <div class=""><span class="header3">3. Select Location, Provider, and Network</span>
+                    <c:Prov_comp_BLPpicklists showHeaders="false" locAcctRec="{!v.locationRecord}" provAcctRec="{!v.providerRecord}"/>
+                </div>
+            </div>             
+
+            <div class="slds-size_1-of-2 slds-grid slds-p-top_medium slds-gutters slds-p-bottom_medium">
+                <div class="slds-size_1-of-1 slds-col">
+                    <ui:inputSelect aura:id="networkAccounts" required="true" label="Network" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testScript_networkInput" value="{!v.networkRecId}">
+                        <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="" label="Select" value="true" />
+                        <aura:iteration items="{!v.networkList}" var="networkAcct">
+                            <ui:inputSelectOption class="picklistOption" text="{!networkAcct.guid__c}" label="{!networkAcct.Name}"/>
+                        </aura:iteration>
+                    </ui:inputSelect>
+                </div>
+            </div>
+            
+            <div><span class="header3">4. Enter Optional Criteria</span>
+                <div class="elementWrap slds-size_1-of-1 slds-grid slds-wrap slds-clearfix">
+                    <div class="slds-grid slds-gutters slds-col slds-size_1-of-2 slds-p-top_xxxsmall">
+                        <div class="slds-size_1-of-2 slds-col">
+                            <div class="">
+                                <ui:inputText value="{!v.pCode}" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_pCodeInput" label="Procedure Code" placeholder="Code" required="false" blur="{!c.cleanUpInput}" maxlength="5"/>
+                            </div>
+                        </div>
+                        <div class="slds-size_1-of-2 slds-col">
+                            <div class="">
+                                <ui:inputText value="{!v.pDesc}" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_pDescInput" label="Procedure Description" placeholder="Description" required="false" blur="{!c.cleanUpInput}"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-col slds-size_1-of-2 slds-clearfix slds-wrap">
+                        <div class="slds-size_1-of-1 slds-col slds-clearfix">
+                            <button class="generalButton slds-float_right testScript_searchButton" disabled="{!v.checkButtonDisabled}" onclick="{!c.feeScheduleSearch}">Search</button>
+                            <button class="generalButton inverse slds-m-right_medium slds-float_right testScript_clearButton" onclick="{!c.clearSearchFields}">Clear All</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--results table-->
+        <aura:if isTrue="{!v.searchMade == true}">
+            <div class="slds resultsTable slds-p-top_medium">
+                <table class="tableClass" aura:id="" id="feeScheduleResultsTable">
+                    <thead>
+                        <tr >
+                            <th class="width9 sortable sortAscend headerText" onclick="{!c.updateColumnSorting}" data-col="0" data-fieldname="ProcedureCode">
+                                <span class="headerText inverse">Procedure Code</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="1" data-fieldname="ProcedureDescription">
+                                <span class="headerText inverse">Procedure Description</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="5" data-fieldname="ToothCode">
+                                <span class="headerText inverse">Tooth Code</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="4" data-fieldname="DollarAmount">
+                                <span class="headerText inverse">Dollar Amount</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="7" data-fieldname="MinimumAge">
+                                <span class="headerText inverse">Minimum Age</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="8" data-fieldname="MaximumAge">
+                                <span class="headerText inverse">Maximum Age</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="9" data-fieldname="EffectiveDate">
+                                <span class="headerText inverse">Effective Date</span>
+                            </th>
+                            <th class="width9 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="10" data-fieldname="TerminationDate">
+                                <span class="headerText inverse">Termination Date</span>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <aura:if isTrue="{!v.noResults}">
+                            <tr>
+                                <td class="bodyText dataSpace noResults" colspan="8">{!$Label.c.No_Results_Found}</td>	
+                            </tr>
+                        </aura:if>
+
+                        <aura:if isTrue="{!v.feeScheduleResults.length > 0}">
+                            <aura:iteration items="{!v.paginationList}" var="feeSched">
+                                <tr>
+                                    <td data-label="Procedure Code" class="slds-is-sortable width9" dataValue="{!feeSched.ProcedureCode}">
+                                        <span class="bodyText dataSpace" >{!feeSched.ProcedureCode}</span>
+                                    </td>
+                                    <td data-label="Procedure Description" class="slds-is-sortable width9" dataValue="{!feeSched.ProcedureDescription}">
+                                        <span class="bodyText dataSpace" >{!feeSched.ProcedureDescription}</span>
+                                    </td>
+                                    <td data-label="Tooth Code" class="slds-is-sortable width9" dataValue="{!feeSched.ToothCode}">
+                                        <span class="bodyText dataSpace" >{!feeSched.ToothCode}</span>
+                                    </td>
+                                    <td data-label="Dollar Amount" class="slds-is-sortable width9" dataValue="{!feeSched.DollarAmount}">
+                                        <lightning:formattedNumber value="{!feeSched.DollarAmount}" style="currency" currencyCode="USD" class="bodyText dataSpace"/>
+                                    </td>
+                                    <td data-label="Minimum Age" class="slds-is-sortable width9" dataValue="{!feeSched.MinimumAge}">
+                                        <span class="bodyText dataSpace" >{!feeSched.MinimumAge}</span>
+                                    </td>
+                                    <td data-label="Maximum Age" class="slds-is-sortable width9" dataValue="{!feeSched.MaximumAge}">
+                                        <span class="bodyText dataSpace" >{!feeSched.MaximumAge}</span>
+                                    </td>
+                                    <td data-label="Effective Date" class="slds-is-sortable width9" dataValue="{!feeSched.EffectiveDate}">
+                                        <lightning:formattedDateTime class="bodyText dataSpace" value="{!feeSched.EffectiveDate}" year="numeric" month="2-digit" day="2-digit"/>
+                                    </td>
+                                    <td data-label="Termination Date" class="slds-is-sortable width9" dataValue="{!feeSched.TerminationDate}">
+                                        <lightning:formattedDateTime class="bodyText dataSpace" value="{!feeSched.TerminationDate}" year="numeric" month="2-digit" day="2-digit"/>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                        </aura:if>
+                    </tbody>
+                </table>
+            </div>
+            <!--pagination for table-->
+            <aura:if isTrue="{!!v.noResults}">
+            <div class="slds-p-right_large slds-p-top_x-small">
+                <div class="slds-col slds-size_1-of-1 footer">
+                    <div class="col paginate">
+                        <div class="desktop">
+                            <a class="{!'spacing  bodyLink ' + (v.startPage == 0 ? ' hidden' : '') }"  onclick="{!c.firstPage}" >First&nbsp;</a>
+                            <a class="{!'spacing  bodyLink ' + (v.startPage == 0 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous&nbsp;</a>
+                            <span class="spacing bodyText pageNum">Page&nbsp;{!v.currentPage}&nbsp;of&nbsp;{!v.totalPages}</span>
+                            <a class="{!'spacing  bodyLink ' + (v.currentPage == v.totalPages ? ' hidden ' : '') }" onclick="{!c.nextPage}">&nbsp;Next</a>
+                        </div>
+                    </div>      
+                </div> 
+            </div>
+            </aura:if>
+        </aura:if>
+        <iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_FeeSchedule'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+    </div>
+
+</aura:component>

@@ -1,0 +1,47 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_FAQRenderer
+Purpose						: FAQ rendered component will do the following 
+							 get title from the url
+							 pass the kav and the query fields set in the ligthnig page
+							 and display the knowledge article in it
+Created on					: 30th September 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			30th September 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global">
+	<!--  attributes for the page --> 
+	<aura:attribute name="knwldge_queryFields" 
+    				type="string" />
+
+    <aura:attribute name="knwldge_articleType"  
+    				type="string" />
+    				
+    <aura:attribute name="knwldge_articleTitle" 
+    				type="string" />
+    
+    <aura:attribute name="portal_configurationText" 
+    				type="string" />
+	
+	<aura:attribute name="displayInfo" type="Boolean" default="false" />
+	<!--  
+		Init method to fetch data to display on the page
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+    <aura:if isTrue="{!v.displayInfo == true}">
+    <!--  the knowledge renderer on the page -->
+    <c:WMP_comp_knowledgeArticleReader knwldge_queryFields="{!v.knwldge_queryFields}"
+    									knwldge_articleType="{!v.knwldge_articleType}"
+    									knwldge_articleTitle="{!v.knwldge_articleTitle}"
+    									portal_configurationText="{!v.portal_configurationText}"
+    />
+    </aura:if>
+</aura:component>

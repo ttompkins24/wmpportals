@@ -1,0 +1,142 @@
+<aura:component controller="Prov_ctrl_MemberEligibility" extends="c:prov_comp_Provider_Common" access="global">
+
+	<!-- error handling -->
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message"/>
+	<aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message"  />
+	<aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	<aura:attribute name="str_successMsg" type="String" description="success message that is displayed" default="Your record has updated" />
+	
+	<aura:attribute name="title" type="String" />
+	<aura:attribute name="searchCriteriaId" 	type="String" description="" />
+	<aura:attribute name="searchOwner" type="String" />
+	<!--
+	 attributes to hold lists of accounts -->
+	<aura:attribute name="bizList" type="Account[]"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRec" type="Account"/>
+	<aura:attribute name="provAcctRec" type="Account"/>
+	<aura:attribute name="memberList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]"/>
+
+	<aura:attribute name="showResults" type="Boolean" description="" />
+	<aura:attribute name="showSearch" type="Boolean" description="" />
+	<aura:attribute name="isHomepage" type="Boolean" />
+
+	<aura:attribute name="eligibleList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" />
+	<aura:attribute name="notEligibleList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" />
+	<aura:attribute name="notFoundList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" />
+	<aura:attribute name="outOfNetworkList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" />
+	<aura:attribute name="checkButtonDisabled" type="Boolean" default="true" />
+	
+	<aura:attribute name="memberCoverageList" type="Object[]" description="" />
+
+	<aura:attribute name="today" type="Date" description="Holds today's date for the default value of the date picker" />
+
+	<!-- VF page attributes -->
+	<aura:attribute name="vfHost" type="String" description="this hold the domain for the visualforce page"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler name="searchSavedEvent" event="c:prov_event_MemberEligibility" action="{!c.handleModalSuccess}"/>    
+
+	<div class="slds " 	>
+		<div class="memberSearch">
+			<c:Prov_comp_BLPpicklists locList="{!v.locList}" provList="{!v.provList}" bizAcctRec="{!v.bizAcctRec}" locAcctRec="{!v.locAcctRec}" provAcctRec="{!v.provAcctRec}" showHeaders="true" />
+
+			<!-- SPINNER -->
+			<lightning:spinner variant="brand" size="large" aura:id="searchSpinnerId" class="slds-hide " alternativeText="Page loading"/>
+			<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+				<div class="slds-size_1-of-1"><h3 class="header">3. Enter Member Information</h3></div>
+			</div>
+			<div class="slds-align_absolute-center fullWidth">
+				<table class="tableClass">
+					<thead>
+						<tr>
+							<th class="width2"><span class="bodyText headerText">&nbsp;</span></th>
+							<th class="width14"><span class="bodyText headerText required">Service Date *</span></th>
+							<th class="width14"><span class="bodyText headerText required">Birth Date *</span></th>
+							<th class="width20"><span class="bodyText headerText">Member Number **</span></th>
+							<th class="width20"><span class="bodyText headerText">First Name **</span></th>
+			                <th class="width20"><span class="bodyText headerText">Last Name **</span></th>
+			                <th class="width8 slds-text-align_center slds-p-right_xx-small"><span class="bodyText headerText">Quick Links</span></th> 
+						</tr>
+					</thead>
+					<tbody id="memberTable">
+						<aura:iteration items="{!v.memberList}" var="member">
+							<tr>
+								<td class="width2" data-label="Line Number">
+									<ui:outputText  class="generalLabelForm dataSpace"  value="{!member.index*1 + 1}"/>
+								</td>					
+								<td class="width14"  data-label="Service Date *">
+									<ui:inputDate aura:id="serviceDate" required="true" class="{!member.index+ 'memberSearchServiceDate dataSpace generalInputForm ' +  'field'}" labelClass="generalLabelForm required" value="{!member.serviceDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" />
+			        				<div class="{!member.index+ 'serviceDateErrorOutput errorOutput slds-hide'}"></div>
+								</td>
+								<td class="width14"  data-label="Birth Date *">
+									<ui:inputDate aura:id="birthDate" class="{!member.index+ 'memberSearchBirthdate generalInputForm dataSpace ' +  'field'}"	 required="true" value="{!member.birthDate}" labelClass="generalLabelForm required" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+			        				<div class="{!member.index+ 'bDayErrorOutput errorOutput slds-hide'}"></div>
+
+								</td>							
+								<td class="width20"  data-label="Member Number**">
+									<ui:inputText aura:Id="memberNumber" placeholder="Member Number" required="false" blur="{!c.checkSpecialCharacters}" maxlength="25" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="{!member.index+ 'memberSearchMemberNumber dataSpace ' +  'slds-col slds-size_1-of-1 generalInputForm'}"	  value="{!member.memberNumber}"/>
+			        				<div class="{!member.index+ 'memberNumberErrorOutput errorOutput slds-hide'}"></div>
+								</td>							
+								<td class="width20" data-label="First Name**">
+									<ui:inputText aura:Id="firstName" placeholder="First Name" required="false" blur="{!c.checkSpecialCharacters}" maxlength="40" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="{!member.index+ 'memberSearchFirstName dataSpace ' +  'slds-col slds-size_1-of-1 generalInputForm'}"  value="{!member.firstName}"/>
+			        				<div class="{!member.index+ 'firstNameErrorOutput errorOutput slds-hide'}"></div>
+								</td>					
+								<td class="width20" data-label="Last Name**">
+									<ui:inputText aura:Id="lastName" placeholder="Last Name" required="false" blur="{!c.checkSpecialCharacters}" maxlength="40" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="{!member.index+ 'memberSearchLastName dataSpace ' +  'slds-col slds-size_1-of-1 generalInputForm'}"	  value="{!member.lastName}"/>
+			        				<div class="{!member.index+ 'lastNameErrorOutput errorOutput slds-hide'}"></div>
+								</td>
+			                    <td class="width12 slds-text-align_center deleteCol"  data-label="Quick Links">
+	        						<a onclick="{!c.deleteRow}" data-value="{!member.index}" title="Delete Row" class="dataSpace">
+										<lightning:icon class="{!member.index+ 'memberSearchTrash ' +  'addIcon'}" iconName="utility:delete" alternativeText="Delete Row"/>
+									</a>
+								</td>
+							</tr>
+						</aura:iteration>
+					</tbody>
+					<tfoot>
+						<tr class="slds-size_1-of-1">
+							<td colspan="7" class="slds-p-bottom_small">
+								<span class="bodyText ">** Indicates either the member number or member first/ last name is required</span>	
+							</td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+			
+			<div class="elementWrap slds-col slds-grid slds-wrap">
+				<div class="slds-col">
+					<a onclick="{!c.addFiveRows}" title="Search is limited to 30 members" class="bodyLink testScript_add5Rows" >
+						<lightning:icon size="medium" class="addIcon" iconName="utility:new" alternativeText="Add 5 Rows"/>
+						Add 5 rows
+					</a>
+				</div>
+				
+				<div class=" slds-text-align_right  inlineBlock">
+					<div class=" bodyLink">
+						<a onclick="{!c.clearSearch}" >Clear all search fields</a>
+					</div>
+					<div class="horizontalSpacing">
+						<button class="generalButton testScript_search" id="searchClick" disabeld="{!v.checkButtonDisabled}" onclick="{!c.search}">Search</button>
+					</div>
+				</div>
+			</div>
+			<div class="slds-col slds-text-align_left">
+				<!-- <ui:inputText aura:Id="nameTest" placeholder="First Name" required="false" maxlength="40" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm"  value="Michael"/> -->
+				<aura:if isTrue="{!!v.isHomepage}">
+				<button class="generalButton inverse" onclick="{!c.saveSearch}">Save Search</button>
+					{!v.body}
+				</aura:if>
+
+			</div>
+			
+		</div>
+	</div>
+	<br />
+	<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_memberEligibility'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+	
+
+</aura:component>

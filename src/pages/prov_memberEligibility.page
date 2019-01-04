@@ -1,0 +1,198 @@
+<apex:page showHeader="false" sidebar="false" controller="Prov_ctrl_MemberEligibility">
+
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}";
+
+		//holds passed in eligiblity information
+		var eligibilityStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+            //console.log('event ' + JSON.stringify(event));
+            //console.log('vf page event origin ' + event.origin);
+            //console.log('vf page correct origin ' + correctOrigin);
+			if(event.origin != correctOrigin){
+				//reject message
+                console.log('rejected message for incorrect origin');
+				return;	
+			}
+
+			// eligibilityStr = event.data;
+
+			//call function to pass data to apex controller
+			getMemberCoverages(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getMemberCoverages(data) {
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.Prov_ctrl_MemberEligibility.getMemberCoveragesRemote}',
+				data,
+				function(result, event){
+                    //console.log('event::'+JSON.stringify(event));
+					if(event.status){
+						var memberCoverageString = result;
+                        //console.log('memberCoverageString ' + memberCoverageString );
+						checkEliglibiltyRemote(memberCoverageString, data);
+					} else if(event.type === 'exception'){
+                        //console.log('exception message ' + event.message);
+                        //console.log('exception where ' + event.where);
+                        var timeoutList;
+                        try{
+                            var dataMap = JSON.parse(data);
+                            //console.log('dataMap::'+dataMap);
+                            timeoutList = {
+                            timeout: {},
+                                claimId:dataMap.member.claim
+                            };
+                        } catch(err){
+                            //console.log('error in try...'+err);
+                            timeoutList = {
+                            timeout: {}
+                            };
+                        }
+                       
+                        //console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+                        //console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 100000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function checkEliglibiltyRemote(memberCoverageString, data) {
+			console.log('eligibility time');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.Prov_ctrl_MemberEligibility.checkEligibilityRemote}',
+				memberCoverageString, data,
+				function(result, event){	
+					if(event.status){
+                        //console.log('	result ' + JSON.stringify(result ));
+
+						if(result != null){
+
+                            //console.log('results: ' + JSON.stringify(result));
+                            //console.log('time out ' + result.hasOwnProperty('timeout'));
+							if(!result.hasOwnProperty('timeout')){
+
+								//dates are being returned in as UTC number, need to convert back to date
+								var eligible = result['eligible'];
+								result['eligible'].forEach(function(element) {
+									element.serviceDate = convertDate(element.serviceDate);
+									element.birthDate = convertDate(element.birthDate);
+									if(element.termDate != null){
+										element.termDate = convertDate(element.termDate);
+									} else {
+										element.termDate = '';
+									}
+									element['memCov'].forEach(function(element1) {
+										element1.EffectiveDate__c = convertDate(element1.EffectiveDate__c);
+										element1.TerminationDate__c = convertDate(element1.TerminationDate__c);
+										element1.Birthdate__c = convertDate(element1.Birthdate__c);
+									});
+								});
+
+								result['ineligible'].forEach(function(element) {
+									element.serviceDate = convertDate(element.serviceDate);
+									element.birthDate = convertDate(element.birthDate);
+									if(element.termDate != null){
+										element.termDate = convertDate(element.termDate);
+									} else {
+										element.termDate = '';
+									}
+									element['memCov'].forEach(function(element1) {
+										element1.EffectiveDate__c = convertDate(element1.EffectiveDate__c);
+										element1.TerminationDate__c = convertDate(element1.TerminationDate__c);
+										element1.Birthdate__c = convertDate(element1.Birthdate__c);
+									});
+								});
+
+								result['outOfNetwork'].forEach(function(element) {
+									element.serviceDate = convertDate(element.serviceDate);
+									element.birthDate = convertDate(element.birthDate);
+									if(element.termDate != null){
+										element.termDate = convertDate(element.termDate);
+									} else {
+										element.termDate = '';
+									}
+									element['memCov'].forEach(function(element1) {
+										element1.EffectiveDate__c = convertDate(element1.EffectiveDate__c);
+										element1.TerminationDate__c = convertDate(element1.TerminationDate__c);
+										element1.Birthdate__c = convertDate(element1.Birthdate__c);
+									});
+								});
+
+								result['notFound'].forEach(function(element) {
+									element.serviceDate = convertDate(element.serviceDate);
+									element.birthDate = convertDate(element.birthDate);
+								});
+							}
+						}
+
+						sendToComponent(result);
+					} else if(event.type === 'exception'){
+                        // console.log('second call timeout');
+                        //console.log('exception message ' + event.message);
+                        //console.log('exception where ' + event.where);
+                        var timeoutList;
+                        try{
+                            var dataMap = JSON.parse(data);
+                           // console.log('dataMap::'+dataMap);
+                            timeoutList = {
+                            timeout: {},
+                                claimId:dataMap.member.claim
+                            };
+                        } catch(err){
+                            // console.log('error in try...'+err);//
+                            timeoutList = {
+                            timeout: {}
+                            };
+                        }
+                       
+                        //console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+					} else {
+						console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: true, timeout: 100000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+</apex:page>

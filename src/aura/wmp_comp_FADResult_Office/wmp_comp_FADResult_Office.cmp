@@ -1,0 +1,162 @@
+<!-- The element that displays the office info with sub dentists under the service location-->
+<aura:component controller="wmp_util_Cache"> 
+	
+	<aura:attribute name="office" type="wmp_wrap_FAD" description="result for the office, includes dentist info" />
+	<aura:attribute name="memCovIds" type="String" />
+	<aura:attribute name="mainDentistCanBeSet" type="Boolean" default="true" />
+	
+	<!-- LABELS-->
+	<aura:attribute name="viewInfoL" type="String" description="view info for button" default="{!$Label.c.View_details}"/>
+	<aura:attribute name="dentistAtOffice" type="String" description="dentists at this office text" default="{!$Label.c.Dentists_at_this_office}" />
+	<aura:attribute name="hideL" type="String" description="Hide Label" default="{!$Label.c.Hide}" />
+	<aura:attribute name="viewL" type="String" description="View Label" default="{!$Label.c.View}" />
+	<aura:attribute name="moreDentistsL" type="String" description="More Dentists" default="{!$Label.c.More_Dentists}" />
+	<aura:attribute name="languageL" type="String" description="Languages L" default="{!$Label.c.Languages}" />
+	<aura:attribute name="specialtyL" type="String" description="specialty Label" default="{!$Label.c.Speciality}" />
+	<aura:attribute name="setMainDentistL" type="String" description="set as main dentist label" default="{!$Label.c.Set_as_Main_Dentist}" />
+	<aura:attribute name="milesL" type="String" description="miles label" default="{!$Label.c.miles}" />
+	<aura:attribute name="notAcceptingNewPatientsL" type="String" description="if no results are found" />
+
+	
+	<div class="slds">
+		<div class="fadResultOffice slds-grid slds-wrap">
+			<!-- OFFICE HEADER START-->
+			<div class="officeHeader slds-size_1-of-1">
+				<div class="desktop">
+					<div class="floatLeft resultOfficeIcon officeImage">
+						<!-- <lightning:icon iconName="custom:custom16" variant="bare" size="large" /> -->
+					</div>
+					<div class="floatLeft officeInfo ">
+						<h3 class="officeTitle">
+							{!v.office.name}
+						</h3>
+						<div class="officeSubInfo">
+							<div class="slds-m-top_x-small officeAddress bodyText">
+								{!v.office.address} <span class="slds-p-left_x-small metaText">({!v.office.distance}&nbsp;{!v.milesL})</span>
+							</div>
+							<div class="officePhone bodyText">
+								<ui:outputPhone value="{!v.office.phone}" />
+							</div>
+						</div>
+					</div>
+					<div class="floatRight slds-m-around--medium ">
+						<a class="generalButton inverse" 	data-id="{!v.office.id}" data-name="{!v.office.name}" onclick="{!c.launchModal}">{!v.viewInfoL}</a>
+					</div>
+				</div>
+				<div class="mobile">
+					<div class="floatLeft resultOfficeIcon officeImage">
+
+					</div>
+					<h3 class="floatLeft officeTitle">
+						{!v.office.name}
+					</h3>
+					<div class="clear slds-size_1-of-1 officeInfo ">
+						<div class="officeSubInfo slds-m-top_x-small">
+							<div class="officeAddress bodyText">
+								{!v.office.address}
+								<span class="slds-p-left_x-small metaText">({!v.office.distance}&nbsp;{!v.milesL})</span>
+							</div>
+							<div class="bodyText officePhone slds-m-top_x-small">
+								<ui:outputPhone value="{!v.office.phone}" />
+							</div>
+						</div>
+					</div>
+					<div class="slds-p-around--medium slds-size_1-of-1 slds-grid">
+						<a class="generalButton inverse slds-col slds-size_1-of-1 slds-text-align_center" 	data-id="{!v.office.id}" data-name="{!v.office.name}" onclick="{!c.launchModal}">{!v.viewInfoL}</a>
+					</div>
+				</div>
+			</div>
+			<!-- OFFICE HEADER END-->
+			<!-- OFFICE BODY START-->
+			<div class="officeBody slds-size_1-of-1">
+				
+				<h5 id="dentistAtOfficeId">
+					{!v.dentistAtOffice}
+				</h5>
+				
+				<div class="slds-grid slds-wrap slds-size_1-of-1">
+					<aura:iteration items="{!v.office.children}" var="dentist">
+						<div class="slds-p-top_medium fadChildDetail slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 ">
+							<div class="slds-col slds-size--1-of-1 dentistWrapper">
+								<h4 class="normalSpacing dentistName">
+									{!dentist.name}
+								</h4>
+								<div class="normalSpacing slds-size_1-of-1  bodyText inlineBlock specialty">
+									<h5>{!v.specialtyL}: </h5>	<span class="slds-m-left_x-small">{!dentist.specialty}</span>
+								</div>
+								<div class="normalSpacing slds-size_1-of-1  bodyText inlineBlock languages">
+									<h5>{!v.languageL}: </h5>
+									<span class="slds-m-left_x-small">{!dentist.languages}</span>
+								</div>
+								<div class="normalSpacing viewInfoDentist">
+									<a data-id="{!dentist.id}" data-name="{!dentist.name}" class="bodyLink" onclick="{!c.launchModal}">{!v.viewInfoL}</a>
+								</div>
+								<aura:if isTrue="{!v.mainDentistCanBeSet}">
+									<aura:if isTrue="{!dentist.acceptingNewPatients}">
+										<div class="slds-col slds-size--1-of-1 normalSpacing slds-p-around_small slds-grid">
+											<a class="slds-col slds-size_1-of-1 slds-text-align_center generalButton" data-id="{!dentist.id}"  data-name="{!dentist.name}" onclick="{!c.launchSetPCD}">{!v.setMainDentistL}</a>
+										</div>
+										<aura:set attribute="else">
+											<div class="slds-col slds-size--1-of-1 normalSpacing slds-p-around_small slds-grid slds-wrap">
+												<a class=" generalButton notActive slds-col slds-size_1-of-1 slds-text-align_center" >{!v.setMainDentistL}</a>
+												<div class="metaText slds-col slds-size_1-of-1 slds-text-align_left">{!v.notAcceptingNewPatientsL}</div>
+											</div>
+										</aura:set>
+									</aura:if>
+								</aura:if>
+							</div>
+						</div>
+					</aura:iteration>
+				</div>
+				<div aura:id="moreDentistsSectionId" id="moreDentistsSectionId" class="slds-grid slds-wrap slds-size_1-of-1 ">
+					<aura:iteration items="{!v.office.moreChildren}" var="dentist">
+						<div class="slds-p-top_medium fadChildDetail slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-2 ">
+						<div class="slds-col dentistWrapper">
+							<h4 class="normalSpacing dentistName">
+								{!dentist.name}
+							</h4>
+                            <div class="normalSpacing bodyText">
+									<h5>{!v.specialtyL}:</h5><span class="slds-m-left_x-small">{!dentist.specialty}</span>
+								</div>
+							<!--<div class="normalSpacing slds-size_1-of-1 slds-m-top_x-small bodyText inlineBlock specialty">
+								<h5>{!v.specialtyL}: </h5>
+								&nbsp;{!dentist.specialty}
+							</div>-->
+							<div class="normalSpacing slds-size_1-of-1 slds-m-top_x-small bodyText inlineBlock languages">
+								<h5>{!v.languageL}: </h5>
+								<span class="slds-m-left_x-small">{!dentist.languages}</span>
+							</div>
+							<div class="normalSpacing viewInfoDentist">
+								<a 	data-id="{!dentist.id}" class="bodyLink" data-name="{!dentist.name}" onclick="{!c.launchModal}">{!v.viewInfoL}</a>
+							</div>
+							<aura:if isTrue="{!v.mainDentistCanBeSet}">
+								<aura:if isTrue="{!dentist.acceptingNewPatients}">
+									<div class="slds-col slds-size--1-of-1 normalSpacing slds-grid slds-m-bottom_small">
+										<a class="slds-col slds-size_1-of-1 slds-text-align_center generalButton" data-id="{!dentist.id}"  data-name="{!dentist.name}" onclick="{!c.launchSetPCD}">{!v.setMainDentistL}</a>
+									</div>
+									<aura:set attribute="else">
+										<div class=" infoButton">
+											<a class="floatRight generalButton notActive" >{!v.setMainDentistL}</a>
+											<div class="metaText clear">{!v.notAcceptingNewPatientsL}</div>
+										</div>
+									</aura:set>
+								</aura:if>
+							</aura:if>
+						</div>
+						</div>
+					</aura:iteration>
+				</div>
+				<aura:if isTrue="{!v.office.moreChildren.length > 0}">
+					<div aura:id="showDentistsDiv" id="showDentistsDiv" class="slds-col clear slds-size--1-of-1 showHideSection endIcon showDiv" >
+						<a onclick="{!c.showMore}" class="headerLink boldText">{!v.viewL}&nbsp;{!v.office.moreChildren.length}&nbsp;{!v.moreDentistsL}</a>
+					</div>
+					<div aura:id="hideDentistsDiv" id="hideDentistsDiv" class="slds-col clear slds-size--1-of-1 showHideSection endIcon ">
+						<a onclick="{!c.hideMore}" class="headerLink boldText">{!v.hideL}&nbsp;{!v.office.moreChildren.length}&nbsp;{!v.moreDentistsL}</a>
+					</div>
+				</aura:if>
+			</div>
+			<!-- OFFICE BODY END-->
+		</div>
+	</div>
+	{!v.body}
+</aura:component>

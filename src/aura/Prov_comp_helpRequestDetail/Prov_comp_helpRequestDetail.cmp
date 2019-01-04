@@ -1,0 +1,564 @@
+<!--
+/**********************************************************************************************************************
+Name 						: Prov_comp_helpRequestDetail
+Purpose						: Will get information from the help request details page and show case info
+Created on					: February 2018
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				7.0			February 2018		West Monroe Partners			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				extends="c:prov_comp_Provider_Common" 
+				controller="prov_ctrl_helpRequestDetail"
+				>
+	
+	<!--  attributes required for the page  -->
+	<aura:attribute name="bln_isError" 
+    				type="boolean" 
+    				description="used to depict if there is an error condition" />
+     
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+	<aura:attribute name="case_inReference"
+					type="Case"
+					description="The help request thats being viewed"
+	/>
+	
+	<aura:attribute name="relatedComments"
+					type="CaseComment[]"
+					description="The comments of the help request thats being viewed"
+	/>
+	
+	<aura:attribute name="runningUser"
+					type="User"
+					description="The running user to determine the (you) in comments"
+	/>
+
+	<aura:attribute name="descriptionError" 
+					type="Boolean" description="case description error" />
+
+	<aura:attribute name="showMemberInfo" type="Boolean" description="control when member info section is displayed" default="false"/>
+	<aura:attribute name="showVoidInfo" type="Boolean" description="control when void info section is displayed" default="false"/>
+	<aura:attribute name="showAppealInfo" type="Boolean" description="control when appeal info section is displayed" default="false"/>
+	<aura:attribute name="showEFTInfo" type="Boolean" description="control when eft info section is displayed" default="false"/>
+	<aura:attribute name="showPMInfo" type="Boolean" description="control when practice management info section is displayed" default="false"/>
+	<aura:attribute name="showStandardInfo" type="Boolean" description="control when standard section is displayed" default="false"/>
+	<aura:attribute name="showSpinner" type="Boolean"/>
+
+	<aura:handler name="init" value="{!this}"  action="{!c.doInit}" />
+		<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+	<div class="caseDetailContainer">
+   		
+		<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="generalErrorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if>
+		<!--  the actual help request section -->
+		<div class="helpRequestDetailPage slds-grid slds-wrap">
+		
+			<!--  the back to your help requests link -->
+			<div class=" slds-col slds-size_1-of-1 slds-float_left">
+				<nav role="navigation" aria-label="Breadcrumbs">
+					<ol class="slds-breadcrumb slds-list_horizontal slds-wrap">
+						<li class="slds-breadcrumb__item bodyLink"><a onclick="{!c.redirectHelpRequests}">Your Help Requests</a></li>
+						<li class="slds-breadcrumb__item breadCrumb">&nbsp;&nbsp;Current Help Request</li>
+					</ol>
+				</nav>
+			</div>
+
+			<div class="helpRequestHeader slds-align_absolute-center slds-col slds-size_1-of-1 slds-float_left">
+				<h1>{!$Label.c.Help_Request}</h1>
+			</div>
+
+			<!-- CASE DETAILS SECTION -->
+			<div class="detailsContainer slds-col slds-size_1-of-1 slds-float_left">
+				<h3>{!$Label.c.Details}</h3>
+
+				<!-- STANDARD INFO SECTION -->
+				<aura:if isTrue="{!v.showStandardInfo}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Business</div >
+						<span class="infoText bodyText">{!v.case_inReference.Business_lkup__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Location</div>
+						<span class="infoText bodyText">{!v.case_inReference.Service_Location__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Provider</div>
+						<span class="infoText bodyText">{!v.case_inReference.Provider__r.Name}</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Type</div>
+						<span class="infoText bodyText">{!v.case_inReference.Subject}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Number</div>
+						<span class="infoText bodyText">{!v.case_inReference.CaseNumber}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Status</div>
+						<span class="infoText bodyText">{!v.case_inReference.Status}
+							<aura:if isTrue="{!v.case_inReference.IsClosed}">
+								<span class="infoText bodyText">&nbsp;on&nbsp;</span>
+								<ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" />
+							</aura:if>
+						</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Claim/Authorization #</div> 
+						<span class="infoText bodyText">{!v.case_inReference.Claim_Auth__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Subject  == 'Request a Peer to Peer Dental Consultation'}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Meeting Logistics Date</div>
+							<span class="infoText bodyText"><ui:outputDate value="{!v.case_inReference.Meeting_Logistics_Contact_Date__c}" format="MM/dd/yyyy" /></span> 
+						</div>
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Meeting Logistics Time</div>
+							<span class="infoText bodyText">{!v.case_inReference.Requested_Contact_Time__c}</span> 
+						</div>
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Meeting Logistics Time Zone</div>
+							<span class="infoText bodyText">{!v.case_inReference.Requested_Contact_Time_Zone__c}</span> 
+						</div>
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Meeting Logistics Phone</div>
+							<span class="infoText bodyText">{!v.case_inReference.Meeting_Logistics_Phone__c}</span> 
+						</div>
+					</aura:if>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Description</div>
+						<span class="infoText bodyText">{!v.case_inReference.Description}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Desired Resolution</div>
+						<span class="infoText bodyText">{!v.case_inReference.Desired_Resolution__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Resolution_Description__c}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Help Request Resolution Description</div>
+							<span class="infoText bodyText">{!v.case_inReference.Resolution_Description__c}</span> 
+						</div>
+					</aura:if>
+				</aura:if>
+				<!-- END STANDARD INFO SECTION-->
+
+				<!-- VOID CLAIM SECTION -->
+				<aura:if isTrue="{!v.showVoidInfo}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Business</div >
+						<span class="infoText bodyText">{!v.case_inReference.Business_lkup__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Location</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Service_Location__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Provider</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Provider__r.Name}</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Type</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Subject}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Number</div>
+						<span class="infoText  bodyText">{!v.case_inReference.CaseNumber}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Status</div>
+						<span class="infoText bodyText">{!v.case_inReference.Status}
+							<aura:if isTrue="{!v.case_inReference.IsClosed}">
+								<span class="infoText bodyText">&nbsp;on&nbsp;</span>
+								<ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" />
+							</aura:if>
+						</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Claim/Authorization #</div> 
+						<span class="infoText  bodyText">{!v.case_inReference.Claim_Auth__c}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Amount</div> 
+						<ui:outputCurrency value="{!v.case_inReference.Amount__c}" class="infoText bodyText"/>
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Billing Provider NPI</div> 
+						<span class="infoText  bodyText">{!v.case_inReference.Provider_NPI__c}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Claim Void Reason</div> 
+						<span class="infoText  bodyText">{!v.case_inReference.Claim_Void_Reason__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Claim_Void_Reason__c == 'Other'}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Claim Void Reason</div> 
+							<span class="infoText  bodyText">{!v.case_inReference.Claim_Void_Reason_Other__c}</span> 
+						</div>
+					</aura:if>					
+
+					<aura:if isTrue="{!v.case_inReference.Resolution_Description__c}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Help Request Resolution Description</div>
+							<span class="infoText bodyText">{!v.case_inReference.Resolution_Description__c}</span> 
+						</div>
+					</aura:if>
+				</aura:if>
+				<!-- END VOID CLAIM SECTION -->
+
+				<!-- APPEAL CLAIM SECTION -->
+				<aura:if isTrue="{!v.showAppealInfo}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Business</div >
+						<span class="infoText bodyText">{!v.case_inReference.Business_lkup__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Location</div>
+						<span class="infoText bodyText">{!v.case_inReference.Service_Location__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Provider</div>
+						<span class="infoText bodyText">{!v.case_inReference.Provider__r.Name}</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Type</div>
+						<span class="infoText bodyText">{!v.case_inReference.Subject}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Number</div>
+						<span class="infoText bodyText">{!v.case_inReference.CaseNumber}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Status</div>
+						<span class="infoText bodyText">{!v.case_inReference.Status}
+							<aura:if isTrue="{!v.case_inReference.IsClosed}">
+								<span class="infoText bodyText">&nbsp;on&nbsp;</span>
+								<ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" />
+							</aura:if>
+						</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Claim/Authorization #</div> 
+						<span class="infoText bodyText">{!v.case_inReference.Claim_Auth__c}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Reason for Appeal</div>
+						<span class="infoText bodyText">{!v.case_inReference.Description}</span>
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Desired Outcome</div> 
+						<span class="infoText bodyText">{!v.case_inReference.Desired_Resolution__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Resolution_Description__c}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Help Request Resolution Description</div>
+							<span class="infoText bodyText">{!v.case_inReference.Resolution_Description__c}</span> 
+						</div>
+					</aura:if>
+				</aura:if>
+				<!-- END APPEAL CLAIM SECTION -->
+
+				<!-- EFT INFO SECTION -->
+				<aura:if isTrue="{!v.showEFTInfo}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Business</div >
+						<span class="infoText bodyText">{!v.case_inReference.Business_lkup__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Location</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Service_Location__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Provider</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Provider__r.Name}</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Type</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Subject}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Number</div>
+						<span class="infoText  bodyText">{!v.case_inReference.CaseNumber}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Status</div>
+						<span class="infoText bodyText">{!v.case_inReference.Status}
+							<aura:if isTrue="{!v.case_inReference.IsClosed}">
+								<span class="infoText bodyText">&nbsp;on&nbsp;</span>
+								<ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a"  />
+							</aura:if>
+						</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm updateWrapper">Practice Management Updates</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Practice_Management_Updates__c}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Requested EFT Start Date</div>
+						<span class="infoText  bodyText">{!v.case_inReference.Desired_Start_Date__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Resolution_Description__c}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Help Request Resolution Description</div>
+							<span class="infoText bodyText">{!v.case_inReference.Resolution_Description__c}</span> 
+						</div>
+					</aura:if>
+				</aura:if>
+				<!-- END EFT INFO SECTION-->
+
+				<!-- PRACTICE MANAGEMENT INFO SECTION -->
+				<aura:if isTrue="{!v.showPMInfo}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Business</div >
+						<span class="infoText bodyText">{!v.case_inReference.Business_lkup__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Location</div>
+						<span class="infoText bodyText">{!v.case_inReference.Service_Location__r.Name}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Provider</div>
+						<span class="infoText bodyText">{!v.case_inReference.Provider__r.Name}</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Type</div>
+						<span class="infoText bodyText">{!v.case_inReference.Subject}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Number</div>
+						<span class="infoText bodyText">{!v.case_inReference.CaseNumber}</span> 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Help Request Status</div>
+						<span class="infoText bodyText">{!v.case_inReference.Status}
+							<aura:if isTrue="{!v.case_inReference.IsClosed}">
+								<span class="infoText bodyText">&nbsp;on&nbsp;</span>
+								<ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" />
+							</aura:if>
+						</span>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Practice Management Updates</div>
+						<span class="infoText bodyText updateWrapper">{!v.case_inReference.Practice_Management_Updates__c}</span> 
+					</div>
+
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Additional Notes</div>
+						<span class="infoText bodyText">{!v.case_inReference.Notes__c}</span> 
+					</div>
+
+					<aura:if isTrue="{!v.case_inReference.Resolution_Description__c}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Help Request Resolution Description</div>
+							<span class="infoText bodyText">{!v.case_inReference.Resolution_Description__c}</span> 
+						</div>
+					</aura:if>
+				</aura:if>
+				<!-- END PRACTICE MANAGEMENT INFO SECTION-->
+			</div>
+			<!-- END CASE DETAILS SECTION -->
+
+			<!-- MEMBER INFORMATION SECTION -->
+			<aura:if isTrue="{!v.showMemberInfo || v.showStandardInfo}">
+			
+				<!--  horizontal line -->
+				<hr class="horizontalLineClass"/>
+
+				<div class="helpRequestHeader slds-align_absolute-center slds-col slds-size_1-of-1 slds-float_left">
+					<h1>Member Information</h1>
+				</div>
+				<!--  the details container and related content -->
+				<div class="detailsContainer slds-col slds-size_1-of-1 slds-float_left">				
+					<aura:if isTrue="{!!v.showAppealInfo}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Member First Name</div >
+							<span class="infoText bodyText">{!v.case_inReference.Provider_Portal_Member_First_Name__c}</span> 
+						</div>
+	
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+							<div class="generalLabelForm">Member Last Name</div >
+							<span class="infoText bodyText">{!v.case_inReference.Provider_Portal_Member_Last_Name__c}</span> 
+						</div>
+						<aura:set attribute="else">
+							<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+								<div class="generalLabelForm">Member Name</div >
+								<span class="infoText bodyText">{!v.case_inReference.Member_Name__c	}</span> 
+							</div>
+						</aura:set>
+					</aura:if>
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--1-of-3 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">Member Id</div >
+						<span class="infoText bodyText">{!v.case_inReference.Member_ID__c}</span> 
+					</div>
+				</div>
+
+			</aura:if>
+			<!-- END MEMBER INFORMATION SECTION -->
+			
+			<hr class="horizontalLineClass"/>
+
+			<!--  ATTACHMENT SECTION -->
+			<div class="helpRequestHeader slds-col slds-size_1-of-1 slds-float_left">
+				<h3>{!$Label.c.Attachments}</h3>
+				<!--  space for add attachment section -->
+				<!--  attachments can be added irrespective of the status -->
+				<aura:if isTrue="{!v.case_inReference.Id}">
+					<c:prov_comp_File_Upload parentId="{!v.case_inReference.Id}" type="Case" page="entry" />
+				</aura:if>
+			</div>
+			<!-- END ATTACHMENT SECTION -->
+
+			<!--  horizontal line -->
+			<hr class="horizontalLineClass"/>
+
+			<!--  CASE COMMENT SECTION -->
+			<div class="slds-col slds-size_1-of-1 slds-float_left">
+				<!--  comments header -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+					<h3>{!$Label.c.Comments}</h3>
+				</div>
+				
+				<aura:if isTrue="{!or(not(empty(v.relatedComments)),(v.case_inReference.Status == $Label.c.Closed))}">
+					
+					<!--  if the case comments are present, each row is a table with border -->
+					<table class="tableClass">
+						<!--  this row will appear only when the case is closed -->
+						<aura:if isTrue="{!v.case_inReference.Status == $Label.c.Closed}">
+							<!--  marking as closed row -->
+							<tr>
+								<td> 
+									<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 slds-float_left">
+										<span class="detailsContainer">
+											<br/>
+											<span class="metaText"><ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" /></span>
+											<br/>
+											<span class="infoText bodyText commentAlignAndPadding"><aura:unescapedHtml value="{!$Label.c.Marked_as_close}"/></span>
+										</span>
+									</div>
+								</td>
+							</tr>								
+						</aura:if>
+						<aura:iteration items="{!v.relatedComments}" var="iterating_comment">
+							<tr>
+								<td> 
+									<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 slds-float_left">
+										<span class="detailsContainer">
+											<br/>
+											<span class="metaText"><ui:outputDate value="{!iterating_comment.CreatedDate}" format="MMMM dd, YYYY hh:mm a" /></span>
+											<br/>
+											<!--  checking if the comment is yours -->
+											<!--  that logic is not yet completed -->
+											<h5>
+												{!iterating_comment.CreatedBy.Alias}
+												<aura:if isTrue="{!iterating_comment.CreatedById == v.runningUser.Id}">
+													&nbsp;{!$Label.c.you}
+													<aura:set attribute="else">
+														<!--&nbsp;{!$Label.c.hyphen}-->&nbsp;{!$Label.c.said}
+													</aura:set>
+												</aura:if>
+											</h5>
+											<br/>
+											<span class="infoText bodyText commentAlignAndPadding"><aura:unescapedHtml value="{!iterating_comment.CommentBody}"/></span>
+										</span>
+									</div>
+								</td>
+							</tr>
+						</aura:iteration>
+						
+					</table>
+					<aura:set attribute="else">
+						<span class="infoText bodyText" >{!$Label.c.No_Comments_found}</span>
+					</aura:set>
+				</aura:if>
+			</div>
+			<!-- END CASE COMMENT SECTION -->
+
+			<!-- NEW COMMENT SECTION-->
+			<br/>
+			<div class="helpRequestDetailInformation slds-col slds-size_1-of-1 ">
+				<aura:if isTrue="{!v.case_inReference.Status != $Label.c.Closed}">
+				<ui:inputTextArea aura:Id="casecommentdescription" 
+								  placeholder="Write a new comment" 
+								  blur="{!c.checkSpecialCharacters}" 
+								  maxlength="10000"
+								  class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea decreaseWidth"/>
+				<aura:if isTrue="{!v.descriptionError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				</aura:if>
+			</div>
+			<div class=" slds-col slds-size_1-of-4 slds-float_right finalPadding">
+				<aura:if isTrue="{!v.case_inReference.Status != $Label.c.Closed}">
+					<!--  appear post file validation -->
+					<!--  button to create the help request -->
+					<button class="generalButton slds-col slds-float_left helpRequestDetailInformation" 
+						onclick="{!c.uploadComment}"
+						 data-location="commentSection" >
+						{!$Label.c.Send_comment} 
+					</button>
+				</aura:if>
+			</div>
+			<!-- END NEW COMMENT SECTION -->
+		</div> 
+	</div>	 
+</aura:component>

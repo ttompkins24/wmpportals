@@ -1,0 +1,196 @@
+<aura:component controller="wmp_ctrl_NavigationHeader"> 
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler name="change" value="{!v.refreshNav}" action="{!c.refreshMemberPlansNav}"/>
+	<!-- <aura:handler event="force:refreshView" action="{!c.refreshHighlight}" value="{!this}" /> -->
+	
+	<aura:attribute name="memPlans" type="object[]" description="Member plans that they are able to see" />
+	<aura:attribute name="showMultiplePlans" type="Boolean" description="show multiple member plans" default="false"/> 
+	<aura:attribute name="showMobile" type="Boolean" description="show the mobile version or desktop version" />
+	<aura:attribute name="onUserDropdown" type="Boolean" description="show the mobile version or desktop version" />
+	<aura:attribute name="hasIDCard" type="Boolean" description="does the portal have id card functionality" />
+	
+	<aura:attribute name="refreshNav" type="Boolean" description="the current page the user is on" />
+
+	<aura:attribute name="currSubId" type="String" description="the current subscriber the user is on" />
+	<aura:attribute name="currPlanId" type="String" description="the current plan the user is on" />
+	<aura:attribute name="currPage" type="String" description="the current page the user is on" />
+	<aura:attribute name="overviewL" type="String" description="the overview text that is in the header" default="{!$Label.c.Overview}"/>
+	<aura:attribute name="idcardL" type="String" description="the id card text that is in the header" default="{!$Label.c.ID_Card}" />
+	<aura:attribute name="findadentistL" type="String" description="the find a dentist text that is in the header" />
+	<aura:attribute name="benefitsL" type="String" description="the benefits text that is in the header" default="{!$Label.c.Benefits}" />
+	<aura:attribute name="historyL" type="String" description="the visits text that is in the header" default="{!$Label.c.History}" />
+	<aura:attribute name="documentsL" type="String" description="the visits text that is in the header" default="{!$Label.c.Documents}"/>
+	<aura:attribute name="companyName" type="String" description="company name; only needed for mobile version"  />
+	<aura:attribute name="closeL" type="String" description="Close text" default="{!$Label.c.Close}" />
+	
+	<aura:handler event="aura:doneRendering" action="{!c.recalcNav}"/>
+	
+	
+	<ltng:require styles="{!join(',', 
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/css/bootstrap.css')}"
+		scripts="{!join(',', 
+			$Resource.jquery_3_2_1,
+			
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/js/bootstrap.js')}"
+		afterScriptsLoaded="{!c.runJquery}"
+	/>
+	
+	<aura:method name="runMethod" action="{!c.recalcNav}" /> 
+	<!-- <aura:registerEvent name="wmp_event_Redirect" type="c:wmp_event_Redirect" /> -->
+	
+	
+	<div class="slds topNavContainer ">
+		<div class="header clear">
+			<aura:if isTrue="{!v.showMobile == false}">
+			<div class="desktop">
+				<nav  role="navigation" id="nav-main">
+					<ul class="topNavRow " id="topNavRowId">
+						<li class="{!'topNavCell ' + ('' == v.currPage? 'selected' : '') }">
+							<a data-loc="" onclick="{!c.redirectUrl}">{!v.overviewL}</a>
+						</li>
+<!-- 											or( ('documents' == v.currPage), ('id-card' == v.currPage), ('history' == v.currPage), ('benefits' == v.currPage) ) 
+											
+										    + 
+ -->						<aura:if isTrue="{!v.showMultiplePlans}">
+							<aura:iteration items="{!v.memPlans}" var="mPlan">
+								<li class="{!'dropdown topNavCell '   +
+										(
+										and(
+											v.onUserDropdown, 
+											(v.currSubId == mPlan.SubscriberId__c)
+										  ) 
+										? ' selected' : '') }">
+									<a class="endIcon" onclick="{!c.runDropdown}" >{!mPlan.FirstName__c}</a>
+									<ul  class="dropdown-menu generalDropdown" >
+										<li class="submenu-item"><a data-loc="benefits" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.benefitsL}</a></li>
+										<aura:if isTrue="{!v.hasIDCard}">
+											<li class="submenu-item"><a data-loc="id-card" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.idcardL}</a></li>
+										</aura:if>
+										<li class="submenu-item"><a data-loc="history" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.historyL}</a></li>
+										<li class="submenu-item"><a data-loc="documents" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.documentsL}</a></li>
+									</ul>
+								</li> 
+							</aura:iteration>
+							
+							<aura:set attribute="else">
+								<li class="{!'topNavCell ' + ('benefits' == v.currPage? 'selected' : '') }">
+									<a  data-loc="benefits" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}"  onclick="{!c.redirectUrl}">{!v.benefitsL}</a>
+								</li>
+								<aura:if isTrue="{!v.hasIDCard}">
+									<li class="{!'topNavCell ' + ('id-card' == v.currPage? 'selected' : '') }">
+										<a  data-loc="id-card" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}"  onclick="{!c.redirectUrl}">{!v.idcardL}</a>
+									</li>
+								</aura:if>
+								
+								<li class="{!'topNavCell ' + ('history' == v.currPage? 'selected' : '') }">
+									<a data-loc="history" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.historyL}</a>
+								</li>
+								<li class="{!'topNavCell ' + ('documents' == v.currPage? 'selected' : '') }">
+									<a data-loc="documents" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.documentsL}</a>
+								</li>
+							</aura:set>
+						</aura:if>
+						
+						<li class="more " data-width="105">
+							<div class="dropdown ">
+								<a class="dropdown-toggle moreDropdown endIcon" onclick="{!c.runDropdown}" >More</a>
+								<ul id="moreList" class="dropdown-menu generalDropdown moresubmenu " aria-labelledby="dropdownMenuButton" aura:id="mooreListId"></ul>
+							</div>
+						</li>
+					</ul>
+					<div class="{!'generalLink fadCell ' }" id="fadTopCellId"  ><!--+ ('find-a-dentist' == v.currPage? 'selected' : '')-->
+						
+							<a data-loc="find-a-dentist" onclick="{!c.redirectUrl}" class="linkColor">
+							{!v.findadentistL}
+							</a>
+						
+					</div>
+				</nav>
+			</div>
+			</aura:if>
+			<aura:if isTrue="{!v.showMobile == true}">
+			<div class="mobile ">
+				<div class="navIcon">
+					<div onclick="{!c.openModal}">
+						<!-- <lightning:icon iconName="utility:justify_text" class="slds-icon_large" class="menuIcon"  /> --> 
+						<a><span  class="menuIcon"></span></a>
+						
+					</div>
+				</div>
+			
+				<div>
+					<div role="dialog" tabindex="-1" aria-labelledby="modal-header-01" aura:id="navContentModal"
+    					aria-describedby="modal-content-id-head" class="slds-modal  navModalPopup" >
+		        		<div class="slds-modal__container navBarModalContainer " id="navModalConId">
+			            	<header class="slds-modal__header navHeader"  >
+			            		<!-- <div class="logo"  >
+			                        
+				                </div> -->
+			            		<div class="navClose" >
+				                	<button tabindex="1" class="slds-button slds-button_icon slds-button_icon-inverse iconCloseModal closeIcon"
+				                			  onclick="{!c.closeModal}">
+				                        <!-- {!v.closeL} -->
+				                    </button>
+				                </div>
+			                </header>
+			                <div class="slds-modal__content " id="modal-content-head">
+			                	<div aura:id="navComponentMId" class="navBodyMobileContainer" >
+									<ul >
+										<li class="topNavCell">
+											<h4><a data-loc="" onclick="{!c.redirectUrl}">{!v.overviewL}</a></h4>
+										</li>
+										<aura:if isTrue="{!v.showMultiplePlans}">
+											
+											<aura:iteration items="{!v.memPlans}" var="mPlan">
+												<li class="collapsible topNavCell ">
+													<a class="endIcon" onclick="{!c.runCollapse}" ><h4>{!mPlan.FirstName__c}</h4></a>
+													<ul  class="dropdown-collapse " >
+														<li class="topNavCell"><a data-loc="benefits" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.benefitsL}</a></li>
+														<aura:if isTrue="{!v.hasIDCard}">
+															<li class="topNavCell"><a data-loc="id-card" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.idcardL}</a></li>
+														</aura:if>
+														<li class="topNavCell"><a data-loc="history" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.historyL}</a></li>
+														<li class="topNavCell"><a data-loc="documents" data-subid="{!mPlan.SubscriberId__c}" data-planid="{!mPlan.PlanGuid__c}" onclick="{!c.redirectUrl}">{!v.documentsL}</a></li>
+													</ul>
+												</li> 
+											</aura:iteration>
+											<aura:set attribute="else">
+												<li class="{!'topNavCell ' + ('benefits' == v.currPage? 'selected' : '') }">
+													<h4><a data-loc="benefits" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.benefitsL}</a></h4>
+												</li>
+												<aura:if isTrue="{!v.hasIDCard}">
+													<li class="{!'topNavCell ' + ('id-card' == v.currPage? 'selected' : '') }">
+														<h4><a  data-loc="id-card" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.idcardL}</a></h4>
+													</li>
+												</aura:if>
+												<li class="{!'topNavCell ' + ('history' == v.currPage? 'selected' : '') }">
+													<h4><a data-loc="history" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.historyL}</a></h4>
+												</li>
+												<li class="{!'topNavCell ' + ('documents' == v.currPage? 'selected' : '') }">
+													<h4><a data-loc="documents" data-subid="{!v.currSubId}" data-planid="{!v.currPlanId}" onclick="{!c.redirectUrl}">{!v.documentsL}</a></h4>
+												</li>
+											</aura:set>
+										</aura:if>
+										<li class="{!'topNavCell ' }">
+											<h4><a data-loc="find-a-dentist" onclick="{!c.redirectUrl}">{!v.findadentistL}</a></h4>
+										</li>
+									</ul>
+									
+								</div>
+			                    <c:wmp_comp_UserProfile />
+			                </div>
+			                
+			                
+			                <!-- <footer class="slds-modal__footer  navFooter">
+			                	
+			                </footer> --> 
+			            </div>
+		        	</div>
+			        <div aura:id="navBackdrop" class="slds-backdrop " onclick="{!c.closeModal}"></div>
+				</div>
+			</div>
+			</aura:if>
+		</div>
+	</div>	
+</aura:component>

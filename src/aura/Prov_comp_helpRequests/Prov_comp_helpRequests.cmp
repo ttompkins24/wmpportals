@@ -1,0 +1,248 @@
+<!--
+/**********************************************************************************************************************
+Name 						: Prov_comp_helpRequests
+Purpose						: 
+Created on					: January 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			January 2018		West Monroe Partners			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				extends="c:prov_comp_Provider_Common"
+				controller="prov_ctrl_helpRequests"
+	>
+	
+	<!--  attributes required for the page  -->
+	<aura:attribute name="bln_isError" 
+    				type="boolean" 
+    				description="used to depict if there is an error condition" />
+     
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+    <aura:attribute name="list_cases"
+    				type="Case[]"
+    				description="the list of cases related to the logged in user"
+    />
+    
+    <!-- PAGINATION VARIABLES -->
+	<aura:attribute name="pageNum"				type="Integer"						description="the page number of the user is on"													default="1"/>
+	<aura:attribute name="totalResults"			type="Integer"						description="total number records that were returned" 											default="0"/>
+	<aura:attribute name="totalPages"			type="Integer"						description="total number of pages"					 											default="1"/>
+	<aura:attribute name="fieldNameSorted"		type="String"						description="field api name of the field that is being sorted"									default="LastModifiedDate"/>
+	<aura:attribute name="sortDirection"		type="String"						description="sort direction for the query. Possible values: ASC, DESC"							default="DESC"/>
+	<aura:attribute name="expandFilter"			type="Boolean"						description="expand/collpase the filters"														default="true"/>
+	
+	
+    <aura:attribute name="caseNumber" type="String"/>
+    <aura:attribute name="claimAuthNum" type="String"/>
+    <aura:attribute name="subscriberId" type="String"/>
+    <aura:attribute name="startServiceDate" type="Date"/>
+    <aura:attribute name="endServiceDate" type="Date"/>
+	<!--  
+	Init method to set the first tab and do initial query
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+
+	<div class="slds  ">
+		
+		<!--  actual div for all the necessary inforamtion to be display -->
+		<div class="generalOuterDiv helpRequestsHistory slds-grid slds-wrap">
+			<!--  error container -->
+			<aura:if isTrue="{!v.bln_isError}">
+				<div class="generalErrorContainer ">
+					<div class="errorInnerContainer">
+						<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+						<span class="errorMessage">{!v.str_errorMsg}</span>
+						</ui:message>
+					</div>
+				</div>
+			</aura:if>
+			<!--  spinner for loading scenarios -->
+			<div class="spinnerContainer">
+		        <lightning:spinner variant="brand" size="large" alternativeText="{!$Label.c.loading}" aura:id="loadingSpinner"  class="spinnerClass "/>
+		    </div>	 
+			
+			
+			
+			<div class="helpRequestHeader slds-col slds-size_1-of-1">
+				<h1>{!$Label.c.Help_Requests}</h1>
+			</div>
+			<!--  surrounding text -->
+			<div class="helpRequestSurroundingText slds-col slds-size_1-of-1">
+				<span class="intro">{!$Label.c.Help_requests_surrounding_text}  &nbsp;  <a onclick="{!c.redirectContactUs}"> {!$Label.c.Contact_Us}  </a></span> 
+			</div>
+			
+			<!-- EXPAND / COLLAPSE FILTERS -->
+			<aura:if isTrue="{!v.expandFilter}">
+                <div class="slds-p-bottom_medium">
+                    <a onclick="{!c.showHideFilter}" class=" testScript_collapse">
+                        <span class="generalLabelForm">Collapse filters -</span>
+                    </a> 
+                </div>
+                <div class="slds-size_1-of-1 slds-grid slds-wrap slds-gutters">
+                    <div class="slds-col slds-size_1-of-3 slds-large-size_1-of-7">
+                        <ui:inputtext class="generalInputForm testScript_caseNumber" labelClass="generalLabelForm" value="{!v.caseNumber}" label="Case Number" />
+                    </div>
+                    <div class="slds-col slds-size_1-of-3  slds-large-size_1-of-7">
+                        <ui:inputtext class="generalInputForm testScript_claimNumber" labelClass="generalLabelForm" value="{!v.claimAuthNum}" label="Claim / Auth Number" />
+                    </div>
+                    <div class="slds-col slds-size_1-of-3  slds-large-size_1-of-7">
+                        <ui:inputtext class="generalInputForm testScript_subscriberId" labelClass="generalLabelForm" value="{!v.subscriberId}" label="Member Id" />
+                    </div>
+                    <div class="slds-col slds-grid slds-grid_vertical-align-end  slds-size_1-of-3  slds-large-size_1-of-7 slds-wrap">
+                        <ui:inputDate aura:id="startServiceDate" class=" generalInputForm slds-col testScript_startServiceDateInput" value="{!v.startServiceDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" label="Submitted Start Date" labelClass="generalLabelForm"/>
+                    </div>
+                    <div class="header5 slds-grow-none slds-text-align_center slds-p-top_x-large">and</div>
+                    <div class="slds-col slds-grid slds-grid_vertical-align-end  slds-size_1-of-3  slds-large-size_1-of-7 slds-wrap">
+                        <ui:inputDate aura:id="endServiceDate" class=" generalInputForm slds-col testScript_endServiceDateInput" value="{!v.endServiceDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" label="Submitted End Date" labelClass="generalLabelForm"/>
+                    </div>
+                    
+                    <div class="">
+                        <a onclick="{!c.clearFilters}">
+                            <span class="generalLabelForm">Clear</span>
+                        </a>
+                    </div>
+                    <div class="slds-col  slds-text-align_right slds-size_1-of-3  slds-large-size_1-of-12">
+                        <button class="generalButton testScript_searchButton" onclick="{!c.filterSearch}">Filter</button>
+                    </div>
+                </div>
+            <aura:set attribute="else">
+                <div class="slds-grid slds-wrap slds-size_1-of-1">
+                    <a onclick="{!c.showHideFilter}" class=" testScript_expand">
+                        <span class="generalLabelForm">Expand filters +</span>
+                    </a> 
+                </div>
+            </aura:set>
+            </aura:if>
+            
+			<!--  the table for displaying the information -->
+			<aura:if isTrue="{!v.list_cases.length > 0}"><!--  -->
+				<!--  pagination div -->
+				<div class="paginationContainer topContainer slds-col slds-size_1-of-1 slds-float_right">
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.pageNum != v.totalPages}">
+						<div class=" mobileDesign slds-float_right">
+							<a class="bodyLink" onclick="{!c.clickNext}">
+							{!$Label.c.Next}
+							</a>
+						</div>
+					</aura:if>
+					<!--  page text -->
+					<div class="bodyText slds-float_right">
+						{!$Label.c.Page} &nbsp; {!v.pageNum} &nbsp; {!$Label.c.of}&nbsp; {!v.totalPages}&nbsp;&nbsp;&nbsp;&nbsp;
+					</div>
+					
+					<!--  should not show the previous button when reached the first page page -->
+					<aura:if isTrue="{!v.pageNum > 1}">
+						<div class="mobileDesign slds-float_right">
+							<a class="bodyLink" onclick="{!c.clickPrevious}">
+							{!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+						</div>
+					</aura:if>
+					
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.pageNum > 1}">
+						<div class="bodyLink slds-float_right">
+							 <a class="bodyLink" onclick="{!c.clickFirst}">
+							{!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+						</div>
+					</aura:if>
+				</div>
+				<div class="slds-align_absolute-center fullWidth">
+					<table class="tableClass" id="helpRequestTable">
+						<thead>
+							<tr>
+								<th class="width10 sortable notSorted headerText"  onclick="{!c.updateColumnSorting}" data-col="0" data-fieldname="caseNumber">Case Number</th>
+								<th class="width50 sortable notSorted headerText"  onclick="{!c.updateColumnSorting}" data-col="1" data-fieldname="Subject">{!$Label.c.Subject}</th>
+								<th class="width10 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="2" data-fieldname="Status">{!$Label.c.Status}</th>
+								<th class="width20 sortable sortDescend headerText" onclick="{!c.updateColumnSorting}" data-col="3" data-fieldname="CreatedDate">{!$Label.c.Created_On}</th>
+								<th class="width10"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<aura:iteration items="{!v.list_cases}" var="iterating_Case">
+								<tr>
+									<td data-label="{!$Label.c.Case_Number}" class="width10"><span class="bodyText dataSpace" >{!iterating_Case.CaseNumber}</span></td>
+									<td scope="row" data-label="{!$Label.c.Subject}" class="width50">
+										<span class="bodyText dataSpace" >
+											{!iterating_Case.Subject}
+											<br/>
+											<span class="metaText descriptionText">
+												{!iterating_Case.Description}
+											</span>
+										</span>
+									</td>
+									<td data-label="{!$Label.c.Status}" class="width10"><span class="bodyText dataSpace" >{!iterating_Case.Status}</span></td>
+                                    <td data-label="{!$Label.c.Created_On}" class="width20"><span class="bodyText dataSpace" ><ui:outputDate value="{!iterating_Case.CreatedDate}" format="MM/dd/YYYY" /></span></td>
+									
+                                    <td class="width10">
+										<div class="additionalHRForMobile">
+											<hr class="horizontalLineClass"/>
+										</div>
+										<span class="bodyLink viewLink"
+											  data-caseid="{!iterating_Case.Id}"
+											  onclick="{!c.redirectToDetailPage}">
+											{!$Label.c.View}
+										</span>
+									</td>
+								</tr>
+							</aura:iteration>
+						</tbody>
+					</table>
+				</div>
+				<!--  pagination div -->
+				<div class="paginationContainer slds-col slds-size_1-of-1 slds-float_right">
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.pageNum != v.totalPages}">
+						<div class=" mobileDesign slds-float_right">
+							<a class="bodyLink" onclick="{!c.clickNext}">
+							{!$Label.c.Next}
+							</a>
+						</div>
+					</aura:if>
+					<!--  page text -->
+					<div class="bodyText mobileDesign slds-float_right">
+						{!$Label.c.Page} &nbsp; {!v.pageNum} &nbsp; {!$Label.c.of}&nbsp; {!v.totalPages}&nbsp;&nbsp;&nbsp;&nbsp;
+					</div>
+					
+					<!--  should not show the previous button when reached the first page page -->
+					<aura:if isTrue="{!v.pageNum > 1}">
+						<div class="mobileDesign slds-float_right">
+							<a class="bodyLink" onclick="{!c.clickPrevious}">
+							{!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+						</div>
+					</aura:if>
+					
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.pageNum > 1}">
+						<div class="bodyLink slds-float_right">
+							 <a class="bodyLink" onclick="{!c.clickFirst}">
+							{!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;</a>
+						</div>
+					</aura:if>
+				</div>
+				<div class="createHelpRequestContainer slds-float_left slds-col slds-size_1-of-1">
+					<!--  button to create the help request -->
+					<a class="generalButton" data-loc="file-case" onclick="{!c.redirectToCreateNewHelpRequest}">
+						{!$Label.c.Create_help_request}
+					</a>
+				</div>
+
+				<aura:set attribute="else">
+					<span class="header4 slds-p-top_large">You currently have no cases or no cases that match the criteria specified.</span>
+				</aura:set>
+			</aura:if>
+		</div>
+	</div>
+</aura:component>

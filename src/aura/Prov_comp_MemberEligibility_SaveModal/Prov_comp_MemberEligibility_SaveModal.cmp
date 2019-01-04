@@ -1,0 +1,76 @@
+<!--
+/*******************************************************************************************************
+Name 						: prov_comp_MemberEligibility_SaveModal
+Purpose						: Save Modal for Search Criteria
+Created on					: 13rd January 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			13rd January 2018		West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="Prov_ctrl_MemberEligibility">
+	
+	<!-- ERROR ATTRIBUTES -->
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+	<aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" default="false" />
+	<aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	<aura:attribute name="str_successMsg" type="String" description="success message that is displayed" default="Your record has updated" />
+
+	
+	<aura:attribute name="title" type="String" description="holds the title of the search " />
+    <aura:attribute name="closeText" type="String" default="{!$Label.c.Close}"/>
+
+	    	<!-- attributes to hold accounts -->
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+	<aura:attribute name="memberList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]"/>
+
+	<aura:registerEvent name="searchSavedEvent" type="c:prov_event_MemberEligibility"/>
+
+
+	<div class="slds">
+		<div class="saveModalWrapper slds-grid slds-wrap slds-size_1-of_1">
+			<div class="popupModal">
+		
+
+
+		    	<section role="dialog" style=" height:100%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+		    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open popModalInner" >
+		        	<div class="slds-modal__container">
+		            	<header class="slds-modal__header">
+							<!-- NOTIFICATIONS -->
+							<aura:if isTrue="{!v.isError}">
+								<div  class="headerMessageContainer ">
+									<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+										<span class="errorIcon"></span>
+										<span class="errorMessage">{!v.str_errorMsg}</span>
+									</ui:message>
+								</div>
+							</aura:if>
+		            		<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+		                			 title="{!v.closeText}" required="true" onclick="{!c.defaultClose}" style="">
+		                        <div class="closeIcon"></div>
+		                    	<span class="slds-assistive-text">{!v.closeText}</span>
+		                    </a>
+		                    <h2  class="popupModalHeader" >Save Search</h2>
+		                </header>
+						<div class="slds-modal__content slds-p-around--medium" id="modal-content-1">
+							<ui:inputText label="Title" aura:Id="searchTitle" placeholder="Enter a name for the Search" required="true" blur="{!c.checkSpecialCharacters}" maxlength="80" labelClass="slds-col slds-size_1-of-1 generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm " value="{!v.title}"/>
+						</div>
+						<footer class="slds-modal__footer">
+							<div class="slds-col slds-size_1-of-1 slds-align_absolute-center">
+	                    		<a class="generalButton"  onclick="{!c.saveSearch}" alt="Save">Save</a>
+							</div>
+							<div class="clear slds-col slds-size_1-of-1 slds-align_absolute-center">
+			                	<a class="bodyLink" onclick="{!c.defaultClose}" alt="Close">Cancel</a>
+		        			</div>
+		            	</footer>
+	             	</div>
+	          </section>
+	      </div>
+		</div>
+	</div>
+</aura:component>

@@ -1,0 +1,70 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" lightningStylesheets="false" docType="html-5.0" applyBodyTag="false" applyHtmlTag="false" renderAs="pdf" controller="prov_ctrl_Member_Service_History_Print">
+
+<html>
+<head >
+    <apex:stylesheet value="{!URLFOR($Resource.GOV_Provider_Print_CSS, 'providerPrintCSS.css')}"/>
+</head>
+<body>
+    <h1 class="floatLeft">Service History</h1>
+    <h1 class="floatRight">
+        <apex:outputText value="{0,date,MM/dd/yyyy}">
+            <apex:param value="{!TODAY()}"/>
+        </apex:outputText>
+    </h1>
+    <div style="clear: both;" class="memberHistoryContainer">
+        <table class="tableClass" id="historyTable">
+            <thead>
+                <tr>
+                    <th class="width10">
+                        <span class="headerText">Service Date</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Procedure Code</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Procedure Code Description</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Tooth/Quad/Arch/Surface</span>
+                    </th>
+                    <th class="width10">
+                        <span class="headerText">Place of Service</span>
+                    </th>
+                    </tr>
+            </thead>
+
+            <tbody>
+                <apex:repeat value="{!services}" var="service">
+                    <tr>
+                        <td class="width10">
+                            <span class="bodyText dataSpace">
+                                <apex:outputText value="{0,date,MM/dd/yyyy}"> 
+                                    <apex:param value="{!service.ProcedureDate__c}"/> 
+                                </apex:outputText>
+                            </span>
+                        </td>
+                        <td data-label="Procedure Code" class="width10">
+                            <span class="bodyText dataSpace">
+                                {!service.ProcedureCode__c}
+                            </span>
+                        </td>
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!service.ProcedureCodeDescription__c}</span>
+                        </td>
+                        <td class="width10">
+                            {!service.ToothCode__c}/
+                            {!service.OralCavityQuadCode__c}/
+                            {!service.OralCavityArchCode__c}/
+                            {!service.ToothSurfaces__c}
+                        </td>
+                        <td class="width10">
+                            <span class="bodyText dataSpace">{!service.TreatmentLocationDescription__c}</span>
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+</apex:page>

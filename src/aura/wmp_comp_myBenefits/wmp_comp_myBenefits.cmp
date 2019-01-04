@@ -1,0 +1,451 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_myBenefits
+Purpose						: My Benefits component will do the following 
+								# will fetch the member plan(s) information from the cache class
+								# for each plan, create a new tab
+								# in each plan, query the knowledge article associated to the plan
+								# display the my benefits page with dynamic and static content
+Created on					: 30th August 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			30th August 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes" 
+				controller="wmp_ctrl_myBenefits"
+				access="global">
+		<!--  
+		#1 Attribute to fetch the member information (member__x)
+	-->
+	<aura:attribute name="currentMember" 
+    				type="mock_Member__c" />
+	
+	<!--  
+		#2 Attribute to fetch the member plan(s) information (memberPlans__x)
+	-->
+    
+     <aura:attribute name="showAccum" 
+    				type="Boolean"
+                    />
+    
+	<aura:attribute name="currentMemberPlans" 
+    				type="mock_MemberCoverage__c[]" />
+    				
+    <aura:attribute name="currentMemberPlansFromAccount" 
+    				type="Account[]" />
+	
+	<aura:attribute name="chosen_MemberPlan"
+					type="mock_MemberCoverage__c"
+					
+	/>
+	<aura:attribute name="planName"
+					type="string"
+	/>
+	<!--   
+		#3 Attribute to fetch knowledge article related to the tab selected to display the information on screen
+	-->
+	<aura:attribute name="knowledgeArticle_myBenefits" 
+    				type="My_Benefits__kav" />
+    				
+
+   	
+   	<!--  Attirbutes to display the links of the downloadable files -->
+    <aura:attribute name="benefits_summary_eng" type="String" description="the downloading  link to get the benefits summary english language file" />
+    <aura:attribute name="benefits_summary_esp" type="String" description="the downloading  link to get the benefits summary spanish language file" />
+    <aura:attribute name="member_handbook_eng" type="String" description="the downloading  link to get the member handbook english language file" />
+    <aura:attribute name="member_handbook_esp" type="String" description="the downloading  link to get the member handbook spanish language file" />
+	<!--  
+		#4 Init method to set the first tab and do initial query
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    /> 
+	<!--  necessary libraries required for the look and feel for the page -->
+
+	<!--  the desktop whole container -->
+	<div class="slds">
+		<div class="myBenefitsContainer">
+		<c:wmp_comp_NotifMainDentistPending memCovRec="{!v.chosen_MemberPlan}"/>
+			<div class="desktop"> 
+				<!--  header container -->
+				<div class="benefitHeader indentLeft">
+					<h1>{!v.currentMember.FirstName__c} &nbsp; {!$Label.c.hyphen}&nbsp; {!$Label.c.Benefits}</h1>
+				</div>
+				<br/>
+				<br/>
+				<!--  the tab's to displayed --> 
+				<div class="indentLeft">
+					<ul class="nav nav-tabs">
+						 <aura:iteration var="iterating_plan" items="{!v.currentMemberPlansFromAccount}" indexVar="indx">
+							  <li class="{!iterating_plan.guid__c == v.chosen_MemberPlan.PlanGUID__c?'nav-item tabMenu activeTab':'nav-item tabMenu inActiveTab'}">	
+							    <a href=""  onclick="{!c.changeInPlanId}" data-planid="{!iterating_plan.guid__c}"><span class="boldText bodyColor"><h5>{!iterating_plan.Name}</h5></span></a>
+							  </li>
+						  </aura:iteration>
+						  <!-- 
+						  <li class="nav-item tabMenu inActiveTab">
+						     <a href="" style="text-decoration:none;padding:0px;"><span class="boldFont">Plan 2: </span> TX CHIP Plan <br/>Effective 8-1-2017</a>
+						  </li> 
+						   -->
+					</ul>
+				</div>
+				<!--  the body of the tab that changes on tab change -->
+				<div class="benefitsBody">
+					<!--   Plan detail card -->
+					<div class="planDetailsContainer">
+						<div class="planDetailTextContainer">
+							<div class="headerText">
+								<span class="infoText">{!$Label.c.Plan_Name}</span>
+								<br/> 
+								<div class="planInfoText">
+									<h3>{!v.planName}</h3><!--  from cache class -->
+								</div>
+							</div>
+							<div class="pushHeadersToLeft headerText">
+								<span class="infoText">{!$Label.c.Effective_Date}</span>
+								<br/>
+								<div class="planInfoText">
+									<!--  1-1-2016 -->
+									<h3><ui:outputDate value="{!v.chosen_MemberPlan.EffectiveDate__c}" format="MM-dd-YYYY" /></h3>
+								</div>
+							</div>
+							<div class="pushHeadersToLeft headerText lastHeader">
+								<span class="infoText">{!$Label.c.ID_Number}</span>
+								<br/>
+								<div class="planInfoText">
+									<h3>{!v.chosen_MemberPlan.SubscriberId__c}</h3>
+								</div>
+							</div>
+							<div class="planDetailsText headerText">
+								<span class="bodyText"><aura:unescapedhtml value="{!v.knowledgeArticle_myBenefits.My_Benefifts_Name__c}" /></span>
+							</div>
+						</div>
+					</div> 
+					<!--  coverage plan with the covered and not covered table -->
+					<div class="coverageDetailsContainer">
+						<div class="coverageDetailTextContainer">
+							<div class="coverageHeaderText">
+								<h2>{!$Label.c.Benefits_Covered_by}</h2>
+							</div>
+							<!--  supporting text from the knowledge article -->
+							<div class="coverageSupportingText">
+								<span class="bodyText"><aura:unescapedhtml value="{!v.knowledgeArticle_myBenefits.Benefits_covered_Surrounding_Text__c}"/></span>
+							</div>
+							<!--  covered and not covered list -->
+							<br/>
+							<div class="coveredNotCoveredTableDiv">
+								<!--  covered table -->
+								<span class="bodyText"><aura:unescapedHtml value="{!v.knowledgeArticle_myBenefits.Covered__c}"/></span>
+								<!-- uncovered table -->
+								<span class="bodyText"><aura:unescapedHtml value="{!v.knowledgeArticle_myBenefits.Not_Covered__c}"/></span>
+							</div>
+							<br/>
+							
+							
+							<!-- the benefits summary header -->
+							<div class="benefitsSummaryHeaderText clear">
+								<h3>{!$Label.c.Benefits_Summary}</h3>
+								 <!--  contains the files links -->
+								 <div class="benefitsSummaryFilesContainer">
+								 	<div class="floatLeft">
+								 		<aura:if isTrue="{!v.knowledgeArticle_myBenefits.Benefits_Summary_is_File__c}" >
+								 			<aura:if isTrue="{! and(v.benefits_summary_eng != undefined, v.benefits_summary_eng != '') }">
+												<span class="pdfIconContainer1">
+											 		<div class="pdfIcon "></div>
+											 		<ui:outputURL value="{!v.benefits_summary_eng}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_English}" target="_blank"/>
+											 		<!-- &nbsp;<a download="{!$Label.c.Benefits_Summary_English}" href="{!v.benefits_summary_eng}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> -->
+											 	</span>
+								 			</aura:if>
+										 	<!--  spanish document -->
+									 		<aura:if isTrue="{! and(v.benefits_summary_esp != undefined, v.benefits_summary_esp != '') }">
+											 	<span class="pdfIconContainer2">
+											 		<div class="pdfIcon "></div>
+											 		<ui:outputURL value="{!v.benefits_summary_esp}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_Spanish}" target="_blank"/>
+											 		<!-- <a download="{!$Label.c.Benefits_Summary_Spanish}" href="{!v.benefits_summary_esp}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> -->  
+											 	</span>
+									 		</aura:if>
+										 	<aura:set attribute="else">
+									 			<aura:if isTrue="{! and(v.knowledgeArticle_myBenefits.Benefits_Summary_English_Link__c != undefined, v.knowledgeArticle_myBenefits.Benefits_Summary_English_Link__c != '') }">
+											 		<span class="pdfIconContainer1">
+												 		<!-- <div class="linkIcon "></div> --> 
+												 		<div class="linkIcon "></div>
+												 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Benefits_Summary_English_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_English}" target="_blank"/>
+												 	</span>
+									 			</aura:if>
+											 	<!--  spanish document -->
+									 			<aura:if isTrue="{! and(v.knowledgeArticle_myBenefits.Benefits_Summary_Spanish_Link__c != undefined, v.knowledgeArticle_myBenefits.Benefits_Summary_Spanish_Link__c != '') }">
+												 	<span class="pdfIconContainer2">
+												 		<div class="linkIcon "></div> 
+												 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Benefits_Summary_Spanish_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_Spanish}" target="_blank"/>
+												 	</span>
+								 			</aura:if>
+										 	</aura:set>							 			
+								 		</aura:if>
+								 		
+								 	</div>
+								 	<!-- <ui:outputURL value="{!concat('/servlet/fileField?entityId=',v.knowledgeArticle_myBenefits.Id,'&field=Member_Handbook_English____Body__s')}" label="{!v.knowledgeArticle_myBenefits.Member_Handbook_English__Name__s}" target="_blank" /> -->
+								 </div>
+							</div>
+							<!-- <a href="/servlet/fileField?entityId={!v.knowledgeArticle_myBenefits.Id}&field=Member_Handbook_English____Body__s">
+								{!v.knowledgeArticle_myBenefits.Member_Handbook_English__Name__s}
+							</a>
+							 -->
+						</div>
+					</div>
+					<!-- ACCUMULATORS -->
+                   <!--  <aura:if isTrue="{!v.showAccum==true}">
+                        <div class="memberHandbookHelpContainer">
+                            <div class="coverageDetailTextContainer">
+                                <c:wmp_comp_Accumulators memCovRec="{!v.chosen_MemberPlan}"/>
+                            </div>
+                        </div>
+                    </aura:if> -->
+				
+					<!--  member handbook container -->
+					<div class="memberHandbookContainer">
+						<!--  Member handbook text -->
+						<div class="coverageDetailTextContainer">
+							<div class="coverageHeaderText">
+								<h3>{!$Label.c.Member_Handbook}</h3>
+							</div>
+							<!--  supporting text from the knowledge article -->
+							<div class="memberHandbookSupportingText">
+								<span class="bodyText"><aura:unescapedhtml value="{!v.knowledgeArticle_myBenefits.Member_Handbook_surrounding_text__c}" /></span>
+							</div>
+							<!--  downloading member handbook files -->
+							<div class="memberHandbookFilesContainer">
+								<div class="floatLeft">
+									<aura:if isTrue="{!v.knowledgeArticle_myBenefits.Member_Handbook_is_File__c}" >
+								 		<aura:if isTrue="{! and(v.member_handbook_eng != undefined, v.member_handbook_eng != '') }">
+										 	<span class="pdfIconContainer1">
+										 		<div class="pdfIcon "></div>
+										 		<ui:outputURL value="{!v.member_handbook_eng}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_English}" target="_blank"/>
+										 		<!-- &nbsp;<a download="{!$Label.c.Member_Handbook_English}" href="{!v.member_handbook_eng}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> --> 
+										 	</span>
+										 </aura:if>
+									 	<!--  spanish document -->
+								 		<aura:if isTrue="{! and(v.member_handbook_esp != undefined, v.member_handbook_esp != '') }">
+										 	<span class="pdfIconContainer2">
+										 		<div class="pdfIcon "></div>
+										 		<ui:outputURL value="{!v.member_handbook_esp}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_Spanish}" target="_blank"/>
+										 		<!-- &nbsp;<a download="{!$Label.c.Member_Handbook_Spanish}" href="{!v.member_handbook_esp}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> --> 
+										 	</span>
+								 		</aura:if>
+									 	<aura:set attribute="else">
+									 		<aura:if isTrue="{! and(v.knowledgeArticle_myBenefits.Member_Handbook_English_Link__c != undefined, v.knowledgeArticle_myBenefits.Member_Handbook_English_Link__c != '') }">
+										 		<span class="pdfIconContainer1">
+											 		<div class="linkIcon "></div> 
+											 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Member_Handbook_English_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_English}" target="_blank"/>
+											 	</span>
+									 		</aura:if>
+										 	<!--  spanish document -->
+									 		<aura:if isTrue="{! and(v.knowledgeArticle_myBenefits.Member_Handbook_Spanish_Link__c != undefined, v.knowledgeArticle_myBenefits.Member_Handbook_Spanish_Link__c != '') }">
+											 	<span class="pdfIconContainer2">
+											 		<div class="linkIcon "></div> 
+											 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Member_Handbook_Spanish_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_Spanish}" target="_blank"/>
+											 	</span>
+									 		</aura:if>
+									 	</aura:set>
+									 </aura:if>		
+							 	</div>
+							</div>
+						</div>
+					</div>
+					
+					<!--  Help in the my benefits page -->
+					<div class=" contactUsSection">
+						<div class="helpSectionHeaderText">
+							<h3>{!$Label.c.Need_help_my_benefits}</h3>
+						</div>
+						<div class="myHelpSectionDetailsText">
+							<span class="infoText bodyText"><aura:unescapedhtml value="{!$Label.c.myBenefits_Help_Surrounding_Text}" /> &nbsp;  </span><a onclick="{!c.redirectContactUs}" class="bodyLink">{!$Label.c.Contact_Us}</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!--  the mobile view container -->
+			<div class="mobile">
+		 		<!--  mobile header -->
+		 		<!--  header container -->
+				<div class="benefitHeader">
+					<h1>{!v.currentMember.FirstName__c}  &nbsp; {!$Label.c.hyphen}&nbsp; {!$Label.c.Benefits}</h1> 
+				</div>
+		 		<div class="mobileBackground">
+		 			<!--  plan option select list -->
+			 		<div class="picklistContainer">
+			 			<ui:inputSelect label=" " change="{!c.changeInPlanIdMob}" class="generalInputForm" aura:id="dynamicPlanPicklist">
+			 				<aura:iteration var="iterating_plan" items="{!v.currentMemberPlansFromAccount}" indexVar="indx" >
+				 				<option value="{!iterating_plan.guid__c}" class="picklistOption"> {!iterating_plan.Name}</option>
+				 			</aura:iteration>
+					        <!-- <option value="1" class="picklistOption"> TX Medicaid Child (Under 18)</option>
+					        <option value="2" class="picklistOption"> TX CHIP Plan</option>-->
+					    </ui:inputSelect>
+			 		</div>
+			 		
+			 		<!--   plan container -->
+			 		<div class="planDetailsContainer">
+			 			<!-- the container for all the text -->
+			 			<div class="planDetailTextContainer">
+			 				<!--  PLAN INFORMATION -->
+			 				<div class="headerText">
+								<span class="infoText">{!$Label.c.Plan_Name}</span>
+								<br/>
+								<div class="planInfoText">
+									<h3>{!v.planName}</h3><!--  from cache class -->
+								</div>
+							</div>
+							<div class="headerText followingPlanDetails">
+								<span class="infoText">{!$Label.c.Effective_Date}</span>
+								<br/>
+								<div class="planInfoText">
+									<!--  1-1-2016 -->
+									<h3><ui:outputDate value="{!v.chosen_MemberPlan.EffectiveDate__c}" format="MM-dd-YYYY" /></h3>
+								</div>
+							</div>
+							<div class="headerText followingPlanDetails">
+								<span class="infoText">{!$Label.c.ID_Number}</span>
+								<br/>
+								<div class="planInfoText">
+									<h3>{!v.chosen_MemberPlan.SubscriberId__c}</h3>
+								</div>
+							</div>
+							<div class="planDetailsText followingPlanDetails">
+								<span class="infoText">{!v.knowledgeArticle_myBenefits.My_Benefifts_Name__c}</span>
+							</div>
+			 			</div>
+			 		</div>
+					<!--  coverage plan with the covered and not covered table -->
+					<div class="coverageDetailsContainer">
+						<div class="coverageDetailTextContainer">
+							<!--  header for the section -->
+							<div class="coverageHeaderText">
+								<h3>{!$Label.c.Benefits_Covered_by}</h3>
+							</div>
+							<!--  supporting text from the knowledge article -->
+							<div class="coverageSupportingText">
+								<span class="infoText"><aura:unescapedhtml value="{!v.knowledgeArticle_myBenefits.Benefits_covered_Surrounding_Text__c}" /></span>
+							</div>
+							<!--  covered and not covered list -->
+							<br/>
+							<div class="coveredNotCoveredTableDiv">
+								<!--  covered table -->
+								<span class="bodyText"><aura:unescapedHtml value="{!v.knowledgeArticle_myBenefits.Covered__c}"/></span>
+								<!-- uncovered table -->
+								<span class="bodyText"><aura:unescapedHtml value="{!v.knowledgeArticle_myBenefits.Not_Covered__c}"/></span>
+							</div>
+							<br/>
+							<!-- the benefits summary header -->
+							<div class="benefitsSummaryHeaderText">
+								<h3>{!$Label.c.Benefits_Summary}</h3>
+							</div>
+							<!--  contains the files links -->
+							 <div class="benefitsSummaryFilesContainer ">
+							 	<div class="slds-grid slds-wrap slds-size_1-of-1">
+								 	<aura:if isTrue="{!v.knowledgeArticle_myBenefits.Benefits_Summary_is_File__c}" >
+									 	<span class="pdfIconContainer1 ">
+									 		<div class="pdfIcon "></div>
+									 		<ui:outputURL value="{!v.benefits_summary_eng}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_English}" target="_blank"/>
+									 		<!-- &nbsp;<a download="{!$Label.c.Benefits_Summary_English}" href="{!v.benefits_summary_eng}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> --> 
+									 	</span>
+									 	<br/>
+									 	<!--  spanish document -->
+									 	<span class="pdfIconContainer2 ">
+									 		<div class="pdfIcon "></div>
+									 		<ui:outputURL value="{!v.benefits_summary_esp}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_Spanish}" target="_blank"/>
+									 		<!-- &nbsp;<a download="{!$Label.c.Benefits_Summary_Spanish}" href="{!v.benefits_summary_esp}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> --> 
+									 	</span>
+									 	<aura:set attribute="else">
+									 		<span class="pdfIconContainer1 ">
+										 		<div class="pdfIcon "></div>
+										 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Benefits_Summary_English_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_English}" target="_blank"/>
+										 	</span>
+										 	<br/>
+										 	<!--  spanish document -->
+										 	<span class="pdfIconContainer2 ">
+										 		<div class="pdfIcon "></div> 
+										 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Benefits_Summary_Spanish_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Benefits_Summary_Spanish}" target="_blank"/>
+										 	</span>
+										 </aura:set>
+									 </aura:if>
+							 	</div>
+							 	<!-- <ui:outputURL value="{!concat('/servlet/fileField?entityId=',v.knowledgeArticle_myBenefits.Id,'&field=Member_Handbook_English____Body__s')}" label="{!v.knowledgeArticle_myBenefits.Member_Handbook_English__Name__s}" target="_blank" /> -->
+							 </div>
+						</div>
+					</div>	
+					<!-- ACCUMULATORS -->
+                    <!-- <aura:if isTrue="{!v.showAccum}">
+                        <div class="memberHandbookHelpContainer">
+                            <div class="coverageDetailTextContainer">
+                                <c:wmp_comp_Accumulators memCovRec="{!v.chosen_MemberPlan}"/>
+                            </div>
+                        </div>
+                    </aura:if> -->
+					
+					<!--  member handbook container -->
+					<div class="memberHandbookContainer">
+						<!--  Member handbook text -->
+						<div class="coverageDetailTextContainer">
+							<div class="coverageHeaderText">
+								<h3>{!$Label.c.Member_Handbook}</h3>
+							</div>
+							<!--  supporting text from the knowledge article -->
+							<div class="memberHandbookSupportingText">
+								<span class="bodyText"><aura:unescapedhtml value="{!v.knowledgeArticle_myBenefits.Member_Handbook_surrounding_text__c}" /></span>
+							</div>
+							<!--  downloading member handbook files -->
+							<div class="memberHandbookFilesContainer">
+								<div class="slds-grid slds-wrap slds-size_1-of-1">
+									<aura:if isTrue="{!v.knowledgeArticle_myBenefits.Member_Handbook_is_File__c}" >
+									 	<span class="pdfIconContainer1">
+									 		<div class="pdfIcon "></div>
+									 		<ui:outputURL value="{!v.member_handbook_eng}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_English}" target="_blank"/>
+									 		<!-- &nbsp;<a download="{!$Label.c.Member_Handbook_English}" href="{!v.member_handbook_eng}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a>  --> 
+									 	</span>
+									 	<br/>
+									 	<!--  spanish document -->
+									 	<span class="pdfIconContainer2">
+									 		<div class="pdfIcon "></div>
+									 		<ui:outputURL value="{!v.member_handbook_esp}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_Spanish}" target="_blank"/>
+									 		<!-- &nbsp;<a download="{!$Label.c.Member_Handbook_Spanish}" href="{!v.member_handbook_esp}"><lightning:icon iconName="utility:download" size="medium" class="downloadIcon"/> </a> --> 
+									 	</span>
+									 	<aura:set attribute="else">
+									 		<span class="pdfIconContainer1">
+										 		<div class="pdfIcon "></div> 
+										 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Member_Handbook_English_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_English}" target="_blank"/>
+										 	</span>
+										 	<br/>
+										 	<!--  spanish document -->
+										 	<span class="pdfIconContainer2">
+										 		<div class="pdfIcon "></div> 
+										 		<ui:outputURL value="{!v.knowledgeArticle_myBenefits.Member_Handbook_Spanish_Link__c}" class="pdfLinkTextDisplay bodyLink boldText" label="{!$Label.c.Member_Handbook_Spanish}" target="_blank"/>
+										 	</span>
+									 	</aura:set>
+									 </aura:if>
+							 	</div>
+							</div>
+						</div>
+					</div>	 	
+					
+					<!--  Help in the my benefits page -->
+					<div class="memberHandbookHelpContainer"> 
+						<div class="coverageDetailTextContainer">
+							<div class="helpSectionHeaderText">
+								<h3>{!$Label.c.Need_help_my_benefits}</h3>
+							</div>
+							<div class="myHelpSectionDetailsText">
+								<span class="infoText"><aura:unescapedhtml value="{!$Label.c.myBenefits_Help_Surrounding_Text}" /> &nbsp; </span><span class="bodyLink"><a onclick="{!c.redirectContactUs}"> {!$Label.c.Contact_Us}  </a></span>
+							</div>
+						</div>
+					</div>	
+			 		<!--  padding at the bottom of the screen -->
+			 		<div class="paddingBottom">
+			 			
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</aura:component>

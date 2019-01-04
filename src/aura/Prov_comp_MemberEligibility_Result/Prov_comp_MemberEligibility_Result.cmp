@@ -1,0 +1,124 @@
+<aura:component extends="c:prov_comp_Provider_Common" controller="Prov_ctrl_MemberEligibility" access="global">
+	
+	<!-- ERROR ATTRIBUTES -->
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message"/>
+	<aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" />
+	<aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	<aura:attribute name="str_successMsg" type="String" description="success message that is displayed" default="Your record has updated" />
+	
+	<!-- PAGE VIEW ATTRIBUTES -->	
+	<aura:attribute name="showSearch" type="Boolean" description="When this is true, the Member Eligibility Search component should be displayed." />
+	<aura:attribute name="showResults" type="Boolean" description="When this is true, the Member Eligibility Search Results component should be displayed." />
+	<aura:attribute name="isHomepage" type="Boolean" />
+
+	<!-- SEARCH CRITERIA ATTRIBUTES -->
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRec" type="Account"/>
+	<aura:attribute name="provAcctRec" type="Account"/>
+	<aura:attribute name="memberList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]"/>
+	<aura:attribute name="searchCriteriaId" 	type="String" description="" />
+	<aura:attribute name="title" type="String" />
+	<aura:attribute name="searchOwner" type="String" />
+
+	<aura:attribute name="searchRun" type="string" description="time search was run"/>
+
+	<!-- RESULTS LISTS -->
+    <aura:attribute name="eligibleList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" description="eligible list" />
+    <aura:attribute name="notEligibleList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" description="Not eligible on selected date list" />
+    <aura:attribute name="notFoundList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" description="not found in search" />
+	<aura:attribute name="outOfNetworkList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" />
+
+	<!-- AURA Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	<div class="slds-col slds-size_1-of-1 slds-grid slds-wrap generalVerticalSpacing"> 
+		<!-- search criteria section -->
+		<div class="slds-size_1-of-1 slds-grid">
+			<table class="slds-col slds-size_4-of-5">
+				<thead>
+					<tr>
+						<th class="width20"><span class="fullWidth bodyText headerText">Business Name</span></th>
+						<th class="width20"><span class="fullWidth bodyText headerText">Location</span></th>
+						<th class="width20"><span class="headerText bodyText">Provider</span></th>
+						<th class="width20 hideOnPrint"><span class="bodyText headerText">Search Run:</span></th>
+					</tr>
+				</thead> 
+				<tbody>
+					<tr>
+						<td data-label="location" class="width20"><span class="bodyText dataSpace" >{!v.bizAcctRec.Name}</span></td>
+						<td data-label="location" class="width20"><span class="bodyText dataSpace" >{!v.locAcctRec.Service_Location_Name__c}</span></td>
+						<td data-label="provider" class="width20"><span class="bodyText dataSpace" >{!v.provAcctRec.Name}</span></td>
+						<td data-label="searchRun" class="width20 hideOnPrint"><span class="bodyText dataSpace" >{!v.searchRun}</span></td>
+					</tr>
+				</tbody>
+			</table>
+			<aura:if isTrue="{!!v.isHomepage}">
+				<div class="slds-col slds-size_1-of-5 slds-text-align_right hideOnPrint">
+					<a class="generalButton inverse inlineBlock testScript_saveSearch" onclick="{!c.saveSearch}">Save Search</a>
+				</div>
+			</aura:if>
+		</div>
+	</div>
+
+	<!-- RESULTS SECTION -->
+	<div class="slds-col slds-size_1-of-1 generalVerticalSpacing"> <!-- search criteria section -->
+		<div>
+			<span style="display:flex;">
+				<lightning:icon size="medium" class="generalEligible hideOnPrint" variant="inverse" iconName="utility:success" alternativeText="Eligible"/>
+				<h3>Eligible</h3>
+			</span>
+			<c:Prov_comp_MemberEligibility_ResultsTable resultsList="{!v.eligibleList}" eligibleIneligibleTable="true" tableId="Eligible" />
+		</div>
+	</div>
+	
+	<div class="slds-col slds-size_1-of-1 generalVerticalSpacing"> <!-- search criteria section -->
+	<br />
+		<div>
+			<span style="display:flex;">
+				<lightning:icon size="medium" class="generalIneligible hideOnPrint" variant="inverse" iconName="utility:error" alternativeText="Not Eligible"/>
+				<h3>Not Eligible on Selected Date</h3>
+			</span>
+			<span class="bodyText dataSpace">{!$Label.c.Not_Eligible_Subtext}</span>
+			<c:Prov_comp_MemberEligibility_ResultsTable resultsList="{!v.notEligibleList}"  tableId="notEligible" eligibleIneligibleTable="true" />
+		</div>
+	</div>
+	<br />
+
+	<div class="slds-col slds-size_1-of-1 generalVerticalSpacing"> <!-- search criteria section -->
+		<div>
+			
+			<span style="display:flex;">
+				<lightning:icon size="medium" class="generalOutOfNetwork hideOnPrint" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/>
+				<h3>Out of Network</h3>
+			
+			</span>
+			<span class="bodyText dataSpace">{!$Label.c.Out_of_Network_Subtext}</span>
+			<c:Prov_comp_MemberEligibility_ResultsTable resultsList="{!v.outOfNetworkList}" tableId="outOfNetwork" eligibleIneligibleTable="true" />
+		</div>
+	</div>
+	<br />
+	
+	<div class="slds-col slds-size_1-of-1 generalVerticalSpacing"> <!-- search criteria section -->
+		<div>
+			<span style="display:flex;">
+				<lightning:icon size="medium" class="generalNotFound hideOnPrint" variant="inverse" iconName="utility:clear" alternativeText="Not Found"/>
+				<h3>Not Found</h3>
+			</span>
+			<span class="bodyText dataSpace">{!$Label.c.Not_Found_Subtext}</span>
+			<c:Prov_comp_MemberEligibility_ResultsTable resultsList="{!v.notFoundList}" tableId="notFound" eligibleIneligibleTable="false" />
+		</div>
+	</div>
+	<br />
+	<br />
+	
+	<div class="slds-grid slds-wrap hideOnPrint">
+		<div class="slds-col slds-size_10-of-12">
+			<a class="generalButton inverse inlineBlock testScript_backSearch" onclick="{!c.backToSearch}">Back to Search</a>
+		</div>
+		<!-- <div class="slds-col slds-text-align_right slds-size_2-of-12">
+			<a class="generalButton inverse inlineBlock testScript_saveSearch" onclick="{!c.saveSearch}">Save Search</a>
+		</div> -->
+	</div>
+	{!v.body}
+
+</aura:component>

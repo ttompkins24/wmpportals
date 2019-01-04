@@ -1,0 +1,312 @@
+<!--
+/*******************************************************************************************************
+Name 						: prov_comp_Panel_Roster
+Purpose						: Displays list of members based on Business/Location/Provider search
+Created on					: 3rd January 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			3rd January 2018		West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="Prov_ctrl_PanelRoster" extends="c:prov_comp_Provider_Common">
+	<!-- attributes to hold lists of accounts -->
+	<aura:attribute name="locValue" type="String"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+    <aura:attribute name="preAuthLabel" type="String" />
+
+	<aura:attribute name="page" type="integer" description="for storing currnet page Number" default="1"/>
+   	<aura:attribute name="pages" type="integer" description="using for store All Pages page Number"/>
+   	<aura:attribute name="total" type="integer" description="total records count store"/>
+   	<aura:attribute name="sortField" type="String" default="EffectiveDate"/>
+   	<aura:attribute name="direction" type="String" default='DESC'/>
+   	<aura:attribute name="noResults" type="boolean"/>
+   	<aura:attribute name="fNameSearch" type="String"/>
+   	
+   	<aura:attribute name="lNameSearch" type="String"/>
+   	<aura:attribute name="maxResults" type="integer"/>
+   	<aura:attribute name="searchActive" type="boolean"/>
+	<aura:attribute name="isAsc" type="boolean" description="boolean flag to pass sorting condition to apex class"/> 
+	<aura:attribute name="memberList"
+    				type="prov_wrap_PanelRoster[]"
+    				description="the list of members related to the selected provider" 
+    				/>		
+	<aura:attribute name="fullList"
+    				type="prov_wrap_PanelRoster[]"
+    				description="the list of members related to the selected provider" 
+    				/>		
+	
+	<!-- error handling -->
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message"/>
+	<aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message"  />
+	<aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	<aura:attribute name="str_successMsg" type="String" description="success message that is displayed" default="Your record has updated" />
+	
+	<aura:attribute name="vfHost" type="String" default="{!$Label.c.Member_Eligibility_VF_URL}"/>
+	<aura:attribute name="checkButtonDisabled" type="Boolean" default="true" />
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+		<div class="slds generalOuterDiv panelRosterContainer">
+			<div>
+			<div>
+				<!-- NOTIFICATIONS -->
+				<aura:if isTrue="{!v.isError}">
+					<div  class="headerMessageContainer ">
+						<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+							<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+							<span class="errorMessage">{!v.str_errorMsg}</span>
+						</ui:message>
+					</div>
+				</aura:if>
+				<aura:if isTrue="{!v.isSuccess}">
+					<div  class="headerMessageContainer ">
+						<ui:message class="successMessageWrap slds-size_1-of-1" severity="success" closable="true">
+							<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+							<span class="successMessage">{!v.str_successMsg}</span>
+						</ui:message>
+					</div>
+				</aura:if>
+				
+				<!-- SPINNER -->
+				<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="slds-hide"/>
+				
+				<div class="slds-float_left">
+					<!-- <lightning:icon size="medium" class="generalOutOfNetwork" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/> -->
+					<h1>Panel Roster</h1>
+					<div class="header3">{!$Label.c.Panel_Roster_Intro}</div>
+				</div>
+				<aura:if isTrue="{!v.memberList.length > 0}">
+					<div class="slds-float_right footer">
+						<span class=" dataSpace spacing"><a class="bodyLink noDecoration printSpacing printIcon" onclick="{!c.printList}">Print</a></span>
+						<span class=" dataSpace spacing"><a class="generalButton inverse" onclick="{!c.downloadList}">Download</a></span>
+					</div>
+				</aura:if>
+			
+			</div>
+			<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+				<div class="slds-size_1-of-3" ><h3 class="header">1. Select Location</h3>
+					<div class="slds-form-element">
+
+<!-- 						<lightning:select label="Location" class="testScript_SLDrop slds-col slds-size_1-of-1 generalInputForm" variant="label-hidden" onchange="{!c.updateLocSearch}"  aura:id="locAccts" disabled="{!if(v.locList.length == 1, true, false)}" value="{!v.locValue}">
+							<aura:if isTrue="{!v.locList.length > 1}">
+				                <option class="picklistOption picklistOptionDefault" value="Any" text="Any"/>
+							</aura:if>
+			                <aura:iteration items="{!v.locList}" var="locAcct">
+                            	<option class="picklistOption" value="{!locAcct.Id}">{!locAcct.Service_Location_Name__c}</option>
+			                </aura:iteration>
+						</lightning:select> -->
+
+		                <ui:inputSelect aura:id="locAccts" label="Location" labelClass="generalLabelForm" disabled="{!if(v.locList.length == 1, true, false)}" class="testScript_SLDrop slds-col slds-size_1-of-1 generalInputForm" change="{!c.updateLocSearch}" >
+		           			<aura:if isTrue="{!v.locList.length > 1}">
+		                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any"/>
+		                	</aura:if>
+	        				<aura:iteration items="{!v.locList}" var="locAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" label="{!locAcct.Service_Location_Name__c}"/>
+		        			</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3"><h3 class="header">2. Select Provider</h3>
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="provAccts" label="Provider" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_providerDrop" change="{!c.updateProvSearch}">
+		                	<aura:if isTrue="{!v.provList.length > 1}">
+							<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any" value="true" />
+							</aura:if>
+	        				<aura:iteration items="{!v.provList}" var="provAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!provAcct.Id}" label="{!provAcct.Name}"/>
+	        				</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3">
+				</div>
+		  	</div>
+		  	<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap nameSearch">
+		  		<div class="slds-size_1-of-3">
+		  			<div class="slds-form-element">
+		  				<ui:inputText aura:id="firstNameInput" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm" label="Member First Name" placeholder="First Name" required="false"/>
+		  			</div>
+		  		</div>
+		  		<div class="slds-size_1-of-3">
+		  			<div class="slds-form-element">
+		  				<ui:inputText aura:id="lastNameInput" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm" label="Member Last Name" placeholder="Last Name" required="false"/>
+		  			</div>
+		  		</div>
+			  	<div class="slds-size_1-of-3">
+					<button class="generalButton slds-float_right memSearchButton testScript_panelRoster_search" disabled="{!v.checkButtonDisabled}" onclick="{!c.panelRosterSearch}">Search</button>
+				</div>
+			</div>
+			
+		</div>
+		
+		
+			<div class="resultsTable">
+				<table class="tableClass panelRosterTable" >
+					<thead>
+						 <tr >
+						 	<th class="width8" id="h1">
+						 		<span class="headerText sortable inverse notSorted testScript_table_srt_memId" onclick="{!c.updateColumnSorting}"  data-fieldname="MemberId" data-col="0" >Member Number</span>
+						 	</th>
+						 	<th class="width8" id="h2">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_birthdate" onclick="{!c.updateColumnSorting}" data-fieldname="BirthDate" data-col="1">Birth Date</span>
+						 	</th>
+						 	<th class="width8" id="h3">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_firstName" onclick="{!c.updateColumnSorting}"  data-fieldname="FirstName" data-col="2">First Name</span>
+						 	</th>
+						 	<th class="width8" id="h4">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_lastName" onclick="{!c.updateColumnSorting}"  data-fieldname="LastName" data-col="3">Last Name</span>
+						 	</th>
+						 	<th class="width8" id="h5">
+						 		<span class="headerText sortable sorted sortDescend inverse testScript_table_srt_effDate" onclick="{!c.updateColumnSorting}"  data-fieldname="EffectiveDate" data-col="4">Effective Date</span>
+						 	</th>
+						 	<th class="width8" id="h6">
+						 		<span class="headerText inverse" data-fieldname="PhoneNumber" data-col="5">Phone Number</span>
+						 	</th>
+						 	<th class="width10" id="h7">
+						 		<span class="headerText inverse" data-fieldname="Address" data-col="6">Address</span>
+						 	</th>
+						 	<th class="width10" id="h8">
+						 		<span class="headerText inverse" data-fieldname="Language" data-col="7">Language</span>
+						 	</th>
+						 	<th class="width10" id="h9">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_planGD" onclick="{!c.updateColumnSorting}" data-fieldname="PlanName" data-col="8">Plan Type</span>
+						 	</th>
+						 	<th class="width10" id="h10">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_provider" onclick="{!c.updateColumnSorting}" data-fieldname="ProviderName" data-col="9">Provider</span>
+						 	</th>
+						 	<th class="width10" id="h11">
+						 		<span class="headerText sortable notSorted inverse testScript_table_srt_serviceLocation" data-fieldname="ServiceOfficeAddress" data-col="10" onclick="{!c.updateColumnSorting}">Service Location Address</span>
+						 	</th>
+						 	<!-- <th class="width10">
+						 		<span class="headerText inverse">PCD</span>
+						 	</th> -->
+						 	<aura:if isTrue="{!or(v.permissions.preAuth == 'full', v.permissions.claims == 'full', 
+		                    						  v.permissions.referral == 'full', v.permissions.brokenAppointment == 'full')}">	
+							 	<th class="width2" id="qLinks">
+							 		<span class="headerText inverse" data-col="11" >Quick Links</span>
+							 	</th>
+						 	</aura:if>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<aura:if isTrue="{!v.noResults}">
+							<tr>
+								<td class="bodyText dataSpace noResults" headers="h1" colspan="10">No Results
+								</td>	
+							</tr>
+						</aura:if>
+
+						<aura:if isTrue="{!v.memberList.length > 0}">
+						<aura:iteration items="{!v.memberList}" var="member">
+						<tr>
+							<td  headers="h1" data-label="Member Number" class="slds-is-sortable width8"  >
+		        				<span class="bodyText dataSpace"><a aura:id="memNumId" onclick="{!c.memberDetail}" data-memberguid="{!member.memberProfileGuid}" data-memnum="{!member.memberNumber}" data-unimemguid="{!member.universalMemberGuid}">{!member.memberNumber}</a></span>
+		      				</td>
+		      				<td  headers="h2" data-label="Birth Date" class="slds-is-sortable width8"  >
+		      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!member.birthDate}" aura:id="memBDate"/>
+                			</td>
+		      				<td headers="h3" data-label="First Name" class="width8"><span class="bodyText dataSpace" data-fname="{!member.firstName}">{!member.firstName}</span></td>
+		      				<td headers="h4" data-label="Last Name" class="width8" ><span class="bodyText dataSpace" data-lname="{!member.LastName}">{!member.lastName}</span></td>
+		      				<td headers="h5" data-label="Effective Date" class="width8" >
+		      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!member.effectiveDate}"/>
+		      				</td>
+
+						    <td headers="h6" data-label="Phone Number" class="width8"><ui:outputPhone class="bodyText dataSpace" value="{!member.phone}" /></td>
+						    <td headers="h7" data-label="Address" class="width10"><span class="bodyText dataSpace" >{!member.address}</span></td>
+						    <td headers="h8" data-label="Language" class="width10"><span class="bodyText dataSpace" >{!member.language}</span></td>
+						    <td headers="h9" data-label="Plan Type" class="width10"><span class="bodyText dataSpace" >{!member.planName}</span></td>
+						    <td headers="h10" data-label="Provider" class="width10"><span class="bodyText dataSpace">{!member.ProviderName}</span></td>
+						    <td headers="h11" data-label="Service Location Address" class="width10"><span class="bodyText dataSpace">{!member.ServiceOfficeAddress}</span></td>
+
+						    <!-- <td data-label="PCD" class="width10"><span class="bodyText dataSpace" ><a href="javascript:void(0);">{!member.pcdName}</a></span></td> -->
+						    <aura:if isTrue="{!or(v.permissions.preAuth == 'full', v.permissions.claims == 'full', 
+		                    						  v.permissions.referral == 'full', v.permissions.brokenAppointment == 'full')}">	
+							    <td class="width2" headers="qLinks">
+							    	<li class="slds-dropdown-trigger slds-dropdown-trigger_hover" >
+								    	<div class="dropdown " title="memberSearch">
+		                          			<button aria-haspopup="true" aria-expanded="false" id="dropdownMember" class="dropdownCol slds-button slds-button_icon slds-button_icon-border-filled hideOnPrint dropdown-toggle" title="memberSearch" data-toggle="dropdown">
+						                            <lightning:icon iconName="utility:down" size="xx-small"/>
+						                    </button>
+		                          			<div class="slds-dropdown dropdown-menu" aria-labelledby="dropdownMember">
+		                          				<ul tabindex="-1" class="slds-dropdown__list" role="menu">
+		                          					<aura:if isTrue="{!v.permissions.claims == 'full'}">
+			                                			<li class="slds-dropdown__item" role="presentation">
+							                                <a tabindex="0" role="menuitem"  data-value="{!member.memberProfileGuid}" onclick="{!c.startClaim}">
+							                                    <span class="slds-truncate" title="Start A Claim">Start A Claim</span>
+							                                </a>
+			                                			</li>
+		                                			</aura:if>
+		                          					<aura:if isTrue="{!v.permissions.preAuth == 'full'}">
+			                          					<li class="slds-dropdown__item" role="presentation">
+							                                <a tabindex="0" role="menuitem"  data-value="{!member.memberProfileGuid}" onclick="{!c.startPreAuth}">
+							                                    <span class="slds-truncate" title="{!v.preAuthLabel}">{!v.preAuthLabel}</span>
+							                                </a>
+			                                			</li>
+		                          					</aura:if>
+		                                			<aura:if isTrue="{!v.permissions.referral == 'full'}">
+			                                			<li class="slds-dropdown__item" role="presentation">
+							                                <a tabindex="0" role="menuitem"  data-value="{!member.memberProfileGuid}" onclick="{!c.startReferral}">
+							                                    <span class="slds-truncate" title="Start A Referral">Start A Referral</span>
+							                                </a>
+			                                			</li>
+		                                			</aura:if>
+		                                			<aura:if isTrue="{!v.permissions.brokenAppointment == 'full'}">
+			                                			<li class="slds-dropdown__item" role="presentation">
+							                                <a tabindex="0" role="menuitem" title="Start Broken Appt" data-value="{!member.memberProfileGuid}" onclick="{!c.startBrokenAppt}">
+							                                    <span class="slds-truncate">Start Broken Appt</span>
+							                                </a>
+			                                			</li>
+		                                			</aura:if>
+		                          				</ul>
+		                          			</div>
+								    	</div>
+							    	</li>
+					            </td>
+					         </aura:if>
+						</tr>
+						</aura:iteration>
+						</aura:if>
+					</tbody>
+				</table>
+				<aura:if isTrue="{!v.memberList.length > 0}">
+				<div>
+					<div class="slds-col slds-size_1-of-1 footer ">
+						<div class="col paginate">
+							<div class="desktop">
+								<!-- <span class="bodyText dataSpace spacing"><a onclick="{!c.showAll}">Show All</a></span>  -->
+								<a class="{!'spacing  bodyLink ' + (v.page == 1 ? ' hidden' : '') }"  onclick="{!c.firstPage}" >First</a>
+								<a class="{!'spacing  bodyLink ' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous</a>
+								<span class="spacing bodyText pageNum">Page&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>
+								<a class="{!'spacing  bodyLink ' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextPage}" >Next</a>
+							</div>
+							<div class="mobile">
+								<table>
+									<tr>	
+										<td>
+										<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous</a>&nbsp;
+										</td>
+										<td>
+										<span class="spacing slds-col slds-size_1-of-3 page bodyText">{!v.page}&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>							
+										</td>
+										<td>
+										&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextPage}" >Next</a>
+										</td>
+										</tr>
+								</table>
+							</div>
+						</div>		
+					</div>	
+
+				</div>
+				</aura:if>
+			</div>
+		<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_PanelRoster'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+		</div>
+</aura:component>

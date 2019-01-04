@@ -1,0 +1,178 @@
+<!--
+/*******************************************************************************************************
+Name 						: wmp_comp_Accumulators
+Purpose						: Displays the accumulator data
+								# Responsive table for desktop and mobile view
+Created on					: 18th October 2017
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			18th October 2017		West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_util_Cache">
+	
+	<!--  attributes required for the page  -->	
+	<aura:attribute name="memCovRec" 
+					type="MemberCoverage__x" 
+					description="Member Coverage data" /> 
+	
+	<aura:attribute name="bln_isError" 
+    				type="boolean" 
+    				description="used to depict if there is an error condition" />
+     
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen" />
+    
+    <aura:attribute name="list_accumulators"
+    				type="MemberAccumulator__x[]"
+    				description="the list of accumulators related to the logged in user" />
+	
+	
+	<!-- Page handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler name="change" value="{!v.memCovRec}" action="{!c.reloadAccumulators}" />
+	
+	
+	<div class="slds">
+		<div class="accumulator clear">	
+			<!--  error container -->
+			<aura:if isTrue="{!v.bln_isError}">
+				<div class="errorContainer ">
+					<div class="errorText">
+						<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+						{!v.str_errorMsg}
+						</ui:message>
+					</div>
+				</div>
+			</aura:if> 
+
+			<!-- Text -->
+			<div>
+				<h2>{!$Label.c.Accumulator_Header}</h2>
+				<br />
+				<p class="bodyText"> {!$Label.c.Accumulator_Subtext}</p>
+			</div>
+			<!--  Accumulator table  isTrue="{!v.list_accumulators.length > 0}" -->
+			<aura:if isTrue="{!true}">
+				<div>
+					<table class="tableClass">
+						<thead>
+							<tr>
+								<th class="width40"><span class="fullWidth bodyText headerText">{!$Label.c.Maximum_and_Term}</span>
+								</th>
+	                            <th class="width10"><span class="headerText bodyText">{!$Label.c.TreatmentClass} </span>
+									<a class="helpIcon" onclick="{!c.openHelpBox}"></a>
+									<!--  pop up for the pop up box -->
+									<div class="helpBox"  aura:id="maxHelpBoxId">
+	                                	<div class="header">
+	                                		<div class="helpHeader">
+	                                			<div class="floatLeft">
+	                                				<h4>{!$Label.c.TreatmentClass}</h4>
+	                                			</div>
+	                                			 <a class="closeIcon floatRight closeHelpBox" onclick="{!c.closeHelpBox}"/>
+	                                			 <br/>
+	                                		</div>
+	                                	</div>
+	                                	<div class="specialtyGroup" style="width:100%">
+	                                		<span class="description bodyText  textAlignLeft" >
+	                                			{!$Label.c.TreatmentClass_Help_Text}
+	                                		</span>
+	                                	</div>
+	                                </div>
+								</th>
+								<th class="width10"><span class="headerText bodyText">{!$Label.c.Maximum} </span>
+									<a class="helpIcon" onclick="{!c.openHelpBox}"></a>
+									<!--  pop up for the pop up box -->
+									<div class="helpBox"  aura:id="maxHelpBoxId">
+	                                	<div class="header">
+	                                		<div class="helpHeader">
+	                                			<div class="floatLeft">
+	                                				<h4>{!$Label.c.Maximum}</h4>
+	                                			</div>
+	                                			 <a class="closeIcon floatRight closeHelpBox" onclick="{!c.closeHelpBox}"/>
+	                                			 <br/>
+	                                		</div>
+	                                	</div>
+	                                	<div class="specialtyGroup" style="width:100%">
+	                                		<span class="description bodyText  textAlignLeft" >
+	                                			{!$Label.c.Maximum_Help_Text}
+	                                		</span>
+	                                	</div>
+	                                </div>
+								</th>
+								<th class="width10"><span class="bodyText headerText">{!$Label.c.Applied}</span>
+									<a class="helpIcon" onclick="{!c.openHelpBox}"></a>
+									<!--  pop up for the pop up box -->
+									<div class="helpBox"  aura:id="appliedHelpBoxId">
+	                                	<div class="header">
+	                                		<div class="helpHeader">
+	                                			<div class="floatLeft">
+	                                				<h4>{!$Label.c.Applied}</h4>
+	                                			</div>
+	                                			 <a class="closeIcon floatRight closeHelpBox" onclick="{!c.closeHelpBox}"/>
+	                                			 <br/>
+	                                		</div>
+	                                	</div>
+	                                	<div class="specialtyGroup" style="width:100%">
+	                                		<span class="description bodyText  textAlignLeft" >
+	                                			{!$Label.c.Applied_Help_Text}
+	                                		</span>
+	                                	</div>
+	                                </div>
+								</th>
+								<th class="width28"><span class="bodyText headerText">{!$Label.c.Remaining}</span>
+									<a class="helpIcon" onclick="{!c.openHelpBox}"></a>
+									<!--  pop up for the pop up box -->
+									<div class="helpBox"  aura:id="remainingHelpBoxId">
+	                                	<div class="header">
+	                                		<div class="helpHeader">
+	                                			<div class="floatLeft">
+	                                				<h4>{!$Label.c.Remaining}</h4>
+	                                			</div>
+	                                			 <a class="closeIcon floatRight closeHelpBox" onclick="{!c.closeHelpBox}"/>
+	                                			 <br/>
+	                                		</div>
+	                                	</div>
+	                                	<div class="specialtyGroup" style="width:100%">
+	                                		<span class="description bodyText  textAlignLeft" >
+	                                			{!$Label.c.Remaining_Help_Text}
+	                                		</span>
+	                                	</div>
+	                                </div>
+								</th>	
+							</tr>
+						</thead> 
+						<tbody>
+							<aura:iteration items="{!v.list_accumulators}" var="accumulator">
+								<tr>
+									<td scope="row" data-label="{!$Label.c.Maximum_and_Term}" class="width40">
+										<span class="bodyText dataSpace" > 
+											{!accumulator.EntityTypeName__c}
+											<br/>
+											<span class="metaText descriptionText">
+											<lightning:formattedDateTime value="{!accumulator.EffectiveDate__c}" timeZone="UTC" /> &nbsp; - &nbsp;  <lightning:formattedDateTime value="{!accumulator.TerminationDate__c}" timeZone="UTC" /> 
+											</span>
+										</span>
+									</td>
+	                                <!-- TreatmentClass__c-->
+									<td data-label="{!$Label.c.TreatmentClass}" class="width20"><span class="bodyText dataSpace" >{!accumulator.TreatmentClass__c}</span></td>
+	                                <td data-label="{!$Label.c.Maximum}" class="width20"><span class="bodyText dataSpace" ><ui:outputCurrency value="{!accumulator.Limit__c}"></ui:outputCurrency></span></td>
+									<td data-label="{!$Label.c.Applied}" class="width20"><span class="bodyText dataSpace" ><ui:outputCurrency value="{!accumulator.Applied__c}" /></span></td>
+									<td data-label="{!$Label.c.Remaining}" class="width20"><span class="bodyText dataSpace" ><ui:outputCurrency value="{!accumulator.Remaining__c}" /></span></td>
+								</tr>
+							</aura:iteration>
+						</tbody>
+					</table>
+					
+					<div class="metaText slds-m-top_large">{!$Label.c.Accumulator_Footer_Text}</div>
+				</div>
+			</aura:if>		
+		</div>
+	</div>
+</aura:component>

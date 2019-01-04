@@ -1,0 +1,126 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_ctrl_overviewPage">
+	<!--  attributes  -->
+	<!--  User record to display name and other related information -->
+	<aura:attribute name="loggedInUserRecord" 
+					type="Contact" 
+					description="The logged in user record. Used to display welcome message and the first time pop up" 
+	/>
+	<aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />				
+    <aura:attribute name="closeText" type="String" default="{!$Label.c.Close}"/>																
+     <!--  inst_memberCoverageExternal
+		Init method to set the first tab and do initial query
+	-->
+    <aura:attribute name="manageDependentHeaderL" type="String" />
+    <aura:attribute name="manageDependentDescriptionL" type="String" />
+    
+    
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+
+	<div>
+		<!--  error container --> 
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="errorContainer ">
+				<div class="errorText">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					{!v.str_errorMsg}
+					</ui:message>
+				</div>
+			</div>
+		</aura:if> 
+	</div>
+	<!--  actual welcome dashboard -->
+	<div class="slds">
+		<div class="welcomeDashboard">
+			<section role="dialog" style="tabindex:-1;" aria-labelledby="modal-heading-01" 
+		    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open modalBackGround" >
+		    	<!--  section to display the popup -->
+	        	<div class="slds-modal__container">
+	        		 <div class="slds-modal__content slds-p-around--medium" id="modal-content-1">
+	        		 	<div class="welcomeText ">
+	        		 		<a alt="{!v.closeText}" tabindex="1" class="floatRight"
+		                			 title="{!v.closeText}" onclick="{!c.defaultClose}" style="">
+		                        <div class="closeIcon"></div>
+		                    	<span class="slds-assistive-text">{!v.closeText}</span>
+		                    </a>
+	        		 		<h2 class="clear">{!$Label.c.Welcome}&nbsp;{!v.loggedInUserRecord.FirstName}!</h2>
+	        		 	</div>
+	        		 	
+	        		 	<!--  the images and the dependent text -->
+	        		 	<div class="slds-grid slds-wrap">
+	        		 		<!--  the imnages and the dependent text are 1 of 3 in terms of grid language -->
+	        		 		<div class="imageandtextcontainer slds-col slds-size_1-of-1">
+								<!--  the image and text 1 is going to be displayed here -->	
+								<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-3 floatLeftContainer">
+									<div class="centerInfo">
+										<div class="manageDependentLandingIcon"></div>
+									</div>
+									<!--  manage dependents text -->
+									<div class="manageDependentLabel">
+										{!$Label.c.Manage_your_dependents}
+										<div class="supportingText">
+											{!$Label.c.Manage_your_dependents_supporting_text}
+										</div>
+									</div>
+									<br/>
+									<br/>
+								</div>
+								<!--  id card text -->
+								<!--  the image and text 2 is going to be displayed here -->	
+								<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-3 floatLeftContainer">
+									<div class="centerInfo">
+										<div class="idCardLandingIcon"></div>
+									</div>
+									<!--  manage dependents text -->
+									<div class="manageDependentLabel">
+										{!$Label.c.Access_ID_cards}
+										<div class="supportingText">
+											{!$Label.c.Access_ID_cards_supporting_text}
+										</div>
+									</div>
+									<br/>
+									<br/>
+								</div>
+								<!--  find and change dentists -->
+								<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-1 slds-large-size--1-of-3 floatLeftContainer">
+									<div class="centerInfo">
+										<div class="fadLandingIcon"></div>	
+									</div>
+									<!--  manage dependents text -->
+									<div class="manageDependentLabel">
+										{!v.manageDependentHeaderL}
+										<div class="supportingText">
+											{!v.manageDependentDescriptionL}
+											<!-- {!$Label.c.Find_and_change_dentists_supporting_text} -->
+										</div>
+									</div>
+									<br/>
+								</div>
+							</div>
+	        		 	</div>
+	        		 	<!--  horizontal ruler and the button  -->
+	        		 	<hr class="horizontalRuler" />
+	        		 	<!--  button to continue -->
+	        		 	<div class="slds-col slds-size_1-of-1 centerInfo continueButton">
+							<a class="generalButton " onclick="{!c.defaultClose}">
+									{!$Label.c.Continue}
+							</a>	        		 	
+	        		 	</div>
+	        		 </div>
+	        	</div>
+		    </section>
+		</div>
+	</div>
+</aura:component>

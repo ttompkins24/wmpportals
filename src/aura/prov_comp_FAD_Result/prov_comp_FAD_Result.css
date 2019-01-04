@@ -1,0 +1,77 @@
+/***************************************************
+	******************FAD LIST******************************
+	***************************************************/
+	.THIS .fadResult{
+		/*
+		background-color:#f8f9fa;
+		*/
+		width: 100%;
+		padding-left:5%;
+		padding-right:5%;
+	}
+	.THIS .fadResult .breadCrumbWrapper{ 
+		margin-bottom:20px;
+	}
+	
+	 .THIS .fadResult .leftContainer,  .THIS .fadResult .mainContainer {
+		/* width:15%; 
+		float:left;*/
+	}
+	
+	 .THIS .fadResult .leftContainer li{
+		margin-top:10px;
+	}
+	
+	.THIS .fadResult .slds-spinner_container{
+		position:fixed;
+	}
+	 .THIS .fadResult .mainContainer{
+		/* width:80%;
+		margin-left:4%; */
+		margin-bottom:5%;
+	}
+	
+	 .THIS .fadResult .mainContainer .header .subTitle{
+	   margin-left:5px;
+	   margin-top:5px;
+	}
+	
+	.THIS .fadResult .fadBody {
+	
+	}
+	
+	 .THIS .fadResult .sortByContainer li.selected,  .THIS .fadResult .showByContainer li.selected{
+		border-left:2px solid #0277bd;
+		padding-left:18px;
+	}
+	
+	
+	 .THIS .fadResult .showByContainer,  .THIS .fadResult .sortByContainer{
+		margin-top: 35px;
+	}
+	
+	 .THIS .fadResult .showByContainer .title,  .THIS .fadResult .showByContainer li,
+	  .THIS .fadResult .sortByContainer .title,  .THIS .fadResult .sortByContainer li{
+		padding-left:20px;
+	}
+	
+	 .THIS .fadResult .mainContainer .footer .paginate{
+		margin-top:20px;
+	}
+	
+	 .THIS .fadResult .mainContainer .header .title{
+		display:inline-flex;
+		padding-bottom:10px;
+	}
+	
+	 .THIS .fadResult .mainContainer .header .paginate,  .THIS .fadResult .mainContainer .footer .paginate{
+		float:right;
+	}
+	
+	 .THIS .fadResult .mainContainer .header .paginate .hidden,  .THIS .fadResult .mainContainer .footer .paginate .hidden{
+		visibility:hidden;
+	}
+	
+	 .THIS .fadResult .mainContainer .header .paginate .spacing,  .THIS .fadResult .mainContainer .footer .paginate .spacing{
+		margin:0px 10px;
+	}

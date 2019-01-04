@@ -1,0 +1,117 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+        access="global"
+        extends="c:prov_comp_Provider_Common" 
+        controller="prov_ctrl_Event_Calendar">
+
+  
+    <!-- Fields -->
+    <aura:attribute access="public" name="events" type="List" />
+    <aura:attribute access="public" name="isLoading" type="Boolean" default="true" />
+
+    <aura:attribute name="numResults" type="Integer" default="0"/>
+    <aura:attribute name="pageNum" type="Integer" default="1"/>
+    <aura:attribute name="totalPages" type="Integer" default="1"/>
+    <aura:attribute name="resultsPerPage" type="Integer" default="1" />
+
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+    <div class="generalOuterDiv eventCalContainer">
+
+
+        <!-- START CARD HEADER -->
+        <h1>Calendar of Future Events</h1>  
+
+        <aura:if isTrue="{!!v.isLoading}">
+            <div class="slds-grid slds-m-top_medium">
+
+                <div class="slds-col">
+                    <aura:if isTrue="{!v.events &amp;&amp; v.events.length > 0}">
+                        <aura:iteration items="{!v.events}" var="event">
+
+                            <article class="slds-card">
+                                <div class=" slds-grid">
+                                    <div class="slds-col slds-size_1-of-12 date-col">
+                                        <div class="slds-card__header">
+                                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                <div class="slds-media__body">
+                                                    <h2 class="slds-card__header-title" style="line-height: 0px;">
+                                                        <span class="slds-text-heading_small "><ui:outputDate value="{!event.Event_Date}" format="MMMM" /></span>
+                                                    </h2>
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="slds-card__body slds-card__body_inner date-col-day"><ui:outputDate value="{!event.Event_Date}" format="dd" /></div>
+                                    </div>
+
+                                    <div class="slds-col slds-size_11-of-12">
+                                        <div class="slds-card__header">
+                                            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                                                <div class="slds-media__body">
+                                                    <h2 class="slds-card__header-title" style="line-height: 0px;">
+                                                        <span class="slds-text-heading_small">
+                                                            <aura:if isTrue="{!event.startTime}">
+                                                                {!event.startTime} - {!event.endTime}
+                                                                <aura:set attribute="else">
+                                                                    All Day
+                                                                </aura:set>
+                                                            </aura:if>
+                                                        </span>
+                                                    </h2>
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="slds-card__body slds-card__body_inner">
+                                            <aura:if isTrue="{!event.Event_Content != '' &amp;&amp; event.Event_Content}">
+                                                <a onclick="{!c.launchEventModal}" data-value="{!event.Id}">{!event.Event_Title}</a>
+                                                <aura:set attribute="else">
+                                                    {!event.Event_Title}
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </aura:iteration>
+
+
+                        <div class="paginateHistoryFooter  slds-size_1-of-1">
+                            <div class="desktop">
+                                <a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+                                <a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+                                <span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+                                <a class="{!'spacing bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+                            </div>
+                            <div class="mobile">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+                                        </td>
+                                        <td>
+                                            <span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+                                        </td>
+                                        <td>
+                                            &nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+
+
+                        <aura:set attribute="else">
+                            There are no events
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </div>
+        </aura:if>
+
+        {!v.body}
+    </div>
+
+
+
+</aura:component>

@@ -1,0 +1,74 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_DeleteClaimDraft_Modal
+Purpose                     : Allows users to delete a claim draft in a modal popup
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             4        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  access="global" controller="prov_ctrl_Claim_Drafts">
+
+    <aura:attribute name="draftsToDeleteCount" type="String"/>
+    <aura:attribute name="draftsToSubmitCount" type="String"/>
+    <aura:attribute name="submitInProgress" type="boolean" default="false"/>
+    <aura:attribute name="claimToDelete" type="Claim__c"/>
+    <aura:attribute name="claimsToDelete" type="Claim__c[]"/>
+    <aura:attribute name="claimsToSubmit" type="Claim__c[]"/>
+	<aura:attribute name="closeText" type="String" default="Cancel"/>
+    <aura:attribute name="suppressWarningNewValue" type="boolean" />
+    <aura:attribute name="recordType" type="String"/>
+
+	<aura:registerEvent name="modalSuccessEvent" type="c:prov_event_Claim_Draft_Modal"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+<div class="slds popupModal" >
+    <section role="dialog" tabindex="-1" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <aura:if isTrue="{!v.submitInProgress}"> 
+
+                <header class="slds-modal__header slds-modal__header_empty"/>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <span class="header3 slds-align_absolute-center slds-p-around_large">Submitting {!v.draftsToSubmitCount}...</span>
+                </div>
+
+            <aura:set attribute="else">
+
+                <header class="slds-modal__header slds-modal__header_empty">
+                    <!-- <a alt="{!v.closeText}" tabindex="1" class="floatRight testScript_closeButton" title="{!v.closeText}" onclick="{!c.closeModal}" style="">
+                        <div class="closeIconA ">{!v.closeText} | </div>
+                    </a> -->
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse testScript_closeButton" title="Close" onclick="{!c.closeModal}">
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <span class="slds-col header5">{!v.closeText}&nbsp;|&nbsp;</span>
+                            <lightning:icon class="ddIcon slds-col" iconName="utility:close" />
+                            <span class="slds-assistive-text">Close</span>
+                        </div>
+                    </button>
+                </header>
+
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-grid slds-wrap">
+                        <span class="header3 slds-align_absolute-center slds-p-top_medium slds-p-bottom_small">You are about to delete {!v.draftsToDeleteCount}. Are you sure?</span>
+                        <span class="header5 slds-align_absolute-center slds-p-bottom_medium">You cannot undo this action. Once drafts are deleted, they cannot be recovered.</span>
+                        <div class="slds-align_absolute-center slds-grid slds-size_1-of-2 slds-p-bottom_medium">
+                            <button class="slds-col generalButton inverse slds-m-right_medium testScript_noButton" onclick="{!c.closeModal}">No</button>
+                            <button class="slds-col generalButton testScript_yesButton " onclick="{!c.confirmDelete}">Yes, Delete</button>
+                        </div>                    
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        <ui:inputCheckbox class="testScript_supporessWarningInput" value="{!v.suppressWarningNewValue}"/><span class="header5 slds-p-left_x-small">Don't show this message again</span>
+                    </div>
+                </div>
+            </aura:set>
+            </aura:if>
+
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</div>
+</aura:component>

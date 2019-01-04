@@ -1,0 +1,39 @@
+.THIS .fileCaseContainer .outsideWrapperClass{
+    padding:20px;
+    background-color:white;
+    border:1px solid #d6d6d6;
+    border-radius:8px;
+    box-shadow:0 0 2px 0 rgba(0, 0, 0, 0.1);
+    display:block;
+    margin-bottom:35px;
+}
+.THIS .fileCaseContainer .outsideWrapperClass .innerWrapperClass{
+    margin:auto;
+}
+
+.THIS .fileCaseContainer .innerWrapperClass .title{
+text-align: center;
+}
+
+.THIS .fileCaseContainer .innerWrapperClass .typeDescription ul{
+    list-style-type: disc;
+    margin-left: 30px;
+}
+.THIS .fileCaseContainer .innerWrapperClass .requestTypeHeader{
+    margin-top:1.5rem;
+}
+
+.THIS .fileCaseContainer .innerWrapperClass .elementWrap{
+    margin-top:25px;
+}
+
+.THIS .fileCaseContainer .innerWrapperClass .uploadAttachment .slds-form-element .slds-form-element__label{
+    display:none !important;
+}
+
+.THIS .fileCaseContainer .innerWrapperClass .addressContainer input{
+    float:left;
+}
+.THIS .fileCaseContainer .slds-spinner_container{
+    position:fixed;
+}

@@ -1,0 +1,104 @@
+.THIS.claimsEntryContainer .testScript_claim_e_comp_clear {
+  margin-top:  20px;
+}
+
+.THIS.claimsEntryContainer  .inputCheck {
+    margin-left: 10px !important;
+}
+ 
+
+.THIS.claimsEntryContainer .inline-checkboxes {
+    display: inline !important;
+}
+
+.THIS.claimsEntryContainer  .radio-label {
+    margin-right: 10px !important;
+    float: right;
+    padding-top: 7px;
+}
+
+
+.THIS.claimsEntryContainer .uiInputRadio {
+    display: inline !important;
+}
+
+.THIS.claimsEntryContainer .required-asterisk {
+    padding-right: 2px;
+    color: rgb(194, 57, 52);
+    font-weight: 700;
+}
+
+
+
+.THIS.claimsEntryContainer .icd-input {
+  width: 90% !important;
+}
+
+.THIS.claimsEntryContainer .slds-file-selector__button {
+  width: 130px !important;
+}
+
+.THIS.claimsEntryContainer .slds-modal__container {
+  max-width: 80rem;
+  min-width: 60rem;
+}
+
+.THIS.claimsEntryContainer .menu_button_claim_entry {
+  margin-top: 26px !important;
+}
+
+.THIS.claimsEntryContainer .clear_button {
+  margin-top:28px;
+}
+
+.THIS.claimsEntryContainer .slds-form-element__control {
+  width: 98% !important;
+}
+
+.THIS.claimsEntryContainer .cob_line_item {
+  margin-left: 40px;
+  margin-right: 40px;
+
+  padding-bottom:10px;
+} 
+
+.THIS.claimsEntryContainer .cob_line_item_heade {
+  border-bottom: 1px solid #dfdfdf;
+  margin-bottom: 10px;
+}
+
+.THIS.claimsEntryContainer .frame {
+  border-radius: 4px;
+    background-color: rgba(135, 135, 135, 0.05);
+    border: solid 1px #dfdfdf;
+    padding: 20px;
+
+}
+.THIS.claimsEntryContainer .cobDeleteIcon{
+	padding-top:25px;
+}
+.THIS.claimsEntryContainer .basic-inline-input {
+  width: 100% !important;
+}
+.THIS.claimsEntryContainer .lighter{
+    margin-top: 44px; 
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.claimsEntryContainer .slds-spinner:before, 
+.THIS.claimsEntryContainer .slds-spinner:after, 
+.THIS.claimsEntryContainer .slds-spinner__dot-a:before, 
+.THIS.claimsEntryContainer .slds-spinner__dot-b:before, 
+.THIS.claimsEntryContainer .slds-spinner__dot-a:after, 
+.THIS.claimsEntryContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}
+
+.THIS .nameText {
+  font-size: 24px;
+}
+
+.THIS .bold {
+    font-weight: bold;
+}

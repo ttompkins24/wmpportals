@@ -1,0 +1,305 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_Referral_Detail">
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}";
+
+		var claimStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+			//console.log('adding addEventListener');
+
+			//claimStr = event.data;
+			//console.log('event data from vf page' + claimStr);
+			//call function to pass data to apex controller
+
+			if(event.data.type == 'referral'){
+				//call function to pass data to apex controller
+				getRefDetail(event.data.str);
+			} else if(event.data.type == 'attachments'){
+				//call function to pass data to apex controller
+				getAttachments(event.data.str);
+			} else if (event.data.type == 'attach'){
+				//console.log('in attachment download');
+				getAttachmentDownload(event.data.str);
+			}
+			//getClaimDetail(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			//console.log('claim page complete');
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getRefDetail(data) {
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Detail.getRefDetailRemote}',
+				data,
+				function(result, event){
+					if(event.status){
+						var refDetailString = result;
+						//console.log('refDetailString ' + JSON.stringify(refDetailString) );
+						afterLogic(refDetailString, data);
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        //console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						//console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function afterLogic(refDetailString, data) { 
+			//console.log('claim Detail after logic');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Detail.afterResponseLogic}',
+				refDetailString,
+				function(result, event){	
+					if(event.status){
+						//console.log('	result ' + JSON.stringify(result ));
+						
+						if(result != null){
+
+							//console.log('result claim' + result.Claim);
+							var newObj = new Object();
+							//console.log(result.Claim.Header.BusinessName);
+							result.Claim.Header.MemberName = result.Claim.Header.PatientFirstName + ' ' + result.Claim.Header.PatientLastName;
+
+							if(result.Claim.Header.ProviderNpi != undefined){
+								result.Claim.Header.ProviderName = convertProvName(result.Claim.Header.ProviderNpi, result.Claim.Header.ProviderFirstName, result.Claim.Header.ProviderLastName);
+							}else {
+								result.Claim.Header.ProviderName = convertProvName('', result.Claim.Header.ProviderFirstName, result.Claim.Header.ProviderLastName);
+							}
+							result.Claim.Header.ServiceLocationName = convertServLocation(result.Claim.Header.ProviderNpi, result.Claim.Header.ProviderAddress1, result.Claim.Header.ProviderCity, result.Claim.Header.ProviderState, result.Claim.Header.ProviderZipCode, result.Claim.Header.ServiceOfficeName);
+
+							result.Claim.Header.Business = convertBusiness(result.Claim.Header.BusinessNpi, result.Claim.Header.BusinessName);
+
+
+							result.Claim.Referral.RequestedProviderPhoneNumber = convertRequestedPhone(result.Claim.Referral.RequestedProviderPhoneNumber);
+
+							result.Claim.Referral.RequestedProviderAddress = convertRequestedAddress(result.Claim.Referral.RequestedProviderAddress1, result.Claim.Referral.RequestedProviderCity, result.Claim.Referral.RequestedProviderState, result.Claim.Referral.RequestedProviderZipcode);
+							result.Claim.Referral.RequestedProviderName = convertRequestedProvider(result.Claim.Referral.RequestedProviderName, result.Claim.Referral.RequestedProviderFirstName, result.Claim.Referral.RequestedProviderLastName);
+							newObj = {type: "referral", str: result.Claim};
+							//console.log('result' + result.Claim);
+						}
+
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					} else {
+						//console.log('message ' + event.message);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					}
+					
+				},
+				{buffer: false, escape: true, timeout: 50000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+		function getAttachments(data){
+
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Detail.getRefAttachmentsRemote}',
+				data,
+				function(result, event){
+					if(event.status){
+						
+						if(result != null){
+
+							//console.log('result claim' + result);
+							var newObj = new Object();
+
+							var resultObj = JSON.parse(result);
+							resultObj.forEach(function(element){
+								element.Created = convertDate(element.Created);
+
+							});
+							
+							newObj = {type: "attachments", str: resultObj};
+						}
+						//when do I set the attachment list?
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        //console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						//console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+			
+		}
+
+		
+
+		function getAttachmentDownload(attachReqStr){
+			//console.log('attachment data' + attachReqStr);
+			var eob = JSON.parse(attachReqStr);
+			//console.log('parsed' + eob);
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Detail.getAttachRemote}',
+				eob.eobLink,
+				function(result, event){
+					if(event.status){
+						
+						if(result != null){
+
+							//console.log('result claim' + result);
+							
+							var newObj = {type: "attach", name: eob.name, filetype: eob.filetype, str: result};
+						}
+
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        //console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						//console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+			
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+		function convertProvName(providerNpi, providerFirstName, providerLastName){
+			var npi = '';
+            if(providerNpi != ''){
+                npi = ' (#' + providerNpi +') ';
+
+            }
+            return providerFirstName + ' ' + providerLastName + npi;
+		}
+
+		function convertServLocation(ServiceLocationNpi, ProviderAddress1, ProviderCity, ProviderState, ProviderZipCode, ServiceOfficeName){
+			var npi = ' ';
+            var name = '';
+            var city = '';
+            var address = '';
+            var state = '';
+            var location = '';
+            var zip = '';
+            if(ServiceLocationNpi != ''){
+                npi = ' (#' + ServiceLocationNpi +') ';
+
+            }
+            if(ProviderCity != null && ProviderAddress1 != null && ProviderState != null){
+                city = ProviderCity;
+                address = ProviderAddress1;
+                state = ProviderState;
+                zip = ProviderZipCode;
+                name = ServiceOfficeName;
+                location = name + npi + address + ', ' + city + ', '+ state + ' ' + zip;
+            }
+
+            return location;
+		}
+
+		function convertBusiness(BusinessNpi, BusinessName){
+			var bizNpi = '';
+            if(BusinessNpi != ''){
+                bizNpi = ' (#' + BusinessNpi +')';
+
+            }
+            return BusinessName + bizNpi;
+		}
+
+		function convertRequestedPhone(phone){
+
+			if(phone != null && phone != '' && !phone.startsWith('(') && phone.indexOf('-') == -1){
+        		var newPhoneNumber = '';
+        		newPhoneNumber = phone.substring(0,3) + '-';
+        		newPhoneNumber += phone.substring(3,6) + '-';
+        		newPhoneNumber += phone.substring(6) ;
+        		return newPhoneNumber;
+        	} else {
+	        	return 	phone;
+        		
+        	}	
+		}
+
+		function convertRequestedAddress(RequestedProviderAddress1, RequestedProviderCity, RequestedProviderState, RequestedProviderZipcode){
+			var city = '';
+            var address = '';
+            var state = '';
+            var location = '';
+            if(RequestedProviderCity != null && RequestedProviderAddress1 != null && RequestedProviderState != null){
+                city = RequestedProviderCity;
+                address = RequestedProviderAddress1;
+                state = RequestedProviderState;
+                location = address + ', ' + city + ', '+ state + ' ' + RequestedProviderZipcode;
+            }
+
+            return location;
+		}
+
+		function convertRequestedProvider(RequestedProviderName, RequestedProviderFirstName, RequestedProviderLastName){
+			var name = '';
+            if(RequestedProviderName == null || RequestedProviderName == ''){
+                name = RequestedProviderFirstName + ' ' + RequestedProviderLastName;
+                return name;
+            }
+            else{
+                return RequestedProviderName;
+            
+             }
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+
+</apex:page>

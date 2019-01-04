@@ -1,0 +1,264 @@
+<!--
+/*******************************************************************************************************
+Name 						: prov_comp_Dentist_List
+Purpose						: Displays list of dentists based on Service location 
+Created on					: February 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				3			February 2018	West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global"  controller="prov_ctrl_Dentist_List" extends="c:prov_comp_Provider_Common">
+
+	<!-- attributes to hold lists of accounts -->
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="locListPage" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	
+	<aura:attribute name="pageNumDentist" type="Integer" default="1" />
+	<aura:attribute name="pageNumLocation" type="Integer" default="1" />
+	
+	<aura:attribute name="total_num_dentist" type="Integer" default="0" />
+	<aura:attribute name="total_num_location" type="Integer" default="0" />
+	
+	<aura:attribute name="total_pages_dentist" type="Integer" default="1" />
+	<aura:attribute name="total_pages_location" type="Integer" default="1" />
+	
+	<aura:attribute name="pageSizeLoc" type="Integer" default="10" />
+	<aura:attribute name="pageSizeProv" type="Integer" default="10" />
+	
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+
+   	<!-- sort values to hold for print -->
+   	<aura:attribute name="sortFieldLoc" type="String"/>
+   	<aura:attribute name="directionLoc" type="String"/>
+   	<aura:attribute name="sortFieldProv" type="String"/>
+   	<aura:attribute name="directionProv" type="String"/>
+
+
+   	<aura:attribute name="noResults" type="boolean"/>
+	<aura:attribute name="dentistList"
+    				type="Providers_Service_Locations__c[]"
+    				description="the list of provider service locations from search results" 
+    				/>		
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+		<div class="dentistListWrapper generalOuterDiv slds">
+			<!-- SAVING SPINNER -->
+	    	<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="slds-hide"/>
+			<div>
+				<div class="slds-float_left">
+				<h1>Practice Records
+				</h1>
+				</div>
+				<div class="slds-float_right footer">
+					<span class="bodyLink dataSpace spacing"><a onclick="{!c.printDocument}" class="printIcon testscript_print">Print</a></span>
+				</div>
+
+			
+			</div>
+			<div class="tableSpacer elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+				<div class="slds-size_1-of-3" >
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="locAccts" label="Filter by Service Location" labelClass="generalLabelForm" disabled="{!if(v.locList.length == 1, true, false)}" class="slds-col slds-size_1-of-1 generalInputForm testscript_servLoc" change="{!c.updateLocSearch}">
+		           			<aura:if isTrue="{!v.locList.length > 1}">
+		                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any"/>
+		                	</aura:if>
+	        				<aura:iteration items="{!v.locList}" var="locAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" label="{!locAcct.Service_Location_Name__c}"/>
+		        			</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3">
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="provAccts" label="Filter by Provider" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_provinput" change="{!c.updateProvSearch}">
+							<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any" value="true" />
+	        				<aura:iteration items="{!v.provList}" var="provAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!provAcct.Id}" label="{!provAcct.Name}"/>
+	        				</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3">
+
+					
+					<div class="slds-form-element">
+						<button  aura:id="searchButton" class="generalButton slds-float_right spacing testscript_searchButton" onclick="{!c.dentistSearch}">Apply Filter</button>
+					</div>
+					<div class="slds-form-element">
+						<button  aura:id="clearSearch" class="generalButton slds-float_right spacing testscript_clearSearch" onclick="{!c.clearSearchFields}">Clear</button>
+					</div>
+				</div>
+		  	</div>
+			
+		
+		
+			<!-- business table -->
+			<div class="tableSpacer resultsTable">
+				<h3>Business</h3>
+				<table class="tableClass" aura:id="busTable" id="busTable">
+					<thead>
+						 <tr>
+						 	<th class="width10">
+						 		<span class="headerText inverse" data-fieldname="Name" data-col="0" data-tableid="busTable">Business Name</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText inverse" data-fieldname="tax_id_number__c" data-col="1" data-tableid="busTable">TIN</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText inverse" data-fieldname="Phone" data-col="2" data-tableid="busTable">Contact Phone</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<!-- show business information -->
+							<tr>
+								<td data-label="Business Name" class="slds-is-sortable width10">
+									<span class="bodyText dataSpace"><a onclick="{!c.businessDetail}" class="testscript_bizLink bodyLink" data-bizid="{!v.bizAcctRec.Id}" data-windguid="{!v.bizAcctRec.windward_guid__c}">{!v.bizAcctRec.Name}</a></span>
+								</td>
+								<td data-label="TIN" class="slds-is-sortable width10">
+									<span class="bodyText dataSpace">{!v.bizAcctRec.tax_id_number__c}</span>
+								</td>
+								<td data-label="Contact Phone" class="slds-is-sortable width10">
+									<span class="bodyText dataSpace">{!v.bizAcctRec.Phone}</span>
+								</td>
+							</tr>
+					</tbody>
+				</table>
+				
+			</div>
+
+			<!-- location table -->
+			<div class="tableSpacer">
+				<h3>Service Locations</h3>
+				<table class="tableClass" aura:id="location" id="location">
+					<thead>
+						 <tr >
+						 	<th class="width10">
+						 		<span class="headerText sortable sorted sortAscend inverse" onclick="{!c.updateColumnSorting}" data-fieldname="Name" data-col="0" data-tableid="location">Office Name</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText sortable notSorted inverse" onclick="{!c.updateColumnSorting}" data-fieldname="BillingStreet" data-col="1" data-tableid="location">Address</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText inverse" data-fieldname="" data-col="2" data-tableid="location">Contact Phone</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<!-- iterate through each location -->
+						<aura:if isTrue="{!v.locListPage.length > 0}">
+							<aura:iteration items="{!v.locListPage}" var="loc"  start="{!(v.pageNumLocation - 1) * v.pageSizeLoc}" end="{!v.pageNumLocation * v.pageSizeLoc}">
+								<tr>
+									<td data-label="Location Name" class="slds-is-sortable width10"> 
+										<span class="bodyText dataSpace"><a class="testscript_locLink bodyLink" onclick="{!c.servLocationDetail}" data-location="{!loc.Id}">{!loc.Name}</a></span>
+									</td>
+									<td data-label="Location Address" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace">{!loc.BillingStreet},&nbsp;{!loc.BillingCity},&nbsp;{!loc.BillingState}&nbsp; {!loc.BillingPostalCode}</span>
+									</td>
+									<td data-label="Contact Phone" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace">{!loc.Phone}</span>
+									</td>
+								</tr>
+							</aura:iteration>
+						</aura:if>
+					</tbody>
+				</table>
+
+				<aura:if isTrue="{!v.locListPage.length > 0}">
+					<div>
+						<div class="slds-col slds-size_1-of-1 footer">
+							<div class="col paginate">
+								<div class="">
+									<span class="{!'bodyText dataSpace spacing' + (v.total_pages_location > 1 ? '' : ' hidden')}"><a onclick="{!c.showAllLocations}">Show All</a></span> 
+									<a class="{!'spacing  bodyLink ' + (v.pageNumLocation == 1 ? ' hidden' : '') }"  onclick="{!c.firstLocPage}" >First</a>
+									<a class="{!'spacing  bodyLink ' + (v.pageNumLocation == 1 ? ' hidden' : '') }" onclick="{!c.previousLocPage}" >Previous</a>
+									<span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumLocation}&nbsp;of&nbsp;{!v.total_pages_location}</span>
+									<a class="{!'spacing  bodyLink ' + (v.total_pages_location > v.pageNumLocation ? '' : ' hidden') }" onclick="{!c.nextLocPage}" >Next</a>
+								</div>
+							</div>		
+						</div>	
+
+					</div>
+				</aura:if>
+			</div>
+
+			<!-- provider table -->
+			<div class="tableSpacer">
+				<h3>Providers</h3>
+				<table class="tableClass" aura:id="dentist" id="dentist">
+					<thead>
+						 <tr >
+						 	<th class="width10">
+						 		<span class="headerText sortable sorted sortAscend inverse" onclick="{!c.updateColumnSorting}" data-fieldname="Provider__r.Name" data-col="0" data-tableid="dentist">Provider Name</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText sortable notSorted inverse" onclick="{!c.updateColumnSorting}" data-fieldname="Provider__r.npi__c" data-col="1" data-tableid="dentist">NPI</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText sortable notSorted inverse" onclick="{!c.updateColumnSorting}" data-fieldname="Service_Location__r.BillingStreet" data-col="2" data-tableid="dentist">Address</span>
+						 	</th>
+						 	<th class="width10">
+						 		<span class="headerText inverse" data-fieldname="" data-col="3" data-tableid="dentist">Contact Phone</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<aura:if isTrue="{!v.noResults}">
+							<tr>
+								<td class="bodyText dataSpace noResults" colspan="4">{!$Label.c.No_Results_Found}
+								</td>	
+							</tr>
+						</aura:if>
+
+						<aura:if isTrue="{!v.dentistList.length > 0}">
+							<aura:iteration items="{!v.dentistList}" var="dentist"  start="{!(v.pageNumDentist - 1) * v.pageSizeProv}" end="{!v.pageNumDentist * v.pageSizeProv}">
+								<tr>
+									<td data-label="Dentist Name" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace"><a class="testscript_provLink bodyLink" onclick="{!c.pslDetail}" data-dentistid="{!dentist.Id}">{!dentist.Provider__r.Name}</a></span>
+									</td>
+									<td data-label="NPI" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace">{!dentist.Provider__r.npi__c}</span>
+									</td>
+									<td data-label="Address" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace">{!dentist.Service_Location__r.BillingStreet},&nbsp;{!dentist.Service_Location__r.BillingCity},&nbsp;{!dentist.Service_Location__r.BillingState}&nbsp; {!dentist.Service_Location__r.BillingPostalCode}</span>
+									</td>
+									<td data-label="Contact Phone" class="slds-is-sortable width10">
+										<span class="bodyText dataSpace">{!dentist.Service_Location__r.Phone}</span>
+									</td>
+								</tr>
+							</aura:iteration>
+						</aura:if>
+					</tbody>
+				</table>
+
+				<aura:if isTrue="{!v.dentistList.length > 0}">
+					<div>
+						<div class="slds-col slds-size_1-of-1 footer">
+							<div class="col paginate">
+								<div class="">
+									<span class="{!'bodyText dataSpace spacing testscript_showAll' + (v.total_pages_dentist > 1 ? '' : ' hidden')}"><a class="testscript_showAll" onclick="{!c.showAllDentists}">Show All</a></span> 
+									<a class="{!'spacing  bodyLink testscript_first' + (v.pageNumDentist == 1 ? ' hidden' : '') }"  onclick="{!c.firstDentPage}" >First</a>
+									<a class="{!'spacing  bodyLink testscript_prev' + (v.pageNumDentist == 1 ? ' hidden' : '') }" onclick="{!c.previousDentPage}" >Previous</a>
+									<span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumDentist}&nbsp;of&nbsp;{!v.total_pages_dentist}</span>
+									<a class="{!'spacing  bodyLink testscript_next' + (v.total_pages_dentist > v.pageNumDentist ? '' : ' hidden') }" onclick="{!c.nextDentPage}" >Next</a>
+								</div>
+							</div>		
+						</div>	
+
+					</div>
+				</aura:if>
+			</div>
+		</div>
+
+</aura:component>

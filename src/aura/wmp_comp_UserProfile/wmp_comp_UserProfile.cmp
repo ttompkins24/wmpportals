@@ -1,0 +1,91 @@
+<aura:component controller="wmp_ctrl_UserProfile" >
+
+<ltng:require styles="{!join(',', 
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/css/bootstrap.css'
+			)}"
+		scripts="{!join(',', 
+			$Resource.jquery_3_2_1,
+			
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/js/bootstrap.js')}"
+		 
+	/> 
+	<aura:registerEvent name="redirect_event" type="c:wmp_event_Redirect" />
+	<aura:handler name="init" action="{!c.doInit}" value="{!this}" />
+	
+	<aura:attribute name="lang" type="String" description="Language that is selected" />
+	<aura:attribute name="helpL" type="String" description="Help Label" default="{!$Label.c.Help}" />
+	<aura:attribute name="accountL" type="String" description="Account Label" default="{!$Label.c.Account_Settings}" />
+	<aura:attribute name="logoutL" type="String" description="Logout Label" default="{!$Label.c.Sign_out}" />
+	<aura:attribute name="notifL" type="String" description="Notifications Label" default="{!$Label.c.Notifications}" />
+	<aura:attribute name="uFullName" type="String" description="User full name" default="{!$User.c.FullName}" />
+	<aura:attribute name="accountSettingsUrl" type="String" description="URL for Account Settings page" default="" />
+	<aura:attribute name="notifList" type="Notification__c[]" description="" />
+    
+	<div class="slds userProfileContainer">
+		<div class="header desktop">
+			<div class="linkList">
+				<div class="link-item">
+					<div  class="dropdown">
+						<a  class="linkColor endIcon" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="langDropdownDesktop">
+							<aura:if isTrue="{!v.lang=='Espanol'}">
+                            		<h4 class="linkColor">Espa&ntilde;ol</h4>
+                                <aura:set attribute="else">
+                                 	<h4 class="linkColor">{!v.lang}</h4>
+                                </aura:set>
+                            </aura:if>
+                            
+						</a>
+						<div class="dropdown-menu generalDropdown" aria-labelledby="langDropdownDesktop">
+							<ul>
+								<li class="" data-id="English" onclick="{!c.changeLanguage}"><a >English</a></li>
+								<li class="" data-id="Espanol" onclick="{!c.changeLanguage}"><a >Espa&ntilde;ol</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="link-item">
+					<a data-loc="help-center-landing" onclick="{!c.redirectUrl}"><h4 class="linkColor">{!v.helpL}</h4></a>
+				</div>
+				
+				<div class="link-item">
+                    <c:wmp_comp_NotificationHeader lang="{!v.lang}" notifL="{!v.notifL}" notifList="{!v.notifList}"/>
+				</div>
+				
+				<div class="link-item">
+					<div class="dropdown">
+						<a class="endIcon linkColor" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="userDropdownDesktop">
+							<h4 class="linkColor">{!v.uFullName}</h4>
+						</a>
+						<div class="dropdown-menu generalDropdown userProfileDropD" aria-labelledby="userDropdownDesktop">
+							<ul>
+                                
+                                <li class=" " data-loc="account-settings" ><a href="{!v.accountSettingsUrl}">{!v.accountL}</a></li>
+								<li class=" " data-loc="add-member-plan" onclick="{!c.redirectUrl}"><a >{!$Label.c.Add_Dependent_Plan}</a></li>
+								<li class=" "  ><a href="{!$Label.c.Logout_Url}">{!v.logoutL}</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="header mobile">
+			<div  class="userBodyMobileContainer" >
+				<ul>
+					<li class="topNavCell headerLink">
+						<a data-loc="help-center-landing" onclick="{!c.redirectUrl}" ><h4>{!v.helpL}</h4></a>
+					</li>
+					<li class="topNavCell headerLink">
+						<a data-loc="account-settings" onclick="{!c.redirectUrl}" ><h4>{!v.accountL}</h4></a>
+					</li>
+					<li class="topNavCell headerLink">
+						<a data-loc="add-member-plan" onclick="{!c.redirectUrl}"><h4>{!$Label.c.Add_Dependent_Plan}</h4></a>
+					</li>
+					<li class="topNavCell headerLink" >
+						<a href="{!$Label.c.Logout_Url}"><h4>{!v.logoutL}</h4></a>
+					</li>
+				</ul>
+				
+			</div>
+		</div>
+	</div>
+</aura:component>

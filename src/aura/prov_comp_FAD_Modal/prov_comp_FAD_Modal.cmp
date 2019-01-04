@@ -1,0 +1,44 @@
+<aura:component >
+ 
+    <aura:attribute name="value" type="String" description="the record id or string value to be displayed" default="001g000001j3uVJAAY"/>
+    <aura:attribute name="typeName" type="String" required="true" description="the type of modal to be displayed" default="RECDETAIL"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    
+    <aura:attribute name="closeText" type="String" default="{!$Label.c.Close}"/>
+    <aura:attribute name="headerText" type="String" default="Find a Provider"/>
+    <aura:attribute name="footerDisplay" type="String" description="What footer to show, a 'Close' or return to 'Overview'" default="Close"/>
+    
+    <aura:attribute name="closeModal" type="Boolean" default="false"/>
+    <aura:handler name="change" value="{!v.closeModal}" action="{!c.defaultClose}" />
+    
+    <div class="slds">
+    	<div class="popupModal">
+	    	<section role="dialog" style=" height:90%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+	    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open " >
+	        	<div class="slds-modal__container">
+	            	<header class="slds-modal__header">
+	                	<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+	                			 title="{!v.closeText}" onclick="{!c.defaultClose}" style="">
+	                        <div class="closeIcon"></div>
+	                    	<span class="slds-assistive-text">{!v.closeText}</span>
+	                    </a>
+	                    <aura:if isTrue="{!v.headerText != ''}">
+	                    	<h2  class="popupModalHeader" >{!v.headerText}</h2>
+	                    </aura:if>
+	                </header>
+	                <div class="slds-modal__content " id="modal-content-1">
+	                	<c:prov_comp_FAD isModal="true" closeModal="{!v.closeModal}"/>
+	                </div>
+	                
+	                <!-- <footer class="slds-modal__footer slds-p-around_large">
+
+	                    		<a class="generalButton"  onclick="{!c.defaultClose}">{!v.closeText}</a>
+	                    		
+	                </footer> -->
+	            </div>
+	        </section>
+	        <div class="slds-backdrop slds-backdrop--open" ></div>
+		</div>
+    </div>
+</aura:component>

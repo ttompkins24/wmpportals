@@ -1,0 +1,41 @@
+.THIS .popupModal .slds-modal__container .forceOutputOwnerIdLookupWithChangeLink{
+	width: fit-content;
+}
+.THIS .popupModal .popupModalHeader{
+	color:#54698d;
+}
+
+.THIS .popupModal .slds-modal__container{
+	width: 80%;
+    max-width: 80%;
+}
+
+.THIS .slds-modal__footer{
+	text-align:center;
+	
+}
+
+.THIS .slds-modal__content{
+	padding:20px 60px;
+}
+.THIS .popupModal .slds-modal__content .textBody {
+    text-align: center;
+}
+
+.THIS .popupModal .slds-modal__content .slds-form-element .slds-form-element__label {
+	font-size:16px !important;
+	line-height:20px !important;
+	font-weight:600 !important;
+}
+
+.THIS .popupModal .slds-modal__content .slds-form-element .slds-form-element__static{
+	font-size:16px !important;
+	line-height:20px !important;
+}
+.THIS .popupModal .slds-modal__content .slds-form-element .slds-form-element__static .container{
+	padding-left:0px;
+	margin-left:0px;	
+}
+.THIS .popupModal .slds-modal__content .slds-form-element .slds-form-element__static .desktop.municipality{
+	display:block;
+}

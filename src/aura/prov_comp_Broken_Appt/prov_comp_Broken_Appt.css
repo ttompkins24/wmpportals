@@ -1,0 +1,55 @@
+.THIS.broken_appt_container .generalShadowBox{
+	margin-bottom: 20px;
+}
+
+.THIS .broken_header {
+	margin-bottom: 20px;
+}
+
+.THIS .blpPicklist .generalLabelForm {
+	width:100%;
+}
+
+.THIS .appt-header{
+		font-size:24px;
+		line-height:32px;
+		font-weight:600;
+		margin-top:20px;
+		margin-bottom: 10px;
+		font-family: Lato;
+	}
+
+.THIS .apptTextField {
+	width: 90%;
+}
+
+.THIS .spaceClass{
+	padding:10px 0px;
+}
+
+.THIS .apptDateField {
+	width: 90%;
+}
+.THIS .uiLabel{
+	display: block;
+}
+
+.THIS .notesArea{
+	width: 90%;
+}
+.THIS .saveBrokenAppt{
+	margin-top: 20px;
+	float:right;
+	margin-right: 30%;
+}
+.THIS .uiInputDate .display{
+	margin-right: 10%;
+}
+
+.THIS .generalInputForm {
+	width: 90%;
+}
+
+.THIS .slds-form-element {
+	margin-bottom: 20px;
+}

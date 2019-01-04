@@ -1,0 +1,21 @@
+.THIS.dentistListWrapper .generalInputForm{
+	width: 90%;
+}
+
+.THIS.dentistListWrapper .paginate{
+    text-align:right;
+    }
+
+.THIS.dentistListWrapper .spacing{
+    margin:0px 10px;
+    }
+.THIS.dentistListWrapper .footer{
+    margin-top:25px;
+}
+
+.THIS.dentistListWrapper .noResults {
+        text-align: center;
+    }
+.THIS.dentistListWrapper .tableSpacer {
+	padding-top:20px;	
+}

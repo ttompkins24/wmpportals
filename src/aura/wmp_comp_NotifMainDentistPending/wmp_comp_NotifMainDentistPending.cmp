@@ -1,0 +1,26 @@
+<aura:component controller="wmp_ctrl_NotificationHeader" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,forceCommunity:availableForAllPageTypes" access="global">
+	
+	<aura:handler name="init" value="{!this}" action="{!c.isPCDPending}" />
+	<aura:attribute name="memCovRec" type="mock_MemberCoverage__c" /> 
+	<aura:handler name="change" value="{!v.memCovRec}" action="{!c.isPCDPending}" />
+	
+	<aura:attribute name="pendingRequest" type="Boolean" default="false"/>
+	<aura:attribute name="pendingPCDRequestLabel" type="String" default="{!$Label.c.Pending_PCD_Request_Notification}" />
+	
+	<aura:attribute name="timer" type="Integer" description="timer for the controller" />
+	<aura:method name="runPCDRequest" action="{!c.isPCDPending}" /> 
+	
+	<div class="slds">
+		<aura:if isTrue="{!and(v.memCovRec != null, v.memCovRec != undefined)}">
+			<aura:if isTrue="{!v.pendingRequest}">
+				<div class="notifMainDentistPending">
+					<div class=" portalNotification outsideWrapper slds-grid slds-wrap slds-size_1-of-1 ">
+						<div class="slds-col slds-p-around--medium slds-size_1-of-1">
+							<h5>{!v.pendingPCDRequestLabel}</h5>
+						</div>
+					</div>
+				</div> 
+			</aura:if>
+		</aura:if>
+	</div>
+</aura:component>

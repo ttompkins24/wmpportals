@@ -1,0 +1,68 @@
+<aura:component controller="wmp_ctrl_MainDentist">
+	
+	<!-- MAIN DENTIST INFO/ CROSS ATTRIBUTES-->    
+    <aura:attribute name="stageName" type="String" description="the type of modal to be displayed" />
+    <aura:attribute name="memCovIds" type="String[]" description=""/>
+    <aura:attribute name="memSuccessMap" type="Map" />
+    <aura:attribute name="memName" type="String" description="if one member is trying to be set, then this will be populated with the members name" />
+    
+    <aura:attribute name="isError" type="Boolean" description="did an error occur" />
+
+	<!-- DENTIST AND OFFICE INFO -->    
+	<aura:attribute name="officeName" type="String" />
+	<aura:attribute name="officeId" type="String" />
+	<aura:attribute name="dentistId" type="String" />
+    <aura:attribute name="dentistName" type="String" />
+    <aura:attribute name="addressInfo" type="String" />
+    
+    
+    <!-- LABELS -->
+    <aura:attribute name="setMem_title" type="String" description="the main title for the set member page"/>
+    <aura:attribute name="setMem_info" type="String" description=" the sub text under the main title"/>
+    <aura:attribute name="setMem_oneMem" type="String" description="text for one member to be selected"/>
+    <aura:attribute name="setMem_allMem" type="String" description="text for the button if you want all members to be set to that"/>
+
+    <aura:attribute name="chosen_reason" type="String" description="the reason selected by the user."/>
+    <aura:attribute name="reasonList" type="String[]" description="list of reasons to change pcd" />
+    <aura:attribute name="reasonError" type="Boolean" />
+
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+     <div class="slds">
+    	<div class="mainDentist_setmem">
+    		<div class="mainDentist_body ">
+                <aura:if isTrue="{!v.reasonError}">
+                    <div class="bodyText slds-text-align_center validationErrorMessage" >Please select a reason.</div>
+                </aura:if>
+
+    			<div class="intro slds-text-align_center" >{!v.setMem_title}</div>
+    			<div class="bodyText slds-text-align_center" >{!v.setMem_info}</div>
+    			
+    			<div class="elementWrap">
+    				<div class="topRow">
+	    				<h5>{!v.dentistName}</h5>&nbsp;-&nbsp;<h5>{!v.officeName}</h5>
+    				</div>
+    				<br />
+    				<div class="bodyText">{!v.addressInfo}</div> 
+    			</div>
+                <div class="slds-text-align_center">
+    			    <ui:inputSelect label="{!$Label.c.FAD_Reason}" value="{!v.chosen_reason}" labelClass="generalLabelForm" class="generalInputForm picklistWidth" >
+                        <ui:inputSelectOption text="" label="Select a Reason" class="picklistOption" />
+                        <aura:iteration items="{!v.reasonList}" var="reason">
+                            <ui:inputSelectOption text="{!reason.Value}" label="{!reason.Label}" class="picklistOption" />
+                        </aura:iteration>
+                    </ui:inputSelect>
+                </div>
+    			<aura:if isTrue="{!v.memCovIds.length == 1}">
+	    			<div class="slds-p-top_medium slds-text-align_center">
+	    				<a class="bodyLink" onclick="{!c.applyOneMember}">{!v.setMem_oneMem} - {!v.memName}</a>
+	    			</div>
+	    		</aura:if>
+    			<div class="slds-p-top_small slds-text-align_center">
+    				<a class="bodyLink" onclick="{!c.applyAllMember}">{!v.setMem_allMem}</a>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+</aura:component>

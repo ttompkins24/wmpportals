@@ -1,0 +1,100 @@
+.THIS.claimReportWrapper .width2{
+  width: 2%;
+}
+
+.THIS.claimReportWrapper .dropdownServiceLine{
+  padding-right: 15px;
+}
+
+.THIS.claimReportWrapper .width15{
+  width: 15%;
+
+}
+
+.THIS.claimReportWrapper .width70{
+  width: 70%;
+}
+
+.THIS.claimReportWrapper .spacing{
+    margin:0px 10px;
+    }
+
+.THIS.claimReportWrapper .spacing-right{
+  margin-right: 10px;
+}
+
+.THIS.claimReportWrapper .reportInnerDiv{
+  border: solid 1px #ccc;
+  border-radius: 5px;
+  border-spacing: 5px;
+  padding: 20px;
+  margin-top: 20px;
+
+}
+
+.THIS.claimReportWrapper .acceptedMessage {
+  width: 100%;
+  height: 39px;
+  border-radius: 2px;
+  background-color: #f5fffa;
+  border: solid 1px #00a88f;
+}
+
+.THIS.claimReportWrapper .finalizedMessage {
+  width: 85px;
+  height: 39px;
+  border-radius: 2px;
+  background-color: #f5fffa;
+  border: solid 1px #00a88f;
+}
+
+.THIS.claimReportWrapper .accepted {
+  width: 69px;
+  height: 24px;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: bold;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+  color: #00a88f;
+}
+
+.THIS.claimReportWrapper .finalized {
+  width: 65px;
+  height: 24px;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: bold;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+  color: #00a88f;
+}
+
+.THIS.claimReportWrapper .filterDiv{
+    border: solid 1px #ccc;
+  border-radius: 5px;
+  border-spacing: 5px;
+  padding: 20px;
+  margin-top :10px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+}
+
+.THIS.claimReportWrapper .noResultsDiv{
+  text-align: center;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: bold;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  background-color: #FBEFEF;
+  color: #000000;
+}

@@ -1,0 +1,289 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Service_Detail
+Purpose                     : Allows users to view Details about Business Accounts
+Created on                  : February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             3        February 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_Service_Detail">
+	<!-- attributes to hold lists of accounts -->
+	<aura:attribute name="bizList" type="Account[]"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRecName" type="String"/>
+	<aura:attribute name="dentistList"
+    				type="Providers_Service_Locations__c[]"
+    				description="the list of provider service locations from search results" 
+    				/>		
+
+	<aura:attribute name="servOfficeHours" type="Map"/>
+
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>    
+	<aura:attribute name="editServiceOffice" type="boolean" default="false"/>
+
+	<aura:attribute name="page" type="integer" description="for storing currnet page Number"/>
+   	<aura:attribute name="pages" type="integer" description="using for store All Pages page Number"/>
+   	<aura:attribute name="total" type="integer" description="total records count store"/>
+   	<aura:attribute name="sortField" type="String" default="Name"/>
+   	<aura:attribute name="direction" type="String" default="ASC"/>
+   	<aura:attribute name="noResults" type="boolean"/>
+   	<aura:attribute name="maxResults" type="integer"/>
+   	<aura:attribute name="searchActive" type="boolean"/>
+	<aura:attribute name="isAsc" type="boolean" description="boolean flag to pass sorting condition to apex class"/> 
+
+	<aura:attribute name="isUpdateSuccess" type="boolean"/>    
+    <aura:attribute name="isUpdateError" type="boolean"/>
+    <aura:attribute name="serviceOfficeUpdateSuccessMsg" type="String"/>
+    <aura:attribute name="serviceOfficeUpdateErrorMsg" type="String"/>
+    <aura:attribute name="hasExistingCase" type="boolean"/>
+	<aura:attribute name="showSpinner" type="Boolean"/>
+	<aura:attribute name="refreshLocation" type="Boolean"/>
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:handler name="change" value="{!v.refreshLocation}" action="{!c.refreshLocation}"/>
+
+	<aura:if isTrue="{!v.editServiceOffice}">
+		<c:prov_comp_Service_Detail_Edit editServiceOffice="{!v.editServiceOffice}" serviceOfficeRecord="{!v.locAcctRec}" recordId="{!v.locAcctRecId}" dentistList="{!v.dentistList}" fieldNameSorted="{!v.sortField}" sortDirection="{!v.direction}"
+			isUpdateSuccess="{!v.isUpdateSuccess}" isUpdateError="{!v.isUpdateError}" serviceOfficeUpdateSuccessMsg="{!v.serviceOfficeUpdateSuccessMsg}" serviceOfficeUpdateErrorMsg="{!v.serviceOfficeUpdateErrorMsg}" refreshLocation="{!v.refreshLocation}"/>
+
+	<aura:set attribute="else">
+		<div class="serviceDetailWrapper slds generalOuterDiv slds-clearfix">
+			<aura:if isTrue="{!v.hasExistingCase}">
+	            <div  class="headerMessageContainer ">
+	                <ui:message class="warningMessageWrap slds-size_1-of-1" severity="warning" closable="false">
+	                    <lightning:icon size="medium" class="generalInfoIcon" variant="inverse" iconName="utility:info" alternativeText="Info"/>
+	                    <span class="warningMessage">{!$Label.c.Location_Existing_Case}
+						<a onclick="{!c.helpRequestRedirect}"> Help Request</a> page.</span>
+	                </ui:message>
+	            </div>                                                
+	        </aura:if>
+			<aura:if isTrue="{!v.isUpdateError}">
+	           	<div  class="headerMessageContainer ">
+		            <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+		            	<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+		                <span class="errorMessage">{!v.serviceOfficeUpdateErrorMsg}</span>
+		            </ui:message>
+		           </div>
+	        </aura:if>
+	        <aura:if isTrue="{!v.isUpdateSuccess}">
+	            <div  class="headerMessageContainer ">
+	                <ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+	                    <lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+	                    <span class="successMessage">{!v.serviceOfficeUpdateSuccessMsg}
+						<a onclick="{!c.helpRequestRedirect}"> Help Request Section</a>.</span>
+	                </ui:message>
+	            </div>                                                
+	        </aura:if>
+			<div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-clearfix">
+					<div class=" slds-col">
+						<h1>Service Office Details</h1>
+						<h3>{!v.locAcctRec.Name} - {!v.locAcctRecName}</h3>
+					</div>
+					<div class=" slds-col slds-clearfix ">
+						<aura:if isTrue="{!and(v.permissions.dentistList == 'full', v.permissions.tierAccess != '3')}">
+							<button class="generalButton slds-float_right inverse slds-m-right_medium testScript_updateInformationButton" onclick="{!c.edit}">
+								<span class="editIcon iconSpaceRight"  title="Update"></span>Update Information
+							</button>
+						</aura:if>
+						<a class=" bodyLink verticalSpacer slds-float_right testScript_printButton printIcon paddingRight" onclick="{!c.printList}">Print</a>
+					</div>
+				<div class="slds-size_1-of-1 slds-grid slds-wrap slds-p-top_large slds-gutters">
+					<div class="slds-col slds-size_1-of-2">
+						<div class="slds-border_bottom slds-p-bottom_x-small">
+							<h4>General Information</h4>
+						</div>
+
+						<div class="slds-m-top_small">
+							<dl class="slds-list_horizontal slds-wrap edit-table-general">
+	                            <dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+	                            <dd class="slds-item_detail bodyText" title="NPI">
+	                                <ui:outputText aura:id="serviceRecNPI" value="{!v.locAcctRec.npi__c}"/>
+	                            </dd>
+
+	                            <dt class="slds-item_label generalLabelForm" title="Address">Address:</dt>
+	                            <dd class="slds-item_detail bodyText" title="Address">
+	                                <ui:outputTextArea aura:id="serviceRecAddress" value="{!v.locAcctRec.BillingStreet + ' ' + v.locAcctRec.BillingCity + ', '+v.locAcctRec.BillingState+' '+v.locAcctRec.BillingPostalCode}"/>
+	                            </dd>
+
+	                            <dt class="slds-item_label generalLabelForm" title="PrimaryLanguage">Primary Language:</dt>
+	                            <dd class="slds-item_detail bodyText" title="PrimaryLanguage">
+	                                <ui:outputText aura:id="serviceRecPrimaryLanguage" value="{!v.locAcctRec.Supported_Languages__c}"/>
+	                            </dd>
+
+	                            <dt class="slds-item_label generalLabelForm" title="Wheelchair">Wheelchair Accessible:</dt>
+	                            <dd class="slds-item_detail bodyText" title="Wheelchair">
+	                                <ui:outputCheckbox aura:id="serviceRecWheelchair" value="{!v.locAcctRec.has_handicap_access__c}"/>
+	                            </dd>
+	                        </dl>
+						</div>
+					</div>
+
+					<div class="slds-col slds-size_1-of-2">
+						<div class="slds-border_bottom slds-p-bottom_x-small">
+							<h4>Contact</h4>
+						</div>
+						
+						<div class="slds-m-top_small">
+							<dl class="slds-list_horizontal slds-wrap edit-table-general">
+	                            <dt class="slds-item_label generalLabelForm" title="Phone">Phone:</dt>
+	                            <dd class="slds-item_detail bodyText" title="Phone">
+	                                <ui:outputPhone aura:id="serviceRecPhone" value="{!v.locAcctRec.Phone}"/>
+	                            </dd>
+	                            <dt class="slds-item_label generalLabelForm" title="Fax">Fax:</dt>
+	                            <dd class="slds-item_detail bodyText" title="Fax">
+	                                <ui:outputPhone aura:id="serviceRecFax" value="{!v.locAcctRec.Fax}"/>
+	                            </dd>
+	                            <dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+	                            <dd class="slds-item_detail bodyText" title="Email">
+	                                <ui:outputEmail aura:id="serviceRecEmail" value="{!v.locAcctRec.Email__c}"/>
+	                            </dd>
+	                        </dl>
+						</div>
+					</div>
+			  	</div>
+			</div>
+			
+			<!-- hours table -->
+			<div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+				<div class="slds-size_1-of-1">
+	                <div class="slds-col">
+	                    <h3>Hours</h3>
+	                </div>
+	                <div class="slds-col">
+						<table class="tableClass" aura:id="">
+							<thead>
+								 <tr>
+								 	<th class="width10">
+								 		<span class="headerText">Sunday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Monday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Tuesday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Wednesday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Thursday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Friday</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText">Saturday</span>
+								 	</th>
+								 </tr>
+							</thead>
+
+							<tbody>
+								<!-- show business information -->
+									<tr>
+										<td data-label="Sunday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.sunday_hours__c}</span>
+										</td>
+										<td data-label="Monday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.monday_hours__c}</span>
+										</td>
+										<td data-label="Tuesday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.tuesday_hours__c}</span>
+										</td>
+										<td data-label="Wednesday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.wednesday_hours__c}</span>
+										</td>
+										<td data-label="Thursday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.thursday_hours__c}</span>
+										</td>
+										<td data-label="Friday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.friday_hours__c}</span>
+										</td>
+										<td data-label="Saturday" class="width10">
+											<span class="bodyText dataSpace">{!v.locAcctRec.saturday_hours__c}</span>
+										</td>
+									</tr>
+							</tbody>
+						</table>
+					</div>	
+				</div>			
+			</div>
+
+			<!-- provider table -->
+			<div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+				<div class="slds-size_1-of-1">
+	                <div class="slds-col">
+	                    <h3>Providers at this Location</h3>
+	                </div>
+	                <div class="slds-col">
+						<table class="tableClass" id="providerTable">
+							<thead>
+								 <tr >
+								 	<th class="width10">
+								 		<span class="headerText sortable sorted sortAscend inverse testScript_providerNameSort" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_Name__c" data-col="0" data-tableid="providerTable">Provider Name</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText sortable notSorted inverse testScript_npiSort" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_NPI__c" data-col="1" data-tableid="providerTable">NPI</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText sortable notSorted inverse testScript_treatAgesSort" onclick="{!c.updateColumnSorting}" data-fieldname="treats_ages_from__c" data-col="2" data-tableid="providerTable">Min Age</span>
+								 	</th>
+									 <th class="width10">
+								 		<span class="headerText sortable notSorted inverse testScript_treatAgesSort" onclick="{!c.updateColumnSorting}" data-fieldname="treats_ages_to__c" data-col="3" data-tableid="providerTable">Max Age</span>
+								 	</th>
+								 	<th class="width10">
+								 		<span class="headerText sortable notSorted inverse testScript_acceptingNewSort" onclick="{!c.updateColumnSorting}" data-fieldname="is_accepting_new_patients__c" data-col="4" data-tableid="providerTable">Accepting New Patients</span>
+								 	</th>
+								 </tr>
+							</thead>
+
+							<tbody>
+								<aura:if isTrue="{!v.noResults}">
+									<tr>
+										<td class="bodyText dataSpace noResults" colspan="5">{!$Label.c.No_Results_Found}
+										</td>	
+									</tr>
+								</aura:if>
+
+								<aura:if isTrue="{!v.dentistList.length > 0}">
+									<aura:iteration items="{!v.dentistList}" var="dentist">
+										<tr>
+											<td data-label="Provider Name" class="slds-is-sortable width10" data-value="{!dentist.Provider_Name__c}">
+												<span class="bodyText dataSpace"><a onclick="{!c.pslDetail}" data-dentistid="{!dentist.Id}">{!dentist.Provider_Name__c}</a></span>
+											</td>
+											<td data-label="NPI" class="slds-is-sortable width10" data-value="{!dentist.Provider_NPI__c}">
+												<span class="bodyText dataSpace">{!dentist.Provider_NPI__c}</span>
+											</td>
+											<td data-label="MinAge" class="slds-is-sortable width10" data-value="{!if(dentist.treats_ages_from__c == undefined, '0', dentist.treats_ages_from__c)}">
+												<span class="bodyText dataSpace">{!dentist.treats_ages_from__c}</span>
+											</td>
+											<td data-label="MaxAge" class="slds-is-sortable width10" data-value="{!if(dentist.treats_ages_to__c == undefined, '0', dentist.treats_ages_to__c)}">
+												<span class="bodyText dataSpace">{!dentist.treats_ages_to__c}</span>
+											</td>
+											<td data-label="New Patients" class="slds-is-sortable width10" data-value="{!dentist.is_accepting_new_patients__c}">
+												<ui:outputCheckbox class="" value="{!dentist.is_accepting_new_patients__c}"/>
+											</td>
+										</tr>
+									</aura:iteration>
+								</aura:if>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</aura:set>
+	</aura:if>
+</aura:component>

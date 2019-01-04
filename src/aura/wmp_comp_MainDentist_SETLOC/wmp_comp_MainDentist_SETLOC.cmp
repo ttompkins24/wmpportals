@@ -1,0 +1,46 @@
+<aura:component >
+	<aura:attribute name="officeId" type="String" />
+	<aura:attribute name="officeName" type="String" />
+	<aura:attribute name="addressInfo" type="String" />
+    <aura:attribute name="dentistName" type="String" />
+    <aura:attribute name="children" type="Object[]" description="children locations for that dentist" />
+    <aura:attribute name="stageName" type="String" description="the type of modal to be displayed" />
+    
+    <aura:attribute name="isError" type="Boolean" description="did an error occur" />
+    
+    <div class="slds">
+    	<div class="mainDentist_setloc">
+    		<div class="mainDentist_header">
+    			<div class="intro" >{!$Label.c.Set_Loc_Info}</div>
+    		</div>
+    		<div class="mainDentist_body ">
+    			<aura:iteration items="{!v.children}" var="office">
+    				<aura:if isTrue="{!not(empty(office.name) ) }">
+    				<div class="elementWrap slds-grid slds-wrap slds-size_1-of-1 slds-p-around_medium">
+    					<div class="slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_4-of-5">
+    						<h5>{!office.name}</h5>
+    						<div class="bodyText">{!office.address}</div>
+    						<div class="{! office.acceptingNewPatients == 'false'}"></div>
+    						<aura:if isTrue="{! office.acceptingNewPatients == 'false'}">
+    							<div class="metaText errorText">
+    								{!$Label.c.Not_accepting_new_patients_here}
+    							</div>
+    						</aura:if>
+    					</div>
+    					<div class="slds-size_1-of-1 slds-medium-size_1-of-4 slds-large-size_1-of-5 slds-p-top_medium slds-text-align_center">
+    						<aura:if isTrue="{! office.acceptingNewPatients == 'true'}">
+	    						<a class="bodyLink" data-officeid="{!office.id}" data-officename="{!office.name}" data-address="{!office.address}" onclick="{!c.chooseLocation}" >
+	    							{!$Label.c.Choose}
+	    						</a>
+    							<aura:set attribute="else">
+		    						<div class="metaText">{!$Label.c.Choose}</div>
+    							</aura:set>
+    						</aura:if>
+    					</div>
+    				</div>
+    				</aura:if>
+    			</aura:iteration>
+    		</div>
+    	</div>
+    </div>
+</aura:component>

@@ -1,0 +1,19 @@
+.THIS .generalOutOfNetwork svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+
+.THIS .generalIneligible svg{
+	fill: #F6C32F;
+	padding-right:5px;
+}
+
+.THIS .generalNotFound svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+
+.THIS .generalEligible svg{
+	fill: #008355;
+	padding-right:5px;
+}

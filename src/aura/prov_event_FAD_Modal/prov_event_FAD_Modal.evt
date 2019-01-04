@@ -1,0 +1,15 @@
+<aura:event type="APPLICATION" description="passes modal component parameters back to referral entry component">
+  <aura:attribute name="firstName" type="String"/>
+  <aura:attribute name="lastName" type="String"/>
+  <aura:attribute name="name" type="String"/>
+  <aura:attribute name="npi" type="String"/>
+  <aura:attribute name="phone" type="String"/>
+  <aura:attribute name="address" type="String"/>
+  <aura:attribute name="city" type="String"/>
+  <aura:attribute name="state" type="String"/>
+  <aura:attribute name="zip" type="String"/>
+  <aura:attribute name="locationId" type="String"/>
+  <aura:attribute name="providerId" type="String"/>
+  <aura:attribute name="routeId" type="String"/>
+
+</aura:event>

@@ -1,0 +1,331 @@
+<aura:component controller="prov_ctrl_Member_Detail" 
+	extends="c:prov_comp_Provider_Common" 
+	implements="forceCommunity:availableForAllPageTypes" 
+	access="global">
+  
+	<!-- Define Private Attributes -->
+	<aura:attribute access="private" name="selectedTabIndex" type="Integer" />
+	<aura:attribute access="private" name="member" type="Object" />
+	<aura:attribute access="private" name="address" type="Object" />
+	<aura:attribute access="private" name="phones" type="List" />
+	<aura:attribute access="private" name="plansAndCoverages" type="List" />
+	<aura:attribute access="private" name="allCoverages" type="List" />
+
+	<aura:attribute access="private" name="primaryDentist" type="Object" />
+	<aura:attribute access="private" name="pcdProvider" type="Object" />
+	<aura:attribute access="private" name="pcdServiceLocation" type="Object" />
+	<aura:attribute access="private" name="activePlan" type="Object" />
+	<aura:attribute access="private" name="activeDate" type="String" />
+
+	<aura:attribute access="private" name="workPhone" type="Object" />
+	<aura:attribute access="private" name="faxPhone" type="Object" />
+	<aura:attribute access="private" name="primaryPhone" type="Object" />
+
+	<aura:attribute access="private" name="showEligibility" type="Boolean" default="false" />
+	<aura:attribute access="private" name="isEligible" type="Boolean" default="false" />
+	<aura:attribute access="private" name="eligibleStatus" type="String"  />
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+	<aura:attribute access="private" name="isError" type="Boolean" default="false"  />
+	
+	<aura:attribute name="preAuthLabel" type="String" description="holds value of preAuth label, differs by portal"/>
+
+	<!-- Define Event Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+	<div class="generalOuterDiv memberDetailContainer">
+		<aura:if isTrue="{!v.isError }">
+			
+
+			<div  class="headerMessageContainer ">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!$Label.c.Member_Not_Found}</span>
+				</ui:message>
+			</div>
+
+		</aura:if>
+
+		<aura:if isTrue="{!and(!v.isLoading, !v.isError) }">
+			<div class="">
+				<a onclick="{!c.printLink}" class="printIcon bodyLink printButton floatRight">Print </a>
+				<!-- START CARD HEADER -->
+				<h1>{!v.member.FirstName__c}&nbsp;{!v.member.LastName__c}</h1>
+
+				<div class="slds-grid">
+
+					<div class="slds-col">
+						<p>
+							<aura:if isTrue="{!v.eligibleStatus == 'eligible'}">
+								<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Eligible"/>
+								<span class="eligibilityTitle boldText">Member is eligible: 
+										{!v.currentBusiness.Name} - 
+									<aura:if isTrue="{!v.pcdProvider}">
+										{!v.pcdProvider.Name} -
+									</aura:if>
+
+									<aura:if isTrue="{!v.pcdServiceLocation}">
+										{!v.pcdServiceLocation.Service_Location_Name__c} -
+									</aura:if>
+
+									<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.activeDate}"/>
+
+								</span>
+								<aura:if isTrue="{!v.activePlan}">
+									<p class="eligibilityDetail">{!v.activePlan.Name}</p>
+								</aura:if>
+							</aura:if>
+							<aura:if isTrue="{!v.eligibleStatus == 'ineligible'}">
+								<lightning:icon size="medium" class="generalIneligible" variant="inverse" iconName="utility:error" alternativeText="Not Eligible"/>
+								<span class="eligibilityTitle boldText">Member is not eligible: 
+
+									<aura:if isTrue="{!v.pcdProvider}">
+										{!v.pcdProvider.Name} -
+									</aura:if>
+
+									<aura:if isTrue="{!v.pcdServiceLocation}">
+										{!v.pcdServiceLocation.Name} -
+									</aura:if>
+
+									<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.activeDate}"/>
+
+								</span>
+								<aura:if isTrue="{!v.activePlan}">
+									<p class="eligibilityDetail">{!v.activePlan.Name}</p>
+								</aura:if>
+							</aura:if>
+							<aura:if isTrue="{!v.eligibleStatus == 'outOfNetwork'}">
+								<lightning:icon size="medium" class="generalOutOfNetwork" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/>
+								<span class="eligibilityTitle boldText">Member is out of network: 
+
+									<aura:if isTrue="{!v.pcdProvider}">
+										{!v.pcdProvider.Name} -
+									</aura:if>
+
+									<aura:if isTrue="{!v.pcdServiceLocation}">
+										{!v.pcdServiceLocation.Name} -
+									</aura:if>
+
+									<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.activeDate}"/>
+
+								</span>
+								<aura:if isTrue="{!v.activePlan}">
+									<p class="eligibilityDetail">{!v.activePlan.Name}</p>
+								</aura:if>
+							</aura:if>
+						</p>
+					</div>
+
+					<div class="">
+						<aura:if isTrue="{!(v.permissions.preAuth == 'full' || v.permissions.claims == 'full' ||
+		                    			v.permissions.referral == 'full' || v.permissions.brokenAppointment == 'full')}">
+						<div class=" dropdown  " title="Options">
+							<span class="slds-p-right_small">Quick Links</span>
+		                  <div class="slds-button slds-button_icon slds-button_icon-border-filled dropdown-toggle optionDropdown" title="Quick Links" 
+		                  		data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownOptions">
+		                    	<lightning:icon iconName="utility:down" size="xx-small" />
+		                  </div>
+		                  <div class="slds-dropdown dropdown-menu slds-dropdown_right  " aria-labelledby="dropdownOptions">
+		                    <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+		                    	<aura:if isTrue="{!v.permissions.claims == 'full'}">
+			                    	<li class="navDropdown-item" >
+			                    		<a class="noDecoration bodyLink testScript_opt_claim" onclick="{!c.startClaim}" >Start a Claim</a>
+			                    	</li>
+		                    	</aura:if>
+		                    	<aura:if isTrue="{!v.permissions.preAuth == 'full'}">
+			                    	<li class="navDropdown-item" >
+			                    		<a href="javascript:void(0);" class="noDecoration bodyLink testScript_opt_preA}" onclick="{!c.startPreAuth}">Start {!v.preAuthLabel}</a><!-- -->
+			                    	</li>
+		                    	</aura:if>
+		                    	<aura:if isTrue="{!v.permissions.referral == 'full'}">
+			                    	<li class="navDropdown-item" >
+			                    		<a class="noDecoration bodyLink testScript_opt_REF}" onclick="{!c.startReferral}" >Start a Referral</a>
+			                    	</li>
+		                    	</aura:if>
+		                    	<aura:if isTrue="{!v.permissions.brokenAppointment == 'full'}">
+			                    	<li class="navDropdown-item" >
+			                    		<a class="noDecoration bodyLink testScript_opt_BA}" onclick="{!c.startBrokenAppt}" >Start Broken Appointment</a>
+			                    	</li>
+			                    </aura:if>
+		                    </ul>
+		                  </div>
+		                  
+		                </div>
+		                </aura:if>
+						<!-- <ui:menu class="slds-float_right">
+				   			<ui:menuTriggerLink aura:id="trigger">
+		                     <button aura:id="dropdown-button" class="slds-button slds-button_icon slds-button_icon-border-filled hideOnPrint" aria-haspopup="true" title="Show More">
+		                            <lightning:icon iconName="utility:down" size="xx-small"/>
+		                    </button>
+		                  	</ui:menuTriggerLink>
+		                      <ui:menuList class="actionMenu" aura:id="actionMenu" visible="false">
+		                            <ui:actionMenuItem aura:id="item1" label="Start a Pre-Auth"/>
+		                            <ui:actionMenuItem aura:id="item2" label="Start A Claim"/>
+		                            <ui:actionMenuItem aura:id="item3" label="Find A Dentist"/>
+		                        </ui:menuList>
+		              	</ui:menu>  -->
+
+					</div>
+				</div>
+
+				<hr/>
+
+				<!-- START CARD DETAILS -->
+				<div class="slds-grid slds-m-bottom_medium">
+					<div class="slds-col slds-size_1-of-3" >
+						<dl class="slds-list_horizontal slds-wrap">
+							
+							<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">DOB:</dt>
+							<dd class="slds-item_detail slds-truncate" title="Birthdate">
+								<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.member.Birthdate__c}"/>
+							</dd>
+
+							<dt class="slds-item_label bodyText boldText slds-truncate" title="Gender">Gender:</dt>
+							<dd class="slds-item_detail slds-truncate" title="Gender">{!v.member.Gender__c}</dd>
+
+							<dt class="slds-item_label bodyText boldText" title="Address">Primary Address:</dt>
+							<dd class="slds-item_detail" title="Address">
+								{!v.address.AddressLine1__c}&nbsp;{!v.address.AddressLine2__c},&nbsp;{!v.address.City__c},&nbsp;{!v.address.State__c}<br/> {!v.address.Zip__c}
+							</dd>
+							
+							<aura:if isTrue="{!v.primaryPhone}">
+								<dt class="slds-item_label bodyText boldText slds-truncate" title="Primary Phone">Primary Home Phone:</dt>
+								<dd class="slds-item_detail slds-truncate" title="Primary Phone">
+									<ui:outputPhone value="{!v.primaryPhone.Number__c}"/>
+								</dd>
+
+								<aura:set attribute="else">
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="Primary Phone">Primary Home Phone:</dt>
+									<dd class="slds-item_detail slds-truncate" title="Primary Phone">
+										-
+									</dd>
+								</aura:set>
+							</aura:if>
+	 
+	 						<aura:if isTrue="{!v.workPhone}">
+								<dt class="slds-item_label bodyText boldText slds-truncate" title="Work Phone">Work Phone:</dt>
+								<dd class="slds-item_detail slds-truncate" title="Work Phone">
+									<ui:outputPhone value="{!v.workPhone.Number__c}"/>
+								</dd>
+
+								<aura:set attribute="else">
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="Work Phone">Work Phone:</dt>
+									<dd class="slds-item_detail slds-truncate" title="Work Phone">
+										-
+									</dd>
+								</aura:set>
+							</aura:if>
+
+							<aura:if isTrue="{!v.faxPhone}">
+								<dt class="slds-item_label bodyText boldText slds-truncate" title="Fax Number">Fax Number:</dt>
+								<dd class="slds-item_detail slds-truncate" title="Fax Number">
+									<ui:outputPhone value="{!v.faxPhone.Number__c}"/>
+								</dd>
+
+								<aura:set attribute="else">
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="Fax Number">Fax Number:</dt>
+									<dd class="slds-item_detail slds-truncate" title="Fax Number">
+										-
+									</dd>
+								</aura:set>
+							</aura:if>
+							
+						</dl>
+					</div>
+
+
+					<aura:iteration items="{!v.plansAndCoverages}" var="plan">
+						<div class=" slds-size_1-of-3" >
+							<div class="slds-panel slds-no-wrap plan-panel">
+							    <div class="slds-form slds-form_stacked slds-grow slds-scrollable_y">
+							      
+							      	<div class="slds-panel__section">
+							        	<ul>
+							          		<li class="slds-form-element slds-hint-parent">
+							            		<h3 class="slds-text-heading_small">Plan</h3>
+							            		<div class="slds-form-element__control">
+							              			<span class="slds-form-element__static">{!plan.Name}</span>
+							            		</div>
+							          		</li>
+
+							          		<li class="slds-form-element slds-hint-parent">
+							            		<h3 class="slds-text-heading_small">Network</h3>
+							            		<div class="slds-form-element__control">
+							              			<span class="slds-form-element__static">{!plan.network.Network__r.Name}</span>
+							            		</div>
+							          		</li>
+
+							          		
+							          		<li class="slds-form-element slds-hint-parent slds-col">
+							          			<div class="slds-grid">
+							          				<div class="slds-col">
+									            		<h3 class="slds-text-heading_small">Issued ID</h3>
+									            		<div class="slds-form-element__control">
+									              			<span class="slds-form-element__static">{!plan.coverage.SubscriberId__c}</span>
+									            		</div>
+									            	</div>
+									            	<div class="slds-col">
+									            		<h3 class="slds-text-heading_small">Coverage End Date</h3>
+									            		<div class="slds-form-element__control"><!-- <ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!plan.coverage.EffectiveDate__c}"/> to  -->
+									              			<span class="slds-form-element__static"><ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!plan.coverage.TerminationDate__c}"/></span>
+									            		</div>
+									            	</div>
+									            </div>
+							          		</li>
+							    	    </ul>
+								    </div>
+							    </div>
+							</div>
+						</div> 
+					</aura:iteration>
+				</div>
+
+
+				<!-- BEGIN TABS AND CONTENT -->
+				<div class="slds-grid">
+					<div class="slds-tabs_default">
+					  	<ul class="slds-tabs_default__nav" aura:id="path" role="tablist">
+						    <li class="{!'slds-tabs_default__item ' + (v.selectedTabIndex==0?'slds-is-active':'')}" title="Overview" role="presentation">
+						    	<a class="slds-tabs_default__link intro" href="javascript:void(0);" onclick="{!c.changeStep}" role="tab" tabindex="0" aria-selected="true" aria-controls="overview-tab" id="overview-tab__item">
+						    		Overview
+						    	</a>
+						    </li>
+						    <li class="{!'slds-tabs_default__item ' + (v.selectedTabIndex==1?'slds-is-active':'')}"  title="Claims and Pre-Authorization" role="presentation">
+						    	<a class="slds-tabs_default__link intro" href="javascript:void(0);" onclick="{!c.changeStep}" role="tab" tabindex="-1" aria-selected="false" aria-controls="claims-tab" id="claims-tab__item">
+						    		Claim and {!v.preAuthLabel}
+						    	</a>
+						    </li>
+						    <li class="{!'slds-tabs_default__item ' + (v.selectedTabIndex==2?'slds-is-active':'')}"  title="Service History" role="presentation">
+						    	<a class="slds-tabs_default__link intro" href="javascript:void(0);" onclick="{!c.changeStep}" role="tab" tabindex="-1" aria-selected="false" aria-controls="history-tab" id="history-tab__item">
+						    		Service History
+						    	</a>
+						    </li>
+					  	</ul>
+
+
+					  	<div id="overview-tab" class="{!'slds-tabs_default__content ' + (v.selectedTabIndex==0?'slds-show':'slds-hide')}" role="tabpanel" aria-labelledby="overview-tab__item">
+					  		<aura:if isTrue="{!v.selectedTabIndex==0}">
+					  			<c:prov_comp_Member_Detail_Overview plans="{!v.plansAndCoverages}" coverages="{!v.allCoverages}" />
+					  		</aura:if>
+					  	</div>
+
+
+					  	<div id="claims-tab" class="{!'slds-tabs_default__content ' + (v.selectedTabIndex==1?'slds-show':'slds-hide')}" role="tabpanel" aria-labelledby="claims-tab__item">
+					  		<aura:if isTrue="{!v.selectedTabIndex==1}">
+					  			<c:prov_comp_Member_Detail_Claims member="{!v.member}"/>
+					  		</aura:if>
+					  	</div>
+					  
+					  	<div id="history-tab" class="{!'slds-tabs_default__content ' + (v.selectedTabIndex==2?'slds-show':'slds-hide')}" role="tabpanel" aria-labelledby="history-tab__item">
+					  		<aura:if isTrue="{!v.selectedTabIndex==2}">
+					  			<c:prov_comp_Member_Detail_History plans="{!v.plansAndCoverages}" />
+					  		</aura:if>
+					  	</div>
+					</div>
+				</div>
+			</div>
+		</aura:if>
+
+		<!-- SAVING SPINNER -->
+	    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="slds-is-fixed"/>
+	</div>
+</aura:component>

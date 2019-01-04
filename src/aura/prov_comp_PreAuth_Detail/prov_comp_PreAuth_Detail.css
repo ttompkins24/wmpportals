@@ -1,0 +1,55 @@
+.THIS .spacing{
+    margin:0px 10px;
+    }
+
+.THIS .spacing-right{
+  margin-right: 10px;
+}
+
+.THIS .acceptedMessage {
+  width: 100%;
+  height: 39px;
+  border-radius: 2px;
+  background-color: #008355 !important; 
+  border: solid 1px #008355 !important;
+}
+
+.THIS .finalizedMessage {
+	width: 85px;
+  height: 39px;
+  border-radius: 2px;
+  background-color: #f5fffa;
+  border: solid 1px #00a88f;
+}
+
+.THIS .accepted {
+  width: 69px;
+  height: 24px;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: bold;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+  color: white;
+}
+
+.THIS .finalized {
+  width: 65px;
+  height: 24px;
+  font-family: Lato;
+  font-size: 16px;
+  font-weight: bold;
+  font-style: normal;
+  font-stretch: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  text-align: center;
+  color: #00a88f;
+}
+
+.THIS .tableClass tr:nth-child(even) {
+  background-color: white;
+}

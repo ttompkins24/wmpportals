@@ -1,0 +1,209 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_helpRequests
+Purpose						: Help center requests has the following in the component
+								# Responsive table for desktop and mobile view
+								# Ability to view the case records for the verified members on the page
+Created on					: 10th October 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			10th October 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_ctrl_helpRequests"
+	>
+	
+	<!--  attributes required for the page  -->
+	<aura:attribute name="bln_isError" 
+    				type="boolean" 
+    				description="used to depict if there is an error condition" />
+     
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+    <aura:attribute name="list_cases"
+    				type="Case[]"
+    				description="the list of cases related to the logged in user"
+    />
+    
+    <!--  pagination variables -->
+    <!-- Attribute to get the total number of cases -->
+    <aura:attribute name="totalNumberOfPages"
+    				type="Integer"	
+    				description="Attribute to get the total number of pages"
+    />
+    <aura:attribute name="visibleNumberOfCases"
+    				type="Integer"
+    				description="the number of cases that needs to be seen on page"
+    				default="20" 
+   	/>
+   	<aura:attribute name="offsetValue"
+    				type="Integer"
+    				description="the number of cases that needs skipped for the rest to be seen "
+    				default="0" 
+   	/>
+   	<aura:attribute name="presentPageNumber"
+    				type="Integer"
+    				description="The displayed page number on screen "
+    				default="1" 
+   	/>
+	<!--  
+	Init method to set the first tab and do initial query
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+
+	<div>
+		<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="generalErrorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if>
+		
+		<!--  actual div for all the necessary inforamtion to be display -->
+		<div class="helpRequestsHistory slds-grid slds-wrap">
+			<!--  spinner for loading scenarios -->
+			<div class="spinnerContainer">
+		        <lightning:spinner variant="brand" size="large" alternativeText="{!$Label.c.loading}" aura:id="loadingSpinner"  class="spinnerClass"/>
+		    </div>	 
+			
+			<div class="helpRequestHeader slds-col slds-size_1-of-1">
+				<h1>{!$Label.c.Help_Requests}</h1>
+			</div>
+			<!--  surrounding text -->
+			<div class="helpRequestSurroundingText slds-col slds-size_1-of-1">
+				<span class="intro">{!$Label.c.Help_requests_surrounding_text}  &nbsp;  <a onclick="{!c.redirectContactUs}"> {!$Label.c.Contact_Us}  </a></span> 
+			</div>
+			
+			
+			<!--  the table for displaying the information -->
+			<aura:if isTrue="{!v.list_cases.length > 0}">
+				<!--  pagination div -->
+				<div class="paginationContainer topContainer slds-col slds-size_1-of-1 slds-float_right">
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.presentPageNumber != v.totalNumberOfPages}">
+						<div class="bodyLink slds-float_right buttonCss"
+							 onclick="{!c.clickNext}">
+							{!$Label.c.Next}
+						</div>
+					</aura:if>
+					<!--  page text -->
+					<div class="bodyText slds-float_right">
+						{!$Label.c.Page} &nbsp; {!v.presentPageNumber} &nbsp; {!$Label.c.of}&nbsp; {!v.totalNumberOfPages}&nbsp;&nbsp;&nbsp;&nbsp;
+					</div>
+					
+					<!--  should not show the previous button when reached the first page page -->
+					<aura:if isTrue="{!v.presentPageNumber > 1}">
+						<div class="bodyLink slds-float_right buttonCss"
+							 onclick="{!c.clickPrevious}">
+							{!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;
+						</div>
+					</aura:if>
+					
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.presentPageNumber > 1}">
+						<div class="bodyLink slds-float_right buttonCss"
+							 onclick="{!c.clickFirst}">
+							{!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;
+						</div>
+					</aura:if>
+				</div>
+				<div class="slds-align_absolute-center fullWidth">
+					<table class="tableClass">
+						<thead>
+							<tr>
+								<th class="width40"><span class="bodyText headerText">{!$Label.c.Subject}</span></th>
+								<th class="width10"><span class="bodyText headerText">{!$Label.c.Affected_Member}</span></th>
+								<th class="width10"><span class="bodyText headerText">{!$Label.c.Status}</span></th>
+								<th class="width14"><span class="bodyText headerText">{!$Label.c.Created_On}</span></th>
+                                <th class="width14"><span class="bodyText headerText">{!$Label.c.Case_Number}</span></th>
+								<th class="width12"></th>
+							</tr>
+						</thead>
+						<tbody>
+							<aura:iteration items="{!v.list_cases}" var="iterating_Case">
+								<tr>
+									<td scope="row" data-label="{!$Label.c.Subject}" class="width40">
+										<span class="bodyText dataSpace" >
+											{!iterating_Case.Subject}
+											<br/>
+											<span class="metaText descriptionText">
+												{!iterating_Case.Description}
+											</span>
+										</span>
+									</td>
+									<td data-label="{!$Label.c.Affected_Member}" class="width10"><span class="bodyText dataSpace" >{!iterating_Case.Contact_Name__c}</span></td>
+									<td data-label="{!$Label.c.Status}" class="width10"><span class="bodyText dataSpace" >{!iterating_Case.Status}</span></td>
+                                    <td data-label="{!$Label.c.Created_On}" class="width28"><span class="bodyText dataSpace" ><ui:outputDate value="{!iterating_Case.CreatedDate}" format="MMMM dd, YYYY" /></span></td>
+									<td data-label="{!$Label.c.Case_Number}" class="width28"><span class="bodyText dataSpace" ><ui:outputDate value="{!iterating_Case.CaseNumber}" /></span></td>
+									
+                                    <td class="width12">
+										<div class="additionalHRForMobile">
+											<hr class="horizontalLineClass"/>
+										</div>
+										<span class="bodyLink viewLink"
+											  data-caseid="{!iterating_Case.Id}"
+											  onclick="{!c.redirectToDetailPage}">
+											{!$Label.c.View}
+										</span>
+									</td>
+								</tr>
+							</aura:iteration>
+						</tbody>
+					</table>
+				</div>
+				<!--  pagination div -->
+				<div class="paginationContainer slds-col slds-size_1-of-1 slds-float_right">
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.presentPageNumber != v.totalNumberOfPages}">
+						<div class=" mobileDesign slds-float_right">
+							<a class="bodyLink" onclick="{!c.clickNext}">
+							{!$Label.c.Next}
+							</a>
+						</div>
+					</aura:if>
+					<!--  page text -->
+					<div class="bodyText mobileDesign slds-float_right">
+						{!$Label.c.Page} &nbsp; {!v.presentPageNumber} &nbsp; {!$Label.c.of}&nbsp; {!v.totalNumberOfPages}&nbsp;&nbsp;&nbsp;&nbsp;
+					</div>
+					
+					<!--  should not show the previous button when reached the first page page -->
+					<aura:if isTrue="{!v.presentPageNumber > 1}">
+						<div class="bodyLink mobileDesign slds-float_right buttonCss"
+							 onclick="{!c.clickPrevious}">
+							{!$Label.c.Previous}&nbsp;&nbsp;&nbsp;&nbsp;
+						</div>
+					</aura:if>
+					
+					<!--  should not show the next button when reached the last page -->
+					<aura:if isTrue="{!v.presentPageNumber > 1}">
+						<div class="bodyLink topContainer slds-float_right buttonCss"
+							 onclick="{!c.clickFirst}">
+							{!$Label.c.First}&nbsp;&nbsp;&nbsp;&nbsp;
+						</div>
+					</aura:if>
+				</div>
+				<div class="createHelpRequestContainer slds-float_left slds-col slds-size_1-of-1">
+					<!--  button to create the help request -->
+					<a class="generalButton" data-loc="file-case" onclick="{!c.redirectToCreateNewHelpRequest}">
+						{!$Label.c.Create_help_request}
+					</a>
+				</div>
+			</aura:if>
+		</div>
+	</div>
+</aura:component>

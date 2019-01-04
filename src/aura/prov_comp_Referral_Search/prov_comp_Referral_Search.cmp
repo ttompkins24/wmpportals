@@ -1,0 +1,166 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Referral_Search
+Purpose                     : Allows users to search for referrals
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             6        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_Referral_Search">
+
+    <aura:attribute name="showResults" type="boolean" default="false"/>
+    <aura:attribute name="disableClear" type="boolean" default="true"/>
+
+    <aura:attribute name="referralStatusOptions" type="String[]" default="[]"/>
+    <aura:attribute name="locationOptions" type="String[]" default="[]"/>
+    <aura:attribute name="providerOptions" type="String[]" default="[]"/>
+    <aura:attribute name="specialtyOptions" type="String[]" default="[]"/>
+
+    <aura:attribute name="selectedReferralStatus" type="String" default=""/>
+    <aura:attribute name="selectedLocation" type="String" default=""/>
+    <aura:attribute name="selectedProvider" type="String" default=""/>
+
+    <aura:attribute name="locationDisplayedValue" type="String" default=""/> 
+    <aura:attribute name="providerDisplayedValue" type="String" default=""/>     
+
+    <aura:attribute name="referralSearchHeader" type="prov_wrap_Claim.ReferralHeaderRequestWrapper" />
+
+    <aura:attribute name="memberNumber" type="String"/>
+    <aura:attribute name="memberLastName" type="String"/>
+    <aura:attribute name="memberFirstName" type="String"/>
+    <aura:attribute name="referralNumber" type="String"/>
+    <aura:attribute name="memberDOB" type="Date"/>
+    <aura:attribute name="startReceivedDate" type="Date"/>
+    <aura:attribute name="endReceivedDate" type="Date"/>
+    <aura:attribute name="selectedSpecialty" type="String"/>
+
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" /> 
+    <!-- change handlers to enable/disable clear all button -->
+    <aura:handler name="change" value="{!v.selectedReferralStatus}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberNumber}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberLastName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberFirstName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.referralNumber}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberDOB}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.startReceivedDate}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.endReceivedDate}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.selectedSpecialty}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.selectedLocation}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.selectedProvider}" action="{!c.setDisableClear}"/>
+
+    <div class="slds generalOuterDiv ">
+        
+        <!-- <aura:if isTrue="true"> -->
+        <aura:if isTrue="{!v.showResults}">
+            <c:prov_comp_Referral_Results showResults="{!v.showResults}" referralStatusOptionsDefault="{!v.referralStatusOptions}" locationOptionsDefault="{!v.locationOptions}" providerOptionsDefault="{!v.providerOptions}" selectedReferralStatusFromSearch="{!v.selectedReferralStatus}" selectedLocationFromSearch="{!v.selectedLocation}" selectedProviderFromSearch="{!v.selectedProvider}" memberNumber="{!v.memberNumber}" memberLastName="{!v.memberLastName}" memberFirstName="{!v.memberFirstName}" referralNumber="{!v.referralNumber}" memberDOB="{!v.memberDOB}" startReceivedDateFromSearch="{!v.startReceivedDate}" endReceivedDateFromSearch="{!v.endReceivedDate}" referralSearchHeader="{!v.referralSearchHeader}" locationDisplayedValue="{!v.locationDisplayedValue}" providerDisplayedValue="{!v.providerDisplayedValue}"/>
+        <aura:set attribute="else">
+            <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1">
+                <div class="slds-col slds-size_1-of-1 ">
+                    <ul class="">
+                        <h1 class="slds-align_absolute-center">Referral and Transfer Search</h1>
+                    </ul>
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_large slds-border_bottom slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputSelect label="Request Status" class="generalInputForm testScript_requestStatusInput" value="{!v.selectedReferralStatus}" labelClass="generalLabelForm">
+                                <aura:iteration items="{!v.referralStatusOptions}" var="option">
+                                    <ui:inputSelectOption class="picklistOption" text="{!option}" label="{!option}"/>
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 "/>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_medium slds-p-bottom_medium">
+                        <div class="slds-col slds-size_1-of-2">
+                            <h3 class="">Member Information</h3>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputDate aura:id="memberDOB" class="generalInputForm testScript_memberDOBInput" value="{!v.memberDOB}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" label="Member D.O.B." labelClass="generalLabelForm"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberNumber" class="generalInputForm testScript_memberNumberInput" value="{!v.memberNumber}" label="Member Number" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                    </div> 
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-border_bottom slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberFirstName" class="generalInputForm testScript_memberFirstNameInput" value="{!v.memberFirstName}" label="Member First Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberLastName" class="generalInputForm testScript_memberLastNameInput" value="{!v.memberLastName}" label="Member Last Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_medium slds-p-bottom_medium">
+                        <div class="slds-col slds-size_1-of-2">
+                            <h3 class="">Submitted Request Details</h3>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <c:wmp_util_MultiSelect optionList="{!v.locationOptions}" fieldLabel="Service Location" selectedValue="{!v.selectedLocation}" delimiter=";" displayValue="{!v.locationDisplayedValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <c:wmp_util_MultiSelect optionList="{!v.providerOptions}" fieldLabel="Provider" selectedValue="{!v.selectedProvider}" delimiter=";" displayValue="{!v.providerDisplayedValue}"/>
+                        </div>
+                    </div> 
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large ">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="referralNumber" class="generalInputForm testScript_requestNumberInput" value="{!v.referralNumber}" label="Referral or Transfer Number" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputSelect label="Provider Specialty" class="generalInputForm testScript_requestedSpecialtyInput" value="{!v.selectedSpecialty}" labelClass="generalLabelForm">
+                                <ui:inputSelectOption class="picklistOption" text="" label="Select"/>
+                                <aura:iteration items="{!v.specialtyOptions}" var="option">
+                                    <ui:inputSelectOption class="picklistOption" text="{!option.Value}" label="{!option.Label}"/>
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large ">
+                        <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-grid_vertical-align-end">
+                            <div class="generalLabelForm slds-size_1-of-1">Submitted Between</div>
+                            <div class="slds-grid slds-size_1-of-1">
+                                <ui:inputDate aura:id="startReceivedDate" class="generalInputForm slds-col testScript_startReceivedDateInput" value="{!v.startReceivedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" />
+                                <h5 class="slds-col slds-align_absolute-center">and</h5>
+                                <ui:inputDate aura:id="endReceivedDate" class="generalInputForm slds-col testScript_endReceivedDateInput" value="{!v.endReceivedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-grid_vertical-align-end">
+                        </div>
+                    </div>
+
+                    <aura:if isTrue="{!v.isError}">
+                        <div  class="headerMessageContainer ">
+                            <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                                <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                                <span class="errorMessage">{!v.str_errorMsg}</span>
+                            </ui:message>
+                        </div>
+                    </aura:if>
+
+                    <div class="slds-col slds-grid slds-size_1-of-1 slds-align_absolute-center ">
+                        <button class="generalButton inverse slds-m-right_medium testScript_clearSearchButton" onclick="{!c.clearSearchFields}" disabled="{!v.disableClear}">Clear all</button>
+                        <button class="generalButton testScript_searchButton" onclick="{!c.search}">Search</button>
+                    </div> 
+
+                </div>
+            </div>
+        </aura:set>
+        </aura:if>
+    </div>
+
+</aura:component>

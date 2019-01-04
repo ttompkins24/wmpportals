@@ -1,0 +1,289 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_overviewDetail
+Purpose						: Overview component will do the following 
+								# will fetch all the member plan(s) information from the cache class which is managed by
+								  logged in user
+								# for each user-plan combination display the respective information
+								# handle the logic to determine if it should display the main dentist section
+								# if the user is loggin for the first time
+									# show the welcome dashboard
+									# update the logged in contact's checkbox to true to avoid the popup being shown
+Created on					: 15th September 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			15th September 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_ctrl_overviewPage"
+				>
+	
+	<!--  attributes  --> 
+	<!--  User record to display name and other related information -->
+	<aura:attribute name="loggedInUserRecord" 
+					type="Contact" 
+					description="The logged in user record. Used to display welcome message and the first time pop up" 
+	/>
+	
+	<aura:attribute name="overviewInfoWrapper" 
+					type="wmp_ctrl_overviewPage.wrapper_overviewPage[]" 
+					description="The wrapper to display all necessary information" 
+	/>
+	
+	<aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+     <aura:attribute name="dentistL"
+    				type="string"
+    				description="dentist label to ensure it toggles between dentist and provider"
+    />	
+    
+    <aura:attribute name="popUpSurroundingTextL"
+    				type="string"
+    				description="dentist label to ensure it toggles between dentist and provider"
+    />	
+    <aura:attribute name="whatIsYourMainDentistL"
+    				type="string"
+    				description="dentist label to ensure it toggles between dentist and provider"
+    />	
+    
+    <aura:attribute name="findADentistSupportingTextL"
+    				type="string"
+    				description="dentist label to ensure it toggles between dentist and provider"
+    />
+    
+    <aura:attribute name="findADentistL"
+    				type="string"
+    				description="dentist label to ensure it toggles between dentist and provider"
+    />																				
+    
+    <aura:attribute name="planConfigs"
+    				type="list"
+    				description="all plan config with their respective booleans to on/off functionalities"
+    />
+    <!--  inst_memberCoverageExternal
+		Init method to set the first tab and do initial query
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+
+	<div>
+		<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="generalErrorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if> 
+		<!--  all the information will be inside the grid -->
+		<div class="portalOverview slds-grid slds-wrap slds-grid--pull-padded">
+			<!--  Welcome header -->
+			<div class="welcomeHeader slds-col slds-size_1-of-1">
+				<h1>{!$Label.c.Welcome}&nbsp;{!v.loggedInUserRecord.FirstName}</h1>
+			</div>
+			{!v.body}
+			<!--  the portal text under the welcome header -->
+			<div class="portalText slds-col slds-size_1-of-1">
+				<div class="intro">{!$Label.c.Portal_Overview_Text}</div>
+			</div>
+			<!--  iterating through the list of overview wrappers that we have -->
+			<aura:iteration items="{!v.overviewInfoWrapper}" var="iterating_overvierwrapper">
+				<!--  the white containers displaying the name, plan and the dentist information -->
+				<div class="memberAndPlanInfoContainer slds-col slds-size_1-of-1">
+					<!--  the text is going to be displayed here -->
+					<div class="memberAndPlanInfoTextContainer slds-size_1-of-1">
+						<!-- Text information displaying the member name, plan name and the member id -->
+						<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-3 slds-large-size--2-of-5 .slds-p-left_small memberAndPlanInfoWithoutDentist ">
+							<div class="indivdualMemberNameText slds-col slds-size_1-of-1">
+								<h2>
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_memberExternal.Prefix__c))}">{!iterating_overvierwrapper.inst_memberExternal.Prefix__c}&nbsp;</aura:if> 
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_memberExternal.FirstName__c))}">{!iterating_overvierwrapper.inst_memberExternal.FirstName__c}&nbsp;</aura:if> 
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_memberExternal.MiddleName__c))}">{!iterating_overvierwrapper.inst_memberExternal.MiddleName__c}&nbsp;</aura:if> 
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_memberExternal.LastName__c))}">{!iterating_overvierwrapper.inst_memberExternal.LastName__c}&nbsp;</aura:if> 
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_memberExternal.Suffix__c))}">{!iterating_overvierwrapper.inst_memberExternal.Suffix__c}&nbsp;</aura:if>
+								</h2>
+								<br/>
+								<div class="planNameandMemberIdtext">
+								<span class="bodyText">
+									{!iterating_overvierwrapper.planName}
+									<br/>
+									{!$Label.c.ID}{!iterating_overvierwrapper.inst_memberCoverageExternal.SubscriberId__c}
+								</span>
+								<br/>
+								<br/>
+								</div>
+							</div>
+						</div>
+						<!--  dentist information and their related address -->
+						<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo))}">
+						<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-3 slds-large-size--2-of-5  memberAndPlanInfoDentistInfo">
+							<!-- checking if the main dentist can be shown  -->
+							<aura:if isTrue="{!iterating_overvierwrapper.related_planConfig.Display_Main_dentist__c }">
+								<div class="mainDentistText slds-col slds-size_1-of-1">
+								<!--  Main dentist text and help icon -->
+								<h4>{!v.dentistL}&nbsp;&nbsp;</h4>
+								<a class="helpIcon" onclick="{!c.openHelpBox}"></a> 
+								<!--  pop up for the pop up box -->
+								<div class="helpBox"  aura:id="helpBoxId">
+                                	<div class="header">
+                                		<div class="helpHeader">
+                                			<div class="floatLeft">
+                                				<h3>{!v.whatIsYourMainDentistL}</h3>
+                                			</div>
+                                			 <a class="closeIcon floatRight closeHelpBox helpBoxColorOverride" onclick="{!c.closeHelpBox}"/>
+                                			 <br/>
+                                		</div>
+                                	</div>
+                                	<div class="specialtyGroup" style="width:100%">
+                                		<span class="description bodyText  textAlignLeft" >
+                                			
+                                			<!--  {!$Label.c.Main_dentist_popup_help_text}--> {!v.popUpSurroundingTextL}&nbsp;<a onclick="{!c.redirectView}" 
+																								data-pageName="{!$Label.c.Find_a_dentist_page_redirect}">
+																							{!v.findADentistL}  </a>
+                                		</span>
+                                	</div>
+                                </div>
+							</div>
+							<br/>
+								<div class="mainDentistProviderLocation  bodyText slds-cols slds-size_1-of-1">
+									<!--  checking if the primary provider is populated -->
+									<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo.PrimaryRecord.Id))}">
+										<div class="slds-p-top_small">
+											<lightning:icon iconName="action:user" variant="bare" size="small" class="floatLeft" style="background-color:#003d6a"/>
+										</div>
+                                        <div class="floatLeft slds-p-left_small ">
+											<span>{!iterating_overvierwrapper.inst_primaryProviderInfo.PrimaryRecord.Name}</span>&nbsp;at&nbsp;
+											<br/>
+	                                        <aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Service_Location_Phone__c))}">
+	                                            {!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Service_Location__r.Name }<br/>
+	                                            {!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Service_Location_Phone__c}&nbsp;{!$Label.c.office}	
+												<aura:set attribute="else" >
+													<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo.Provider.Phone))}">
+															{!iterating_overvierwrapper.inst_primaryProviderInfo.Provider.Phone}&nbsp;{!$Label.c.office}		
+													</aura:if>
+												</aura:set>
+												<br/>
+												<!-- <aura:unescapedHtml value="{!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Address__c }"/><br/>
+												 -->
+											</aura:if>
+                                        </div>		
+										
+										<div class="viewInfoContainer">
+											<div class="viewInfoTextLink">
+												<!--  <ui:outputUrl click="openModal" value="{!$Label.c.View_Info}" data-providerId="{!iterating_overvierwrapper.inst_primaryProviderInfo.Provider.Id}" />-->
+												<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Id))}">
+													<a  style="text-decoration:none;"
+														onclick="{!c.openModal}" 
+														class="bodyLink"
+														data-providerid="{!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Id}"
+														data-providerName="{!iterating_overvierwrapper.inst_primaryProviderInfo.Name}">{!$Label.c.View_details}</a>
+												</aura:if>
+												<aura:set attribute="else">
+													<aura:if isTrue="{!not(empty(iterating_overvierwrapper.inst_primaryProviderInfo.Provider.Id))}">
+														<a  style="text-decoration:none;"
+															onclick="{!c.openModal}" 
+															class="bodyLink"
+															data-providerid="{!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.Provider.Id}"
+															data-providerName="{!iterating_overvierwrapper.inst_primaryProviderInfo.Name}">{!$Label.c.View_details}</a>
+													</aura:if>
+												</aura:set>
+											</div>
+										</div>										
+										
+										<!--  else condition the name is of the service location-
+										<aura:set attribute="else">
+											{!iterating_overvierwrapper.inst_primaryProviderInfo.Name}
+											<br/>
+											<aura:if isTrue="{!not(emoty(iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.service_Location__r.Id))}">
+												{!iterating_overvierwrapper.inst_primaryProviderInfo.ServiceLocation.service_Location__r.Name}
+												<br/>
+											</aura:if>
+											{!iterating_overvierwrapper.inst_primaryProviderInfo.Phone}&nbsp;{!$Label.c.office}
+											<div class="viewInfoContainer">
+												<div class="viewInfoTextLink">
+													
+													<a  style="text-decoration:none;"
+														onclick="{!c.openModal}" 
+														data-providerid="{!iterating_overvierwrapper.inst_primaryProviderInfo.Provider.Id}"
+														data-providerName="{!iterating_overvierwrapper.inst_primaryProviderInfo.Name}">{!$Label.c.View_Info}</a>
+													
+												</div>
+											</div>
+										</aura:set> -->
+									</aura:if>
+								</div>
+							</aura:if>
+						</div>
+						</aura:if>
+						<!--  view benfits and view id card buttons -->
+						<div class="benfitsAndIDCardButtons slds-wrap"
+                             >
+							<div        onclick="{!c.redirectView}" 
+												data-memberid="{!iterating_overvierwrapper.inst_memberCoverageExternal.SubscriberId__c}"
+												data-planid="{!iterating_overvierwrapper.inst_memberCoverageExternal.PlanGUID__c}"
+												data-pageName="{!$Label.c.Benefits_Page_Name}"
+												class="viewBenfitsText generalButton slds-size_4-of-5 " tabindex="0" style="min-width:200px;">
+										{!$Label.c.View_Benefits}
+                            </div><br/>
+							<!-- checking if the id card can be shown  -->
+							<aura:if isTrue="{!iterating_overvierwrapper.related_planConfig.Display_ID_and_related__c}">
+								<!--  view id card button -->
+									<div        onclick="{!c.redirectView}" 
+												data-memberid="{!iterating_overvierwrapper.inst_memberCoverageExternal.SubscriberId__c}"
+												data-planid="{!iterating_overvierwrapper.inst_memberCoverageExternal.PlanGUID__c}"
+												data-pageName="{!$Label.c.ID_Card_Page_Name}"
+												class="generalButton inverse viewBenfitsText slds-size_4-of-5 " tabindex="0" style="min-width:200px;">
+										{!$Label.c.View_ID_card}
+								</div>
+							</aura:if>
+							
+						</div>
+					</div>
+				</div> 
+			</aura:iteration>
+			<!--  view benfits and view id card buttons -->
+			<div class="slds-col slds-size_1-of-1 findADentistContainer">
+				<!--  the blue containers displaying the find a dentist-->
+				<div class="memberAndPlanInfoTextContainer slds-col slds-size_1-of-1">
+					<!--  actual text -->
+					<div class="slds-col slds-size_2-of-1.95 slds-medium-size--2-of-3 slds-large-size--3-of-5.5 .slds-p-left_small memberAndPlanInfoDentistInfo">
+						<!--  find a dentist label -->
+						<div class="findADentistLabel slds-col slds-size_1-of-1">
+							<!--  Main dentist text and help icon -->
+							<h2>{!v.findADentistL}</h2> 
+							<br/>
+							<div class="findADentistSupportingText">
+								<!--  {!$Label.c.Find_a_dentist_supporting_text}-->
+								<span class="bodyText">{!v.findADentistSupportingTextL}</span>
+							</div>
+						</div>
+					</div>
+					<!--  view benfits and view id card buttons -->
+					<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-3 slds-large-size--1-of-3 slds-p-left_small benfitsAndIDCardButtons slds-grid slds-wrap ">
+							<div class="viewBenfitsText generalButton slds-m-top_medium" 
+                                 onclick="{!c.redirectView}" 
+								 data-pageName="{!$Label.c.Find_a_dentist_page_redirect}" tabindex="0" style="min-width:200px;">
+								{!$Label.c.Search}
+							</div>
+					</div>	
+				</div>
+			</div>
+		</div>
+	</div>    
+</aura:component>

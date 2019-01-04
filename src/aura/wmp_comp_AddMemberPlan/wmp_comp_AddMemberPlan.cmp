@@ -1,0 +1,50 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global">
+	
+	
+    
+    <aura:attribute name="step" 
+    				type="String"
+    				description="where the use is in the process. Possible values are selection, dependent, self, success"
+    				default="selection"
+   	/>  
+   	<aura:attribute name="nameAdded" 
+    				type="String"
+    				description="the person's name that was successfully added"
+   	/>
+   	
+   	<aura:attribute name="successfulStep"
+   					type="String"
+   					description="which successful add a plan happened, either self or dependent"
+   	/> 
+    				
+    
+	<div class="slds">
+		<form>
+			<div class="addMemberPlanContainer">
+				<div class="slds-grid slds-wrap slds-col slds-align_absolute-center slds-size_1-of-1 slds-medium-size_4-of-5 slds-large-size_3-of-5">
+					<div class="slds-size_1-of-1 innerWrapperClass">
+						<!-- SELECTION -->
+						<aura:if isTrue="{!v.step == 'selection'}">
+							<c:wmp_comp_AddMemberPlan_Start step="{!v.step}"/>
+						</aura:if>	
+						
+						<!-- Adding a plan for a dependent -->
+						<aura:if isTrue="{!v.step == 'dependent'}">
+							<c:wmp_comp_AddMemberPlan_Depend nameAdded="{!v.nameAdded}" step="{!v.step}" successfulStep="{!v.successfulStep}" />
+						</aura:if>	
+						
+						<!-- Adding a plan for yourself -->
+						<aura:if isTrue="{!v.step == 'self'}">
+							<c:wmp_comp_addMemberPlan_Self nameAdded="{!v.nameAdded}" step="{!v.step}" successfulStep="{!v.successfulStep}" />
+						</aura:if>	
+						
+						<!-- Success step, can go to the overview or back to selection -->
+						<aura:if isTrue="{!v.step == 'success'}">
+							<c:wmp_comp_AddMemberPlan_Success nameAdded="{!v.nameAdded}"  step="{!v.step}" successfulStep="{!v.successfulStep}" />
+						</aura:if>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+</aura:component>

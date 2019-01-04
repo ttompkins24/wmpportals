@@ -1,0 +1,38 @@
+<aura:component > 
+	
+	<aura:attribute name="onUserDropdown" type="Boolean" description="show the mobile version or desktop version" />
+	<aura:attribute name="currSubId" type="String" description="the current subscriber the user is on" />
+	<aura:attribute name="currPlanId" type="String" description="the current plan the user is on" />
+	<aura:attribute name="currPage" type="String" description="the current page the user is on" />
+	<aura:attribute name="refreshNav" type="Boolean" description="the current page the user is on" />
+	<aura:attribute name="notifList" type="Notification__c[]" description="" />
+	
+	<div class="slds communityWrapperContainer">
+		<div class="desktop ">
+			<div class="topRow">
+				<a onclick="{!c.redirectHome}"><div class="logo floatLeft" title="DentaQuest">
+					&nbsp;
+				</div></a>
+				<div class="profileWrap floatRight">
+					<c:wmp_comp_UserProfile notifList="{!v.notifList}"/>
+				</div>
+			</div>
+			<div class="navBar">
+				<c:wmp_comp_Navigation refreshNav="{!v.refreshNav}" showMobile="false" onUserDropdown="{!v.onUserDropdown}" currSubId="{!v.currSubId}" currPlanId="{!v.currPlanId}" currPage="{!v.currPage}"/>
+			</div>
+		</div>
+		<div class="mobile ">
+			<div class="topRow">
+				<a onclick="{!c.redirectHome}"><div class="logo floatLeft mobileLogoHeader" title="DentaQuest">
+					&nbsp;
+				</div></a>
+				<div class="nav">
+					<c:wmp_comp_Navigation refreshNav="{!v.refreshNav}" showMobile="true" onUserDropdown="{!v.onUserDropdown}" currSubId="{!v.currSubId}" currPlanId="{!v.currPlanId}" currPage="{!v.currPage}"/>
+				</div>
+				<div class="floatRight notifContainer">
+					<c:wmp_comp_NotificationHeader notifList="{!v.notifList}"/>
+				</div>
+			</div>
+		</div>
+	</div>
+</aura:component>

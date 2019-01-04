@@ -1,0 +1,66 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="Prov_ctrl_BLPpicklists" extends="c:prov_comp_Provider_Common">
+
+	<!-- attributes to hold lists of accounts -->
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/> 
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRec" type="Account"/>
+	<aura:attribute name="provAcctRec" type="Account"/>
+	<aura:attribute name="showHeaders" type="Boolean" default="true" />
+	<aura:attribute name="resetPicklists" type="Boolean"  />
+	<aura:attribute name="showActiveOnly" type="Boolean" default="false" />
+
+	
+	<aura:attribute name="provRequired" type="Boolean" description="is the dependent relationship required" default="false"/>
+
+	<aura:attribute name="locationValue" type="String" />
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler name="change" value="{!v.locAcctRec}" action="{!c.locationChange}" />
+	<aura:handler name="change" value="{!v.provAcctRec}" action="{!c.providerChange}" />
+	<aura:handler name="change" value="{!v.resetPicklists}" action="{!c.resetPicklistAction}" />
+	
+		<div class="slds slds-size_1-of-1 blpPicklist">
+			<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap slds-gutters">
+				
+				<div class="slds-size_1-of-3 slds-col" >
+					<aura:if isTrue="{!v.showHeaders}">
+						<h3 class="header">1. Select Location</h3>
+					</aura:if>
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="locAccts" label="Service Location" labelClass="generalLabelForm required" 
+                                        class="slds-col slds-size_1-of-1 generalInputForm  testScript_blp_location"  
+                                        change="{!c.updateLocSearch}" disabled="{!if(v.locList.length == 1, true, false)}" required="true">
+		    				<aura:if isTrue="{!v.locList.length > 1}">
+		                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Select One" />
+		                	</aura:if>
+	        				<aura:iteration items="{!v.locList}" var="locAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" 
+                                                      label="{!locAcct.Service_Location_Name__c}" 
+                                                      value="{!locAcct.Id == v.locAcctRec.Id}"/>
+		        			</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3 slds-col">
+					<aura:if isTrue="{!v.showHeaders}">
+						<h3 class="header">2. Select Provider</h3>
+					</aura:if>
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="provAccts" label="Provider" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testScript_blp_provider" 
+		                	change="{!c.updateProvSearch}" disabled="{!if(v.provList.length == 1, true, false)}" required="true">
+		                	<aura:if isTrue="{!v.provList.length > 1}">
+		                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Select One"/>
+		                	</aura:if>
+	        				<aura:iteration items="{!v.provList}" var="provAcct">
+                                <ui:inputSelectOption class="picklistOption" text="{!provAcct.Id}" label="{!provAcct.Name}"/>
+		        			</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+	
+		  	</div>
+		</div>
+
+</aura:component>

@@ -1,0 +1,92 @@
+<aura:component >
+	
+	<!-- 
+		 data-procedureCode="{!lineItem.procedureCode}" data-partOfMouth="{!lineItem.partOfMouth}" 
+		data-claimNumber="{!lineItem.claimNumber}" data-eobName="{!lineItem.eobName}" data-eobUrl="{!lineItem.eobUrl}" 
+		data-claimStatus="{!lineItem.claimStatus}" data-planName="{!lineItem.planName}" 
+		data-totalCost="{!lineItem.totalCost}" data-planPay="{!lineItem.planPay}"
+		data-youPay="{!lineItem.youPay}"
+	-->
+	<aura:attribute name="procedureCode" type="String" description="" />
+	<aura:attribute name="partOfMouth" type="String" description="" />
+	<aura:attribute name="claimNumber" type="String" description="" />
+	<aura:attribute name="eobName" type="String" description="" />
+	<aura:attribute name="eobUrl" type="String" description="" />
+	<aura:attribute name="claimStatus" type="String" description="" />
+	<aura:attribute name="planName" type="String" description="" />
+	<aura:attribute name="totalCost" type="Decimal" description="" />
+	<aura:attribute name="planPay" type="Decimal" description="" />
+	<aura:attribute name="youPay" type="Decimal" description="" />
+	<aura:attribute name="description" type="String" description="" />
+	<aura:attribute name="provider" type="String" description="" />
+	<aura:attribute name="appDate" type="String" description="" />
+	
+	<div class="slds">
+    	<div class="historyDetail">
+	    	<section role="dialog" style=" height:90%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+	    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open " >
+	        	<div class="slds-modal__container">
+	            	<header class="slds-modal__header">
+	                	<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+	                			 title="{!v.closeText}" onclick="{!c.defaultClose}" style="">
+	                        <div class="closeIcon"></div>
+	                    	<span class="slds-assistive-text">{!$Label.c.Close}</span>
+	                    </a>
+	                    <aura:if isTrue="{!v.headerText != ''}">
+	                    	<h4 >{!v.description} - {!v.provider}</h4>
+	                    </aura:if>
+	                </header>
+	                <div class="slds-modal__content slds-p-around--medium" >
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4 slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Procedure_Code}:</h5>
+	                		<div class="slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4 bodyText spaceBetween">{!v.procedureCode}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Part_of_Mouth}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.partOfMouth}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Claim_Number}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.claimNumber}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Claim_Status}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.claimStatus}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Procedure_Date}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.appDate}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Plan}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.planName}</div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Total_Cost}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4"><ui:outputCurrency value="{!v.totalCost}"/></div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Plan_pays}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4"><ui:outputCurrency value="{!v.planPay}"/></div>
+	                	</div>
+	                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+	                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.You_may_pay}:</h5>
+	                		<div class="bodyText spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4"><ui:outputCurrency value="{!v.youPay}"/></div>
+	                	</div>
+	                	<aura:if isTrue="{! and(v.eobName != '', v.eobName != undefined )}">
+		                	<div class="elementWrap slds-size_1-of-1 slds-grid">
+		                		<h5 class="slds-col slds-size_1-of-4  slds-medium-size_1-of-4 slds-large-size_1-of-4">{!$Label.c.Explanation_of_benefits}:</h5>
+		                		<a src="{!v.eobUrl}" class="bodyLink spaceBetween slds-col slds-size_1-of-2 slds-medium-size_3-of-4 slds-large-size_3-of-4">{!v.eobName}</a>
+		                	</div>
+	                	</aura:if>
+	                </div>
+	                
+	                <footer class="slds-modal__footer slds-p-around_large">
+	                    <a class="generalButton"  onclick="{!c.defaultClose}">{!$Label.c.Close}</a>
+	                </footer>
+	            </div>
+	        </section>
+	        <div class="slds-backdrop slds-backdrop--open" ></div>
+		</div>
+    </div>
+</aura:component>

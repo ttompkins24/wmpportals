@@ -1,0 +1,161 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" lightningStylesheets="false" docType="html-5.0" applyBodyTag="false" applyHtmlTag="false" controller="prov_ctrl_Practice_Mgmt_Print" renderAs="pdf">
+
+<html>
+<head>
+    <apex:stylesheet value="{!URLFOR($Resource.GOV_Provider_Print_CSS, 'providerPrintCSS.css')}"/>
+<script type="text/javascript">
+    
+
+</script>
+
+</head>
+
+<body>
+
+    <!-- REQUIRED SLDS WRAPPER -->
+
+<div>
+
+    <div>   
+        <h1 class="floatLeft">Practice Records</h1>
+    <h1 class="floatRight">
+        <apex:outputText value="{0,date,MM/dd/yyyy}">
+            <apex:param value="{!TODAY()}"/>
+        </apex:outputText>
+    </h1>
+
+    <apex:outputText rendered="{!hasError}">
+        <h3 style="clear: both;">{!errorMessageString}</h3>
+    </apex:outputText>
+
+            <div style="clear: both;" class="business">
+                <h3>Business</h3>
+                <table class="tableClass">
+                    <thead>
+                         <tr>
+                            <th >
+                                <span class="headerText">Business Name</span>
+                            </th>
+                            <th >
+                                <span class="headerText">TIN</span>
+                            </th>
+                            <th >
+                                <span class="headerText">Contact Phone</span>
+                            </th>
+                         </tr>
+                    </thead>
+
+                    <tbody>
+                        <!-- show business information -->
+
+                        <tr>
+                            <td data-label="Business Name" >
+                                <span class="bodyText dataSpace">{!bizacctrec.Name}</span>
+                            </td>
+                            <td data-label="TIN" >
+                                <span class="bodyText dataSpace">{!bizacctrec.tax_id_number__c}</span>
+                            </td>
+                            <td data-label="Contact Phone" >
+                                <span class="bodyText dataSpace">{!bizacctrec.Phone}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+            </div>
+
+            <!-- location table -->
+            <div class="tableSpacer">
+                <h3>Service Locations</h3>
+                <table class="tableClass">
+                    <thead>
+                         <tr >
+                            <th >
+                                <span class="headerText">Office Name</span>
+                            </th>
+                            <th >
+                                <span class="headerText">Address</span>
+                            </th>
+                            <th >
+                                <span class="headerText">Contact Phone</span>
+                            </th>
+                         </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <apex:repeat value="{!locaccts}" var="loc">
+                            <tr>
+                                <td data-label="Location Name" class="slds-is-sortable width10"> 
+                                    <span class="bodyText dataSpace">{!loc.Name}</span>
+                                </td>
+                                <td data-label="Location Address" class="slds-is-sortable width10">
+                                    <span class="bodyText dataSpace">{!loc.BillingStreet}</span><br/>
+                                    <span class="bodyText dataSpace">{!loc.BillingCity},&nbsp;{!loc.BillingState}&nbsp; {!loc.BillingPostalCode}</span>
+                                </td>
+                                <td data-label="Contact Phone" class="slds-is-sortable width10">
+                                    <span class="bodyText dataSpace">{!loc.Phone}</span>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+
+                
+            </div>
+
+            <!-- provider table -->
+            <div class="tableSpacer">
+                <h3>Providers</h3>
+                <table class="tableClass">
+                    <thead>
+                         <tr >
+                            <th >
+                                <span class="headerText">Provider Name</span>
+                            </th>
+                            <th >
+                                <span class="headerText">NPI</span>
+                            </th>
+                            <th >
+                                <span class="headerText">Address</span>
+                            </th>
+                            <th >
+                                <span class="headerText">Contact Phone</span>
+                            </th>
+                         </tr>
+                    </thead>
+
+                    <tbody>
+
+                            <apex:repeat value="{!provaccts}" var="dentist">
+                                <tr>
+                                    <td data-label="Dentist Name" class="slds-is-sortable width10">
+                                        <span class="bodyText dataSpace">{!dentist.Provider__r.Name}</span>
+                                    </td>
+                                    <td data-label="NPI" class="slds-is-sortable width10">
+                                        <span class="bodyText dataSpace">{!dentist.Provider__r.npi__c}</span>
+                                    </td>
+                                    <td data-label="Address" class="slds-is-sortable width10">
+                                        <span class="bodyText dataSpace">{!dentist.Service_Location__r.BillingStreet}</span><br/>
+                                        <span class="bodyText dataSpace">{!dentist.Service_Location__r.BillingCity},&nbsp;{!dentist.Service_Location__r.BillingState}&nbsp; {!dentist.Service_Location__r.BillingPostalCode}</span>
+                                    </td>
+                                    <td data-label="Contact Phone" class="slds-is-sortable width10">
+                                        <span class="bodyText dataSpace">{!dentist.Service_Location__r.Phone}</span>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                    </tbody>
+                </table>
+
+                
+            </div>
+    </div>
+
+    
+</div>
+    
+</body>
+</html>
+
+<!-- </apex:form> -->
+</apex:page>

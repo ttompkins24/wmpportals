@@ -1,0 +1,284 @@
+<!--
+/**********************************************************************************************************************
+Name 						: prov_comp_File_Case
+Purpose						: Submitting a case, you can select the case type or describe the issue and add attachments if you want.
+							 
+Created on					: April 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				5.0			April 2018		        West Monroe Partners			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component controller="prov_ctrl_File_Case" implements="forceCommunity:availableForAllPageTypes" access="global" extends="c:prov_comp_Provider_Common">
+    <aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition"/>
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"/>
+	<aura:attribute name="bln_isSuccess" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition"/>
+    <aura:attribute name="str_successMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"/>
+    <aura:attribute name="locationError" type="Boolean" description="case description error"/>
+    <aura:attribute name="providerError" type="Boolean" description="case description error"/>
+    <aura:attribute name="claimNumberError" type="Boolean" description="case description error"/>
+    <aura:attribute name="phoneNumberError" type="Boolean" description="case description error"/>
+    <aura:attribute name="contactDateError" type="Boolean" description="case description error"/>
+    <aura:attribute name="timeChosenError" type="Boolean" description="case description error"/>
+    <aura:attribute name="zoneChosenError" type="Boolean" description="case description error"/>
+
+    <aura:attribute name="descriptionError" type="Boolean" description="case description error"/>
+    <aura:attribute name="resultError" type="Boolean" description="case description error" />
+    
+    <aura:attribute name="typeDescriptionList" type="Object[]" description="type description list" />
+    <aura:attribute name="caseSettingMap" type="Object" description="map for holding all case settings" />
+    <aura:attribute name="selectedCaseSetting" type="Object" description="single case settings" />
+    
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+    
+    <aura:attribute name="typeChosen" type="String" description="type of case that is chosen" default=""/>
+    <aura:attribute name="locationChosen" type="Account" description="provider that is chosen" default=""/>
+    <aura:attribute name="providerChosen" type="Account" description="location that is chosen" default=""/>
+    <aura:attribute name="memberFirstName" type="String" description="member first name" default=""/>
+    <aura:attribute name="memberLastName" type="String" description="member last name" default=""/>
+    <aura:attribute name="memberNumber" type="String" description="member number" default=""/>
+    <aura:attribute name="claimAuthNumber" type="String" description="claim/auth number" default=""/>
+    <aura:attribute name="phoneNumber" type="String" description="phone number" default=""/>
+    <aura:attribute name="contactDate" type="Date" description="contact date" default=""/>
+	<aura:attribute name="timeChosen" type="String" description="contact time" default=""/>
+	<aura:attribute name="zoneChosen" type="String" description="contact time zone" default=""/>
+    <aura:attribute name="requestDesc" type="String" description="request description" default=""/>
+    <aura:attribute name="resultDesc" type="String" description="desired result description" default=""/>
+	
+	<aura:attribute name="caseId" type="Id" description="case of id when inserted to upload attachments"/>
+	<aura:attribute name="resetPicklists" type="boolean" description="reset BLP picklists" default="false"/>
+
+    <aura:attribute name="showSpinner" type="boolean"/>
+
+	<aura:attribute name="timeList" type="List" description="list of all times from case object"/>
+	<aura:attribute name="zoneList" type="List" description="list of all timezones from case object"/>
+
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}" />
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>	
+
+    <div class="slds generalOuterDiv" >
+		<aura:if isTrue="{!v.bln_isSuccess}">
+			<div class="headerMessageContainer">
+				<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+					<lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+					<span class="successMessage">{!$Label.c.Case_Submission_Success_Header}&nbsp;{!v.str_successMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if> 
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="headerMessageContainer ">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+					<span class="errorMessage">{!$Label.c.Error}:&nbsp;{!v.str_errorMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<div class="slds-grid slds-wrap slds-align_absolute-center slds-size_1-of-1">
+			<div class="slds-size_3-of-4">
+
+				<div class="slds-size_1-of-1 slds-p-bottom_medium slds-align_absolute-center">
+					<h1>{!$Label.c.Create_a_Help_Request}</h1> 
+				</div>
+				<div class="slds-size_1-of-2 slds-p-bottom_small" >
+					<span class="intro">{!$Label.c.Help_Request_Sub_Text}</span>
+				</div>
+				
+				<div class="slds-size_1-of-1 slds-p-bottom_large slds-p-left_medium">
+					<ul class="slds-list_dotted ">
+						<aura:iteration items="{!v.typeDescriptionList}" var="cType">
+							<li class="bodyText ">
+								<span class="header3 boldText">{!cType.Label}</span>&nbsp;{!cType.Description}
+							</li>
+						</aura:iteration>
+					</ul>
+				</div>
+				<div class="slds-size_1-of-1 slds-wrap">
+					<!-- CASE TYPE -->
+					<div class="slds-size_1-of-2 slds-grid slds-gutters slds-p-bottom_medium">				
+						<div class="slds-size_1-of-1 slds-col">
+							<ui:inputSelect value="{!v.typeChosen}" required="true" label="{!$Label.c.Request_help_with}" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testScript_caseTypeInput" change="{!c.changeCurrentCaseSetting}" >
+								<ui:inputSelectOption label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault" text="" value="true" />
+								<aura:iteration items="{!v.typeDescriptionList}" var="cType">
+									<ui:inputSelectOption label="{!cType.Label}" text="{!cType.Value}" class="picklistOption" />
+								</aura:iteration>
+							</ui:inputSelect>
+						</div>
+					</div>
+
+					<div class="slds-size_1-of-1 slds-p-bottom_medium">
+						<!-- LOCATION AND PROVIDER-->
+                        <c:Prov_comp_BLPpicklists showHeaders="false" locAcctRec="{!v.locationChosen}" provAcctRec="{!v.providerChosen}" resetPicklists="{!v.resetPicklists}"/>
+						<div class="slds-size_1-of-1 slds-grid slds-gutters">
+							<div class="slds-size_1-of-2 slds-col">
+								<aura:if isTrue="{!v.locationError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+							</div>
+							<div class="slds-size_1-of-2 slds-col">							
+								<aura:if isTrue="{!v.providerError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+							</div>
+						</div>
+					</div>
+
+					<aura:if isTrue="{!and(v.typeChosen != null,v.typeChosen != '') }">
+						<!-- MEMBER INFO -->
+						<aura:if isTrue="{!v.selectedCaseSetting.Show_Member_Info__c}">
+							<div class="slds-size_1-of-1 slds-grid slds-gutters slds-p-bottom_medium">
+								<div class="slds-col slds-size_1-of-2 ">
+									<ui:inputText aura:Id="memberFirstName" placeholder="First Name" blur="{!c.checkSpecialCharacters}" maxlength="255" label="Member First Name" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_memberFirstNameInput" value="{!v.memberFirstName}"/>
+								</div>
+
+								<div class="slds-col slds-size_1-of-2 ">
+									<ui:inputText aura:Id="memberLastName" placeholder="Last Name" blur="{!c.checkSpecialCharacters}" maxlength="255" label="Member Last Name" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_memberLastNameInput" value="{!v.memberLastName}"/>
+								</div>
+							</div>
+							<div class="slds-size_1-of-2 slds-grid slds-gutters slds-p-bottom_medium">
+								<div class="slds-col slds-size_1-of-1 ">
+									<ui:inputText aura:Id="memberNumber" placeholder="Number" blur="{!c.checkSpecialCharacters}" maxlength="255" label="Member Number" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_memberNumberInput" value="{!v.memberNumber}"/>
+								</div>
+							</div>
+						</aura:if>
+
+						<!-- CLAIM AUTH NUMBER -->
+						<aura:if isTrue="{!v.selectedCaseSetting.Show_Claim_Auth_Number__c}">
+							<div class="slds-size_1-of-1 slds-grid slds-gutters slds-p-bottom_medium">				
+								<div class="slds-size_1-of-2 slds-col">
+									<ui:inputText aura:Id="claimAuthNumber" placeholder="Number" blur="{!c.checkSpecialCharacters}" maxlength="255" required="true" label="Claim/Auth Number" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testScript_claimAuthNumberInput" value="{!v.claimAuthNumber}"/>
+									<aura:if isTrue="{!v.claimNumberError}">
+										<div class="validationErrorMessage">
+											{!$Label.c.Required_Error}
+										</div>
+									</aura:if>
+								</div>
+								<div class="slds-size_1-of-2 slds-col">
+									<aura:if isTrue="{!v.selectedCaseSetting.Show_Additional_Meeting_Info__c}">
+										<div class="slds-p-bottom_medium slds-size_1-of-1 ">
+											<ui:inputPhone aura:Id="phoneNumber" placeholder="(123) 456-7890" blur="{!c.fixPhone}" maxlength="15" required="true" label="Phone #" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testScript_phoneNumberInput" value="{!v.phoneNumber}"/>
+											<aura:if isTrue="{!v.phoneNumberError}">
+												<div class="validationErrorMessage">
+													{!$Label.c.Required_Error}
+												</div>
+											</aura:if>
+										</div>
+									</aura:if>
+								</div>
+							</div>
+						</aura:if>
+
+						<!-- ADDTIONAL MEETING INFO -->
+						<aura:if isTrue="{!v.selectedCaseSetting.Show_Additional_Meeting_Info__c}">
+							<div class="slds-p-bottom_medium slds-grid slds-gutters slds-size_1-of-1">
+								<div class="slds-col slds-size_1-of-3">
+									<ui:inputDate aura:Id="contactDate" displayDatePicker="true" required="true" label="Requested Contact Date" labelClass="generalLabelForm required" class="generalInputForm testScript_contactDateInput" format="MM/dd/yyyy" value="{!v.contactDate}" blur="{!c.fixDate}"/>
+									<aura:if isTrue="{!v.contactDateError}">
+										<div class="validationErrorMessage">
+											{!$Label.c.Required_Error}
+										</div>
+									</aura:if>
+								</div>
+								<div class="slds-col slds-size_1-of-3">
+									<ui:inputSelect required="true" label="Requested Contact Time" labelClass="generalLabelForm required" class="generalInputForm testscript_contactTimeInput" value="{!v.timeChosen}" >
+										<ui:inputSelectOption label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault" text="" value="true" />
+										<aura:iteration items="{!v.timeList}" var="time">
+											<ui:inputSelectOption class="picklistOption" text="{!time.value}" label="{!time.label}"/>
+										</aura:iteration>
+									</ui:inputSelect>
+									<aura:if isTrue="{!v.timeChosenError}">
+										<div class="validationErrorMessage">
+											{!$Label.c.Required_Error}
+										</div>
+									</aura:if>
+								</div>
+								<div class="slds-col slds-size_1-of-3">
+									<ui:inputSelect required="true" label="Requested Contact Time Zone" labelClass="generalLabelForm required" class="generalInputForm testscript_contactTimeZoneInput" value="{!v.zoneChosen}" >
+										<ui:inputSelectOption label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault" text="" value="true" />
+										<aura:iteration items="{!v.zoneList}" var="zone">
+											<ui:inputSelectOption class="picklistOption" text="{!zone.value}" label="{!zone.label}"/>
+										</aura:iteration>
+									</ui:inputSelect>
+									<aura:if isTrue="{!v.zoneChosenError}">
+										<div class="validationErrorMessage">
+											{!$Label.c.Required_Error}
+										</div>
+									</aura:if>
+								</div>
+							</div>
+						</aura:if>
+
+						<!-- REQUEST DESCRIPTION -->
+						<div class="slds-size_1-of-1 slds-grid slds-gutters slds-p-bottom_medium">
+							<div class="slds-col slds-size_1-of-1">
+								<ui:inputTextArea aura:Id="casedescription" placeholder="{!$Label.c.Enter_text}" blur="{!c.checkSpecialCharacters}" maxlength="255" required="true" label="{!$Label.c.Prov_Case_Description}" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea testScript_requestDescInput" value="{!v.requestDesc}"/>
+								<aura:if isTrue="{!v.descriptionError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+							</div>
+						</div>
+						<!-- DESIRED RESULT -->
+						<div class="slds-size_1-of-1 slds-grid slds-gutters slds-p-bottom_medium">
+							<div class="slds-col slds-size_1-of-1">
+								<ui:inputTextArea aura:Id="casedesired" placeholder="{!$Label.c.Enter_text}" blur="{!c.checkSpecialCharacters}" maxlength="255" required="true" label="{!$Label.c.Case_Desired_Resolution}" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea testScript_resultDescInput" value="{!v.resultDesc}"/>
+								<aura:if isTrue="{!v.resultError}">
+									<div class="validationErrorMessage">
+										{!$Label.c.Required_Error}
+									</div>
+								</aura:if>
+							</div>
+						</div>
+
+						<!-- ATTACHMENTS -->
+						<div class="slds-grid slds-size_1-of-1 uploadAttachment">
+							<div class="slds-size_1-of-1 slds-col generalLabelForm slds-m-bottom_medium">Attach Related Documents</div>
+							<aura:if isTrue="{!v.caseId == null}">
+								<div class="slds-form-element">
+									<label class="slds-checkbox_toggle slds-col">
+										<input type="checkbox" name="checkbox" aria-describedby="toggle-desc" value="on" onclick="{!c.createDraftCase}" />
+										<span id="toggle-desc" class="slds-checkbox_faux_container" aria-live="assertive">
+											<span class="slds-checkbox_faux"></span>
+										</span>
+									</label>
+								</div>
+							</aura:if>
+						</div>
+						<div class="slds-p-bottom_medium slds-size_1-of-1">
+							<aura:if isTrue="{!v.caseId != null}">
+								<div class="slds-page-header slds-size_1-of-1">
+									<div class="slds-media">
+										<div class="slds-media__body">
+											<c:prov_comp_File_Upload parentId="{!v.caseId}" type="Case" />
+										</div>
+									</div>
+								</div>
+							</aura:if>
+						</div>
+						
+						<div class="slds-p-bottom_medium slds-p-top_large slds-size_1-of-1 slds-text-align_center">
+							<a class=" generalButton testScript_saveCaseButton" onclick="{!c.saveCase}">{!$Label.c.Submit}</a>
+						</div>
+					</aura:if>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</aura:component>

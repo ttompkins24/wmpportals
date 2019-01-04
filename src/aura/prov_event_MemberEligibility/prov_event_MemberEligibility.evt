@@ -1,0 +1,12 @@
+<aura:event type="COMPONENT" description="passes modal component parameters back to claim detail component">
+	<aura:attribute name="memCov" type="Object"/>
+	<aura:attribute name="message" type="String"/>
+	<aura:attribute name="isSuccess" type="Boolean"/>
+	<aura:attribute name="successMsg" type="String"/>
+	<aura:attribute name="successCount" type="Integer"/>
+    <aura:attribute name="isError" type="Boolean"/>
+	<aura:attribute name="errorMsg" type="String"/>
+	<aura:attribute name="errorCount" type="Integer"/>
+	<aura:attribute name="eventType" type="String"/>
+	<aura:attribute name="title" type="String" />
+</aura:event>

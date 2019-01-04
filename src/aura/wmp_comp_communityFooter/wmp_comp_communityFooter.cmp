@@ -1,0 +1,163 @@
+<!--
+/**********************************************************************************************************************
+Name 						: WMP_comp_communityFooter
+Purpose						: The footer component that displays the links, logo and injects google analytics scripts
+Created on					: 16th August 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  						Comments
+1.0				1.0			16th August 2017		Santosh Kumar Sriram		See header - purpose
+1.1				7.0			19th October 2017		Todd Tompkins				implemented stylesheet requirements, pulled the css into static resource,
+																				made links use one list, made footer more responsive
+
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes"
+				controller="wmp_util_Cache"
+				access="global">  
+	
+	<!--  including css for the page -->
+	<ltng:require scripts="{!join(',', 
+					$Resource.TexasPortal + '/css/LiveAgentDeployment.js'
+					
+				)}"
+			afterScriptsLoaded="{!c.loadLiveAgentJS}"
+	/>
+	
+
+	<!-- 
+    	#1 Variable defintion
+     -->
+     <aura:attribute name="footer_portalConfigurationLinks_part1"
+     			type="Portal_Configuration_Links__mdt[]"
+     />
+     
+    <!--  <aura:attribute name="footer_portalConfigurationLinks_part2"
+     			type="Portal_Configuration_Links__mdt[]"
+     /> -->
+     <aura:attribute name="chatId"
+     			type="String"
+     />
+
+     <aura:attribute name="generalRecordTypeId" type="String" />
+    
+	<aura:attribute name="portalConfig"
+					type="Portal_Configuration__mdt"
+					description="the portalconfig determines what faqs are displayed on the page"
+	/>
+
+    
+	<!--  init method to get the key map and then construct it to display in footer -->
+	<!--
+	   #2 Handler definitions 
+	-->
+    <aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" />
+    				
+     
+	<!--  div container for footer -->
+	<div class="slds footerContainer" >
+		<!-- desktop view -->
+    <div class="desktop footerContainerDesktop ">
+	        <!--  div live support button -->
+		<aura:if isTrue="{!v.portalConfig.Live_Chat_Functionality__c}">
+		    <div class="liveAgentContainer">
+		        <a href="javascript://Chat" onclick="{!c.launchLiveAgent}" class="noDecoration">
+			        <div class="liveSupportButton2">
+			        	<div class="liveChatIcon"></div>
+			        	<h4 class="inverse  liveChatText">{!$Label.c.Live_Chat}</h4>
+			        </div>
+		        </a>
+		    </div>
+		</aura:if>
+        <!--  div for the first column of links -->
+        <div class="footerColumnContainer slds-grid slds-wrap">
+			<div class="slds-col slds-size_3-of-10">
+	            <div class="DQVlogo slds-size_1-of-1 " title="DentaQuest">
+	            </div>
+	            <!-- <br/>
+	            <div class="planLogo clear slds-size_1-of-1">
+	            </div> -->
+	        </div>
+	        <!--  div for the second column of links -->
+	        <div class="slds-col slds-size_2-of-5 slds-grid slds-wrap slds-p-left_large">
+	            <aura:iteration items="{!v.footer_portalConfigurationLinks_part1}" 
+									var="iterating_footerLink_mtd"
+					>
+						<div class="footerLinkSpacing slds-col slds-size_1-of-2 slds-p-right_small">
+						<!--  Individual links appear here -->
+						<a href="{!if($Locale.language == 'en',iterating_footerLink_mtd.URL__c,iterating_footerLink_mtd.Spanish_URL__c)}" target="_blank"> <ui:outputText value="{!if($Locale.language == 'en',iterating_footerLink_mtd.Link_Label__c,iterating_footerLink_mtd.Link_Label_Sp__c)}" /> </a>
+						<!-- <a href="{!iterating_footerLink_mtd.URL__c}" target="_blank"> <ui:outputText value="{!if($Locale.language == 'en',iterating_footerLink_mtd.Link_Label__c,iterating_footerLink_mtd.Link_Label_Sp__c)}" /> </a> -->
+						</div>
+						
+				</aura:iteration>
+	        </div>
+		        <div class="slds-col slds-size_3-of-10 " >
+		        	<div class = "floatRight">
+		            <a class="bloggerIcon" target="_blank" href="javascript:void(0);">
+		            </a>
+		            <a class="twitterIcon" target="_blank" href="javascript:void(0);">
+		            </a>
+		            <a class="facebookIcon" target="_blank" href="javascript:void(0);">
+		            </a>
+		        </div>
+	        </div>
+	       
+	        <div class=" slds-size_1-of-1 footerText metaText clear slds-p-top_large  slds-p-bottom_medium">
+	            {!$Label.c.FooterText}
+	        </div>
+        </div>
+	        <a id="liveagent_button_online" href="javascript://Chat" style="display: none;" onclick="{!c.launchLiveAgent}">
+		       <!-- OnlineOnline Chat Content --></a><div id="liveagent_button_offline" style="display: none;"><!-- Offline
+		       Offline Chat Content --></div>
+		      
+	    </div>
+	
+	    <!-- mobile view -->
+	    <div class="mobile footerContainer">
+    		<aura:if isTrue="{!v.portalConfig.Live_Chat_Functionality}">
+		    	<div class="liveAgentContainer">
+		    		<a href="javascript://Chat" onclick="{!c.launchLiveAgent}" class="noDecoration">
+			        <div class="liveSupportButton2"  >
+			        	<div class="liveChatIcon"></div>
+			        	<h4 class="inverse  liveChatText">{!$Label.c.Live_Chat}</h4>
+			        </div>
+			        </a>
+		    	</div>
+		    </aura:if>
+	    	<div class="overallContainer">
+	        <div class="slds-grid slds-wrap">
+	    		 <!--  div for the second column of links -->
+	            <aura:iteration items="{!v.footer_portalConfigurationLinks_part1}" 
+									var="iterating_footerLink_mtd"
+					>
+					<div class="slds-size_1-of-2 slds-col slds-p-right_small footerLinkSpacing">
+						<!--  Individual links appear here -->
+						<a href="{!if($Locale.language == 'en',iterating_footerLink_mtd.URL__c,iterating_footerLink_mtd.Spanish_URL__c)}" target="_blank"><ui:outputText class="footerText" value="{!if($Locale.language == 'en',iterating_footerLink_mtd.Link_Label__c,iterating_footerLink_mtd.Link_Label_Sp__c)}" />  </a>
+						<!-- <a href="{!iterating_footerLink_mtd.URL__c}" target="_blank"><ui:outputText class="footerText" value="{!if($Locale.language == 'en',iterating_footerLink_mtd.Link_Label__c,iterating_footerLink_mtd.Link_Label_Sp__c)}" />  </a> -->
+					</div>
+						
+				</aura:iteration>
+		    </div>
+   		 	<div class="firstColumn">
+				<div class="otherColumns">
+		            <a class="bloggerIcon " target="_blank" href="http://oralhealthmatters.blogspot.com">
+		            </a>
+		            <a class="twitterIcon " target="_blank" href="http://twitter.com/dentaquest">
+		            </a>
+		            <a class="facebookIcon " target="_blank" href="https://www.facebook.com/dentaquest">
+		            </a>
+	            </div>
+	        </div>
+            <div class="DQVlogo slds-p-top_large clear" title="DentaQuest">
+            </div>
+            <!-- <div class="planLogo slds-p-top_x-small clear">
+            </div> -->
+		        <div class="footerText increaseOpacity metaText clear slds-p-top_medium slds-p-bottom_medium">
+		            {!$Label.c.FooterText}
+		        </div>
+		    </div>	
+    	</div>
+	</div>
+</aura:component>

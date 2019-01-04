@@ -1,0 +1,235 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" lightningStylesheets="true" docType="html-5.0" applyBodyTag="false" applyHtmlTag="false" controller="prov_ctrl_PreChat_Form">
+<apex:stylesheet value="{!URLFOR($Resource.GOV_Provider_CSS, 'css/standard.css')}"/>
+<apex:slds />
+
+<html>
+<head>
+<style type="text/css">
+    .whiteFont { color: white !important; }
+</style>
+<script type="text/javascript">
+    
+
+    (function() { 
+    function handlePageLoad() {
+        var endpointMatcher = new RegExp("[\\?\\&]endpoint=([^&#]*)");
+        document.getElementById('prechatForm').setAttribute('action',
+        decodeURIComponent(endpointMatcher.exec(document.location.search)[1]));
+    } 
+    if (window.addEventListener) {
+        window.addEventListener('load', handlePageLoad, false);
+    } else { 
+        window.attachEvent('onload', handlePageLoad, false);
+    }
+    })(); 
+
+    function assignHiddenValue(type, value) {
+        document.getElementById(type).value = value;
+        if(type == 'selectedLocation') {
+            getProviders();
+        }
+    }
+
+    function validatePage() {
+        var location = document.getElementById('selectedLocation').value;
+        var provider = document.getElementById('selectedProvider').value;
+        var description = document.getElementById('description').value;
+        if(!location || location == 'Select' || !provider || provider == 'Select') {
+            alert('{!$Label.Pre_Chat_Subtext}');
+            return false;
+        } else if(!description) {
+            alert('{!$Label.Pre_Chat_Description}'); 
+            return false;
+        } else {
+            return true;
+        }
+    }
+</script>
+</head>
+
+<body class="slds-scope">
+<form method="post" id="prechatForm" onsubmit="return validatePage();">
+    <div class="slds-size_1-of-1">
+        <div class="slds-p-top_large slds-size_3-of-4 slds-align_absolute-center">
+            <div class="slds-border_bottom slds-size_1-of-1 slds-p-bottom_x-small slds-align_absolute-center">
+                <span class="header1">{!$Label.Pre_Chat_Title}</span>
+            </div>
+        </div>
+        <div class="slds-size_3-of-4 slds-border_bottom slds-p-bottom_x-small slds-p-top_x-large slds-align_absolute-center">
+            <span class="header3">{!$Label.Pre_Chat_Subtext}</span>      
+        </div>
+        <div class="slds-grid slds-gutters slds-size_3-of-4 slds-align_absolute-center slds-p-top_large">
+            <div class="slds-col slds-size_1-of-2 ">
+                <apex:outputLabel value="{!$Label.Select_Location}" for="locSelect" styleClass="generalLabelForm"/>
+                <select id="locSelect" class="generalInputForm" onchange="assignHiddenValue('selectedLocation',this.value)" required="true">
+                    <!-- <option value="" selected="selected" disabled="disabled"></option> -->
+                </select>
+            </div>
+            <div class="slds-col slds-size_1-of-2 ">
+                <apex:outputLabel value="{!$Label.Select_Provider}" for="provSelect" styleClass="generalLabelForm slds-p-right_large"/>
+                <select id="provSelect" class="generalInputForm" onchange="assignHiddenValue('selectedProvider',this.value)" required="true">
+                    <!-- <option value="" selected="selected" disabled="disabled"></option> -->
+                </select>
+            </div>
+        </div>
+        <div class="slds-size_3-of-4 slds-p-top_x-large slds-align_absolute-center">
+            <span class="header3">{!$Label.Pre_Chat_Description}</span>
+        </div>
+        <div class="slds-size_1-of-1 slds-align_absolute-center slds-p-top_medium">            
+            <textarea wrap="soft" name="liveagent.prechat:caseDescription" id="description" class="generalInputFormArea" maxLength="30000" cols="50" rows="4" required="true"/>
+        </div>  
+        <div class="slds-size_1-of-1 slds-align_absolute-center slds-p-top_medium">            
+            <input type="submit" value="Submit" id="prechat_submit" class="generalButton whiteFont"/>
+        </div>
+    </div>
+
+<!-- Detail inputs -->
+<input type="hidden" name="liveagent.prechat:serviceLocation" id="selectedLocation" value=""/>
+<input type="hidden" name="liveagent.prechat:provider" id="selectedProvider" value=""/>
+
+<!-- Map the detail inputs to the Contact fields --> 
+<input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="Id,Contact Id;" />
+
+<!-- Try to find the Contact by email (exact match) -->
+<input type="hidden" name="liveagent.prechat.findorcreate.map.doFind:Contact" value="Id,true;" />
+<input type="hidden" name="liveagent.prechat.findorcreate.map.isExactMatch:Contact" value="Id,true;" />
+
+<!-- Save the Contact on the Live Chat Transcript's Contact Loookup -->
+<input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Contact" value="Contact" />
+
+<!-- Show the Contact when it is found or created -->
+<input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="true" />
+
+<!-- Create a Case every time -->
+<!-- Hard coded case values -->
+<input type="hidden" name="liveagent.prechat:caseSubject" value="Live Chat"/>
+<input type="hidden" name="liveagent.prechat:caseType" value="Other"/>
+<input type="hidden" name="liveagent.prechat:caseStatus" value="New"/>
+<input type="hidden" name="liveagent.prechat:caseRecordType" value="{!caseRecordType}"/>
+<input type="hidden" name="liveagent.prechat:caseRouteTo" value="DentaQuest Portal Cases"/>
+<input type="hidden" name="liveagent.prechat:caseOwner" value="{!caseOwner}"/>
+<!-- Map values from pre-chat details -->
+<input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="
+AccountId,serviceLocation;
+Business_lkup__c,BusinessId;
+Description,caseDescription;
+Origin,PortalLabel;
+OwnerId,caseOwner;
+Provider__c,provider;
+RecordTypeId,caseRecordType;
+Route_To__c,caseRouteTo;
+Service_Location__c,serviceLocation;
+Status,caseStatus;
+Subject,caseSubject;
+SubType__c,caseType;
+Type,caseType;
+"/>
+<!-- Set all values to create -->
+<input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Case" value="
+AccountId,true;
+Business_lkup__c,true;
+Description,true;
+Origin,true;
+OwnerId,true;
+Provider__c,true;
+RecordTypeId,true;
+Route_To__c,true;
+Service_Location__c,true;
+Status,true;
+Subject,true;
+SubType__c,true;
+Type,true;
+"/>
+<input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Case" value="Case"/>
+<input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Case" value="true"/>
+
+<!-- Link the Contact to the Case -->
+<input type= "hidden" name="liveagent.prechat.findorcreate.linkToEntity:Contact" value="Case,ContactId" />
+
+</form> 
+</body>         
+<script type='text/javascript' src='{!chatJsUrl}'></script>
+<script type="text/javascript">
+    liveagent.details.preChatInit('{!chatUrl}','detailCallback');
+    var detailMap = {};
+    var callBackRun = false;
+    var detailCallback = function (details){
+        for(var i = 0; i < details.customDetails.length; i++) {
+            var label = details.customDetails[i].label;
+            var value = details.customDetails[i].value;
+            detailMap[label] = value;
+        }
+        //console.log('detail map: '+ JSON.stringify(detailMap));
+        if(!callBackRun) {
+            getLocations();
+        }
+    };
+
+    function getLocations() {
+        var businessId = detailMap.BusinessId;
+        //console.log('businessId: '+businessId);
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.prov_ctrl_PreChat_Form.serviceLocationOptions}',
+            businessId,
+            function(result, event){
+                if(event.status) {
+                    //console.log('event: '+event.status);
+                    //console.log('result: '+JSON.stringify(result));
+                    var locationList = result;
+                    var locSel = document.getElementById('locSelect');
+                    // default list to only location when there is only 1
+                    if(locationList.length > 1) {
+                        locSel.options[0] = new Option('','',true,true);
+                    } else {
+                        document.getElementById('selectedLocation').value = locationList[0].Id;
+                        //console.log('defaulted location: '+document.getElementById('selectedLocation').value);
+                    }
+                    getProviders();                    
+                    // add in all available locations
+                    for(var i = 0; i < locationList.length; i++) {
+                        locSel.options[locSel.options.length] = new Option(locationList[i].Name, locationList[i].Id);
+                    }
+                }
+            },
+            {escape: true}
+        );
+        callBackRun = true;
+    }
+
+    function getProviders() {
+        var provSel = document.getElementById('provSelect');
+        for(i = provSel.options.length - 1; i >=0; i--) {
+            provSel.remove(i);
+        }
+        var businessId = detailMap.BusinessId;
+        //console.log('businessId: '+businessId);
+        var locationId = document.getElementById('selectedLocation').value;
+        //console.log('selected Location: '+locationId);
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.prov_ctrl_PreChat_Form.providerOptions}',
+            businessId,
+            locationId,
+            function(result, event){
+                if(event.status) {
+                    //console.log('event: '+event.status);
+                    //console.log('result: '+JSON.stringify(result));
+                    var providerList = result;
+                    // default list to only provider when there is only 1
+                    if(providerList.length > 1) {
+                        provSel.options[0] = new Option('','',true,true);
+                    } else {
+                        document.getElementById('selectedProvider').value = providerList[0].Id;
+                        //console.log('defaulted provider: '+document.getElementById('selectedProvider').value);
+                    }
+                    // add in all available providers
+                    for(var i = 0; i < providerList.length; i++) {
+                        provSel.options[provSel.options.length] = new Option(providerList[i].Name, providerList[i].Id);
+                    }
+                }
+            },
+            {escape: true}
+        );
+    }
+</script>
+</html>
+</apex:page>

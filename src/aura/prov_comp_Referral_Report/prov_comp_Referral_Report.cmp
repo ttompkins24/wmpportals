@@ -1,0 +1,194 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Referral_Report
+Purpose                     : Allows users to view a report of Referrals submitted that day
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             6        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Referral_Detail">
+	
+
+	<aura:attribute name="referralDetails" type="prov_wrap_Claim.ClaimDetailResultClaimWrapper[]"/>
+	<aura:attribute name="dateFilterList" type="String[]"/>
+	<aura:attribute name="filterDate" type="date"/>
+	<aura:attribute name="noResults" type="Boolean" default="false"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+<div class="slds generalOuterDiv refReportWrapper">
+
+
+	<div class="elementWrap slds-col slds-size_1-of-1  ">
+		<div class="slds-size_1-of-1 slds-grid slds-wrap">
+			<div class="slds-size_5-of-6">
+				<h1>Referral: Daily Confirmation Report
+				</h1>
+			</div>
+			<div class="slds-size_1-of-6 slds-text-align_right">
+			<span class="bodyText dataSpace spacing ">
+				<a onclick="{!c.printList}" aura:id="refDetailPrint" 
+						class="linkColor noDecoration printIcon testscript_refReportPrint hideOnPrint">
+					Print
+				</a>
+			</span>
+		</div>
+			<div class="slds-size_1-of-1 slds-grid">
+	            <div class="slds-size_1-of-1">
+                	
+                </div>
+	                
+			</div>
+	</div>
+
+		<div class="slds-size_1-of-1 slds-grid filterDiv hideOnPrint">
+                <div class="slds-col">
+                <div class="slds-size_7-of-12">
+                	<h3>{!$Label.c.Ref_Report_Header_Text}</h3>
+                	<p>{!$Label.c.Ref_Report_SubHeader_Text}</p>
+                    <p class="slds-p-bottom_small">Please use <a onclick="{!c.searchRedirect}">Referral Search</a> to view latest available information</p>
+                    <ui:inputSelect aura:id="dateFilter" label="View referrals submitted on:" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_refDateSelect" change="{!c.updateDate}">
+                            <aura:iteration items="{!v.dateFilterList}" var="date">
+                                 <ui:inputSelectOption class="picklistOption" text="{!date}" label="{!date}"/>
+                            </aura:iteration>
+                    </ui:inputSelect>
+                </div>
+            	</div>
+                <div class="slds-col">
+                <div class="slds-float_right">
+                    <button onclick="{!c.filterByDate}" aura:id="refReportFilter" class="generalButton testscript_refReportFilter ">View</button>
+                </div>
+            	</div>
+
+			
+		</div>
+
+		<!-- iterate through pre-auths here -->
+		
+
+			<aura:if isTrue="{!v.noResults}">
+				<div class="slds-col slds-size_1-of-1 noResultsDiv">
+					{!$Label.c.Referral_confirmation}
+								
+
+				</div>
+			</aura:if>
+
+		<aura:if isTrue="{!v.referralDetails.length > 0}">
+		<aura:iteration items="{!v.referralDetails}" var="ref">
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap reportInnerDiv pageBreakAfter">
+			
+			<div class="slds-col slds-size_1-of-1">
+				<div class="slds-float_left">
+					<aura:if isTrue="{!ref.Header.IsInternalCareTransfer}">
+					<h1>Interim Care Transfer</h1>
+					<aura:set attribute="else">
+						<h1>Referral
+					</h1>
+					</aura:set>
+					</aura:if>
+
+						<h3><a class="testscript_refReport" onclick="{!c.handleOpenRef}" data-ref="{!ref.Header.ClaimId}">#{!ref.Header.ClaimNumber}</a></h3>
+					<p>Submitted: <ui:outputDateTime value="{!ref.Header.SubmittedDate}"/></p>
+							
+					
+				</div>
+				
+
+
+			</div>
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+		
+			<!-- MemberInformation/Dentist Information -->
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small slds-p-top_small">
+                    <li class="header4 generalSpacing_top">Member Information</li>
+                </ul>
+			</div>
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Servicing Provider Information</li>
+                </ul>		
+			</div>	
+			<!-- member Information fields -->
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Name">Member Name:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Name" data-value="Member Name">{!ref.Header.MemberName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">D.O.B.</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="DOB" data-value="DOB"><lightning:formattedDateTime value="{!ref.Header.PatientBirthDate}" year="numeric" day="numeric" month="numeric" timeZone="{! $Locale.timezone }"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Number">Member Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Number" data-value="Member Number">{!ref.Header.SubmittedMemberId}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Plan">Plan:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Plan" data-value="Plan">{!ref.Header.PlanName}</dd>
+				</dl>			
+			</div>
+			<!-- dentist Information fields -->
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Dentist">Provider:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Dentist" data-value="Dentist">{!ref.Header.ProviderName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Service Location">Service Location:</dt>
+					<dd class="slds-item_detail generalLabelForm" title="Service Location" data-value="Service Location">{!ref.Header.ServiceLocationName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Business">Business:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Business" data-value="Business">{!ref.Header.Business}</dd>
+								
+				</dl>			
+			</div>
+
+
+			<div class="slds-size_1-of-1">
+				<ul class="slds-border_bottom slds-p-bottom_x-small slds-p-top_medium">
+                    <li class="header4 generalSpacing_top">Requested Provider Information</li>
+                   
+                </ul>
+			</div>
+
+
+			<!-- Requested Provider Information fields --> 
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Provider">Provider:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Provider" data-value="Provider">{!ref.Header.ApprovedProvider}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="DentAddress">Address:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="DentAddress" data-value="DentAddress">{!ref.Header.ApprovedProviderAddress}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="PhoneNumber">Phone Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="PhoneNumber" data-value="PhoneNumber">{!ref.Header.ApprovedProviderPhone}</dd>
+								
+				</dl>			
+			</div>
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+
+			</div>
+
+		</div>
+	</div>
+		</aura:iteration>
+	</aura:if>
+
+		
+		
+
+			
+	
+	</div>
+	
+	
+</div>
+
+</aura:component>

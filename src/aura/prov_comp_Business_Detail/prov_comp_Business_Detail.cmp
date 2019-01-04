@@ -1,0 +1,403 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Business_Detail
+Purpose                     : Allows users to view Details about Business Accounts
+Created on                  : February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             3        February 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Business_Detail">
+
+	<aura:attribute name="isUpdateError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+	<aura:attribute name="isUpdateSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" default="false" />
+	<aura:attribute name="bizUpdateSuccessMsg" type="String"/>
+	<aura:attribute name="bizUpdateErrorMsg" type="String"/>
+    <aura:attribute name="hasExistingCase" type="boolean"/>
+
+	<aura:attribute name="bizList" type="Account[]"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+
+	<aura:attribute name="notes" type="String" />
+	<aura:attribute name="providerTypes" type="String[]"/>
+
+	<!-- attributes to hold accounts -->
+	<aura:attribute name="business_updates" type="Map" />
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+	<aura:attribute name="page" type="integer" description="for storing currnet page Number"/>
+   	<aura:attribute name="pages" type="integer" description="using for store All Pages page Number"/>
+   	<aura:attribute name="total" type="integer" description="total records count store"/>
+   	<aura:attribute name="sortField" type="String"/>
+   	<aura:attribute name="direction" type="String"/>
+   	<aura:attribute name="noResults" type="boolean"/>
+   	<aura:attribute name="maxResults" type="integer"/>
+   	<aura:attribute name="searchActive" type="boolean"/>
+   	<aura:attribute name="editBusiness" type="boolean"/>
+   	<aura:attribute name="caseUpdateNumber" type="String"/>
+	<aura:attribute name="isAsc" type="boolean" description="boolean flag to pass sorting condition to apex class"/>
+	<aura:attribute name="showSpinner" type="Boolean"/>	 
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+		<div class="{!'slds' + (v.editBusiness ? ' businessDetailWrapperEdit' : ' businessDetailWrapper')}">
+    		<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+		
+			<!-- message containers -->
+			<aura:if isTrue="{!and(v.hasExistingCase, !v.editBusiness)}">
+	            <div  class="headerMessageContainer ">
+	                <ui:message class="warningMessageWrap slds-size_1-of-1" severity="warning" closable="false">
+	                    <lightning:icon size="medium" class="generalInfoIcon" variant="inverse" iconName="utility:info" alternativeText="Info"/>
+	                    <span class="warningMessage">{!$Label.c.Business_Existing_Case}
+						<a onclick="{!c.helpRequestRedirect}"> Help Request</a> page.</span>
+	                </ui:message>
+	            </div>                                                
+	        </aura:if>
+			<aura:if isTrue="{!and(v.isUpdateError, v.editBusiness)}">
+				<div class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+						<span class="errorMessage">{!v.bizUpdateErrorMsg}</span>
+					</ui:message>
+				</div>
+			</aura:if>
+			<aura:if isTrue="{!and(v.isUpdateSuccess, !v.editBusiness)}">
+				<div class="headerMessageContainer ">
+					<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+						<lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+						<span class="successMessage">{!v.bizUpdateSuccessMsg}<a onclick="{!c.helpRequestRedirect}"> Help Request Section</a>.</span>
+					</ui:message>
+				</div>				
+			</aura:if>
+			<!-- end message containers -->
+
+			<!-- BUSINESS DETAIL SECTION -->
+			<aura:if isTrue="{!!v.editBusiness}">
+				<div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-clearfix">
+					<div class="slds-col">
+						<h1>Business Details</h1>
+						<h3>{!v.bizAcctRec.Name}</h3>
+					</div>
+					<div class="slds-col slds-clearfix">
+						<aura:if isTrue="{!and(v.permissions.dentistList == 'full' , v.permissions.tierAccess == '1')}">
+							<button class="generalButton slds-float_right inverse slds-m-right_medium testScript_updateInformationButton" onclick="{!c.editBusiness}">
+								<span class="editIcon iconSpaceRight" title="Update"></span>Update Information
+							</button>
+						</aura:if>
+						<a class=" bodyLink verticalSpacer slds-float_right testScript_printButton printIcon paddingRight" onclick="{!c.printList}">Print</a>
+					</div>
+
+					<div class="slds-size_1-of-1 slds-grid slds-wrap slds-p-top_large slds-gutters">
+						<div class="slds-col slds-size_1-of-2">
+							<div class="slds-border_bottom slds-p-bottom_x-small">
+								<h4>General Information</h4>
+							</div>
+
+							<div class="slds-m-top_small">
+								<dl class="slds-list_horizontal slds-wrap">
+									<dt class="slds-item_label generalLabelForm" title="EIN">EIN:</dt>
+									<dd class="slds-item_detail bodyText" title="EIN">{!v.bizAcctRec.tax_id_number__c}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+									<dd class="slds-item_detail bodyText" title="NPI">{!v.bizAcctRec.npi__c}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Provider Type">Provider Type:</dt>
+									<dd class="slds-item_detail bodyText" title="Provider Type">{!v.bizAcctRec.business_type__c}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Tax Information">Tax Information:</dt>
+									<dd class="slds-item_detail bodyText" title="Tax Information">{!v.bizAcctRec.w9_type__c}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Address">Address:</dt>
+									<dd class="slds-item_detail bodyText" title="Address">{!v.bizAcctRec.BillingStreet},&nbsp;{!v.bizAcctRec.BillingCity},&nbsp;{!v.bizAcctRec.BillingState}&nbsp; {!v.bizAcctRec.BillingPostalCode}</dd>
+								</dl>
+							</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-2">
+							<div class="slds-border_bottom slds-p-bottom_x-small">
+								<h4>Contact</h4>
+							</div>
+							
+							<div class="slds-m-top_small">
+								<dl class="slds-list_horizontal slds-wrap">
+									<dt class="slds-item_label generalLabelForm" title="Phone">Phone:</dt>
+									<dd class="slds-item_detail bodyText" title="Phone">{!v.bizAcctRec.Phone}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Fax">Fax:</dt>
+									<dd class="slds-item_detail bodyText" title="Fax">{!v.bizAcctRec.Fax}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+									<dd class="slds-item_detail bodyText" title="Email">{!v.bizAcctRec.Email__c}</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Website">Website:</dt>
+									<dd class="slds-item_detail bodyText" title="Website">
+										<a href="{!'http://'+v.bizAcctRec.Website}" target="_blank">{!v.bizAcctRec.Website}</a>
+									</dd>
+								</dl>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+					<div class="slds-size_1-of-1">
+						<div class="slds-col">
+							<h3>Service Locations</h3>
+						</div>
+						<div class="slds-col">
+							<table class="tableClass" aura:id="">
+								<thead>
+									<tr>
+										<th class="width10">
+											<span class="headerText sortable sorted sortAscend inverse" onclick="{!c.updateColumnSorting}" data-fieldname="Name" data-col="0" >Office Name</span>
+										</th>
+										<th class="width10">
+											<span class="headerText sortable notSorted inverse" onclick="{!c.updateColumnSorting}" data-fieldname="BillingStreet" data-col="1">Address</span>
+										</th>
+										<th class="width10">
+											<span class="headerText inverse" data-fieldname="Phone" data-col="2">Contact Phone</span>
+										</th>
+									</tr>
+								</thead>
+
+								<tbody>
+									<aura:if isTrue="{!v.locList.length > 0}">
+										<aura:iteration items="{!v.locList}" var="loc">
+											<tr>
+												<td data-label="Location Name" class="slds-is-sortable"> 
+													<span class="bodyText dataSpace"><a onclick="{!c.servLocationDetail}" data-location="{!loc.Id}">{!loc.Name}</a></span>
+												</td>
+												<td data-label="Location Address" class="slds-is-sortable">
+													<span class="bodyText dataSpace">{!loc.BillingStreet},&nbsp;{!loc.BillingCity},&nbsp;{!loc.BillingState}&nbsp; {!loc.BillingPostalCode}</span>
+												</td>
+												<td data-label="Contact Phone" class="slds-is-sortable ">
+													<span class="bodyText dataSpace">{!loc.Phone}</span>
+												</td>
+											</tr>
+										</aura:iteration>
+									</aura:if>
+								</tbody>
+							</table>				
+
+							<aura:if isTrue="{!v.locList.length > 0}">
+								<div >
+									<div class="slds-col slds-size_1-of-1 footer">
+										<div class="paginate">
+											<div class="desktop">
+												<span class="{!'bodyText dataSpace spacing' + (v.pages > 1 ? '' : ' hidden')}"><a class="testscript_showAll" onclick="{!c.showAllLocations}">Show All</a></span> 
+												<a class="{!'spacing  bodyLink testscript_first' + (v.page == 1 ? ' hidden' : '') }"  onclick="{!c.firstLocPage}" >First</a>
+												<a class="{!'spacing  bodyLink testscript_prev' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousLocPage}">Previous</a>
+												<span class="spacing bodyText pageNum">Page&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>
+												<a class="{!'spacing  bodyLink testscript_next' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextLocPage}" >Next</a>
+											</div>
+										</div>		
+									</div>	
+
+								</div>
+							</aura:if>
+						</div>
+					</div>
+				</div>
+			</aura:if>
+			<!-- END BUSINESS DETAIL SECTION -->
+			
+			
+			<!-- EDIT BUSINESS SECTION -->
+			<aura:if isTrue="{!v.editBusiness}">
+				<div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-m-bottom_large headerBackground">
+					<div class="slds-size_11-of-12 slds-col mainHeaderText">
+						<h1 class="inverse">Edit Business Detail</h1>
+					</div>
+					<div class="slds-size_1-of-12 slds-col mainHeaderText">
+						<div class="slds-float_right">
+							<button class="generalButton inverse testScript_cancelButton" onclick="{!c.editBusinessCancel}">Cancel</button>
+						</div>
+					</div>
+				</div>
+				<div class="elementWrap slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+					<div class="slds-size_1-of-1 slds-p-bottom_medium slds-grid slds-wrap" >                 
+						<div class="slds-size_8-of-12 slds-col generalLabelForm">
+							Update and submit Business details on this form to request a change.
+						</div>
+						<div class="slds-size_4-of-12 slds-col ">
+							<span class="slds-float_right" title="Help">Why do I have to log a Help Request to make changes?<lightning:helptext content="{!$Label.c.Edit_Provider_Detail}" /></span>
+						</div>               
+					</div>
+
+					<div class="slds-size_1-of-1 slds-grid">
+						<div class="slds-col slds-size_1-of-2">
+							<div>
+								<ul class="slds-border_bottom slds-p-bottom_x-small">
+									<li class="header4">General Information</li>
+									<li>Updates made to this section will be applied to all records associated with this Business.</li>
+								</ul>
+							</div>
+
+							<div class="slds-p-top_medium">
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label generalLabelForm" title="EIN">EIN:</dt>
+									<dd class="slds-item_detail bodyText" title="EIN" data-value="EIN">
+										<ui:inputText class="generalInputForm testscript_bizRecEIN" labelClass="slds-hide" label="EIN" value="{!v.bizAcctRec.tax_id_number__c}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+									<dd class="slds-item_detail bodyText " label="NPI" data-label="NPI" data-value="{!v.bizAcctRec.npi__c}">
+										<ui:inputText class="generalInputForm testscript_bizRecNPI"  labelClass="slds-hide" label="NPI" value="{!v.bizAcctRec.npi__c}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Provider Type">Provider Type:</dt>
+									<dd class="slds-item_detail bodyText" title="Provider Type">
+										<ui:inputText aura:id="bizRecBizType" class="generalInputForm testscript_provType"  labelClass="slds-hide" label="Provider Type" maxlength="150" value="{!v.bizAcctRec.business_type__c}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Tax Information">Tax Information:</dt>
+									<dd class="slds-item_detail bodyText" title="Tax Information">
+										<ui:inputText aura:id="bizRecTaxInfo" class="generalInputForm testscript_bizRecTaxInfo"  labelClass="slds-hide" label="Tax Information" value="{!v.bizAcctRec.w9_type__c}" change="{!c.fieldChange}"></ui:inputText>	
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm dtExtra" title="Street">Street:</dt>
+									<dd class="slds-item_detail bodyText ddExtra" title="Street">
+										<ui:inputTextArea aura:id="bizRecStreet" class="generalInputForm testscript_bizRecStreet"  labelClass="slds-hide" label="Street" maxlength="255" value="{!v.bizAcctRec.BillingStreet}" change="{!c.fieldChange}"></ui:inputTextArea>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="City">City:</dt>
+									<dd class="slds-item_detail bodyText" title="City">
+										<ui:inputText aura:id="bizRecCity" class="generalInputForm testscript_bizRecCity" labelClass="slds-hide" label="City" value="{!v.bizAcctRec.BillingCity}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="State">State:</dt>
+									<dd class="slds-item_detail bodyText" title="State">
+										<ui:inputText aura:id="bizRecState" class="generalInputForm testscript_bizRecState"  labelClass="slds-hide" label="State" value="{!v.bizAcctRec.BillingState}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Postal Code">Postal Code:</dt>
+									<dd class="slds-item_detail bodyText" title="Postal Code">
+										<ui:inputText aura:id="bizRecPostalCode" class="generalInputForm testscript_bizRecPostalCode" labelClass="slds-hide" label="Postal Code" value="{!v.bizAcctRec.BillingPostalCode}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+								</dl>
+							</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-2">
+							<div>
+								<ul class="slds-border_bottom slds-p-bottom_x-small">
+									<li class="header4">Contact</li>
+									<li>&zwnj;</li>
+								</ul>
+							</div>
+							<div class="slds-p-top_medium">
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label generalLabelForm" title="Phone">Phone:</dt>
+									<dd class="slds-item_detail bodyText" title="Phone">
+										<ui:inputPhone aura:id="bizRecPhone" class="generalInputForm testscript_bizRecPhone" labelClass="slds-hide" label="Phone" value="{!v.bizAcctRec.Phone}" maxlength="40" change="{!c.fieldChange}"></ui:inputPhone>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Fax">Fax:</dt>
+									<dd class="slds-item_detail bodyText" title="Fax">
+										<ui:inputPhone aura:id="bizRecFax" class="generalInputForm testscript_bizRecFax" labelClass="slds-hide" label="Fax " value="{!v.bizAcctRec.Fax}" maxlength="40" change="{!c.fieldChange}"></ui:inputPhone>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+									<dd class="slds-item_detail bodyText" title="Email">
+										<ui:inputText aura:id="bizRecEmail" class="generalInputForm testscript_bizRecEmail" labelClass="slds-hide" label="Email " value="{!v.bizAcctRec.Email__c}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+
+									<dt class="slds-item_label generalLabelForm" title="URL">URL:</dt>
+									<dd class="slds-item_detail bodyText" title="URL">
+										<ui:inputText aura:id="bizRecURL" class="generalInputForm testscript_bizRecURL" labelClass="slds-hide" label="Website" value="{!v.bizAcctRec.Website}" change="{!c.fieldChange}"></ui:inputText>
+									</dd>
+								</dl>
+							</div>
+						</div>
+					</div>	
+				</div>	  	
+		
+				<div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+					<div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+						<div class="slds-size_8-of-12 slds-col">
+							<h3>Service Locations</h3>
+						</div>
+						<div class="slds-size_4-of-12 slds-col generalLabelForm">
+						</div>
+					</div>
+					<div class="slds-col">
+						<table class="tableClass" aura:id="">
+							<thead>
+								<tr>
+									<th class="">
+										<span class="headerText sortable sorted sortAscend" onclick="{!c.updateColumnSorting}" data-fieldname="Name" data-col="0" >Office Name</span>
+									</th>
+									<th class="">
+										<span class="headerText sortable notSorted" onclick="{!c.updateColumnSorting}" data-fieldname="BillingStreet" data-col="1">Address</span>
+									</th>
+									<th class="">
+										<span class="headerText inverse" data-fieldname="Phone" data-col="2">Contact Phone</span>
+									</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<aura:if isTrue="{!v.locList.length > 0}">
+									<aura:iteration items="{!v.locList}" var="loc">
+										<tr>
+											<td data-label="Location Name" class="slds-is-sortable "> 
+												<span class="bodyText dataSpace"><a onclick="{!c.servLocationDetail}" data-location="{!loc.Id}">{!loc.Name}</a></span>
+											</td>
+											<td data-label="Location Address" class="slds-is-sortable ">
+												<span class="bodyText dataSpace">{!loc.BillingStreet},&nbsp;{!loc.BillingCity},&nbsp;{!loc.BillingState}&nbsp; {!loc.BillingPostalCode}</span>
+											</td>
+											<td data-label="Contact Phone" class="slds-is-sortable ">
+												<span class="bodyText dataSpace">{!loc.Phone}</span>
+											</td>
+										</tr>
+									</aura:iteration>
+								</aura:if>
+							</tbody>
+						</table>
+						<aura:if isTrue="{!v.locList.length > 0}">
+							<div>
+								<div class="slds-col slds-size_1-of-1 footer">
+									<div class="col paginate">
+										<div class="desktop">
+											<span class="{!'bodyText dataSpace spacing' + (v.pages > 1 ? '' : ' hidden')}"><a class="testscript_showAll" onclick="{!c.showAllLocations}">Show All</a></span> 
+											<a class="{!'spacing  bodyLink testscript_first' + (v.page == 1 ? ' hidden' : '') }"  onclick="{!c.firstLocPage}" >First</a>
+											<a class="{!'spacing  bodyLink testscript_prev' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousLocPage}" >Previous</a>
+											<span class="spacing bodyText pageNum">Page&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>
+											<a class="{!'spacing  bodyLink testscript_next' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextLocPage}" >Next</a>
+										</div>
+									</div>		
+								</div>	
+
+							</div>
+						</aura:if>
+					</div>
+				</div>
+				<!--Submit Footer-->
+				<div class="slds slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+					<div class="slds-align_absolute-center">
+						<ul >
+							<li class="header3 slds-align_absolute-center">Does everything look correct?</li>
+							<li class="slds-align_absolute-center slds-p-top_small">Please make sure all information is correct and include any additional notes or instructions below.</li>
+							<li class="slds-align_absolute-center slds-p-top_medium">
+								<ui:inputTextArea aura:id="comments" class="generalInputForm testScript_commentsInput" placeholder="Additional notes" rows="5" value="{!v.notes}"/>
+							</li>
+							<li class="slds-p-top_medium slds-align_absolute-center ">
+								<button class="generalButton testScript_submitButton" onclick="{!c.saveBusinessUpdate}">Submit Change Request</button>
+							</li>
+							<li class="slds-p-top_medium slds-align_absolute-center">{!$Label.c.Dentist_Processing}</li>
+						</ul>
+					</div>
+				</div>
+				<!-- END Submit Footer -->
+			</aura:if>
+			<!-- END EDIT BUSINESS SECTION -->
+		</div>
+</aura:component>

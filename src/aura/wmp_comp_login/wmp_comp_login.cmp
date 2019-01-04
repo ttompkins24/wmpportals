@@ -1,0 +1,17 @@
+<aura:component controller="LightningLoginFormController" implements="flexipage:availableForAllPageTypes,forceCommunity:availableForAllPageTypes" access="global">
+	
+	
+	<aura:attribute name="username" type="String" />
+	<aura:attribute name="password" type="String" />
+	
+	<div class="slds">
+		
+		<div class="outerwrapper">
+			<div class="innerwrapper">
+				
+				<lightning:input value="{!v.username}" label="Username"/>	
+				<lightning:input type="password" value="{!v.password}" label="Username"/>	
+			</div>
+		</div>
+	</div>
+</aura:component>

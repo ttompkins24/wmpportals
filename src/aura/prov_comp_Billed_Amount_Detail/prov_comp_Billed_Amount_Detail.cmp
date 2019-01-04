@@ -1,0 +1,335 @@
+<aura:component controller="prov_ctrl_Billed_Amount_Detail" 
+	extends="c:prov_comp_Provider_Common" 
+	implements="forceCommunity:availableForAllPageTypes" 
+	access="global">
+	
+	<aura:attribute access="private" name="billed_amount" type="Billed_Amount__c" />
+	<aura:attribute access="private" name="business" type="Object" />
+	<aura:attribute access="private" name="billedAmountName" type="String" />
+	<aura:attribute access="private" name="availableLocations" type="List" />
+	<aura:attribute access="private" name="availableProviders" type="List" />
+	<aura:attribute access="private" name="allLocations" type="List" />
+	<aura:attribute access="private" name="allProviders" type="List" />
+	<aura:attribute access="private" name="serviceLocationToProviderMap" type="Object" />
+
+	<!-- Define Event Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+	<!-- ERROR ATTRIBUTES -->
+	<aura:attribute name="isError"          	type="Boolean" 						description="boolean variable that controls the visibility of the error message" 				default="false"/>
+	<aura:attribute name="isSuccess"        	type="Boolean" 						description="boolean variable that controls the visibility of the success message" 				default="false" />
+	<aura:attribute name="str_errorMsg"     	type="String"  						description="error message that is displayed " 													default="Please review the errors below" />
+	<aura:attribute name="str_successMsg"   	type="String"  						description="success message that is displayed" 												default="Your record has updated" />
+
+	<div class="billedAmountContainer slds-m-top_medium generalOuterDiv">
+
+		<!-- NOTIFICATIONS -->
+		<aura:if isTrue="{!v.isError}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" iconName="utility:warning" alternativeText="Error"/>
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<aura:if isTrue="{!v.isSuccess}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="successMessageWrap slds-size_1-of-1" severity="success" closable="true">
+					<lightning:icon size="medium" class="generalSuccessIcon" iconName="utility:success" alternativeText="Success"/>
+					<span class="successMessage">{!v.str_successMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<div class="breadCrumbWrapper">
+			<span class="bodyText" >Manage Practice</span>
+			&nbsp;>&nbsp;
+			<a class="bodyLink testScript_back" onclick="{!c.backToSearchResults}"  href="javascript:void(0);">Billed Amount List</a>
+		</div>
+
+		<aura:if isTrue="{!v.billed_amount &amp;&amp; v.billed_amount.Id}">
+
+			<div class="slds-grid verticalSpacing">
+				<div class="slds-col">
+					<h2 class="slds-m-bottom_medium">Billed Amount Details</h2>
+				</div>
+
+				<div class="slds-col">
+					
+					<a onclick="{!c.printPage}" class="noDecoration billed-button slds-float_right bodyLink printIcon testScript_print">Print</a>
+				</div>
+			</div>
+
+			
+
+			<div class="slds-grid slds-m-bottom_medium">
+			  	<div class="slds-panel slds-grid slds-grid_vertical slds-nowrap business-entity">
+			    	<div class="slds-form slds-form_stacked">
+			      		<div class="slds-panel__section slds-grid">
+				      		<div class="slds-col slds-p-right_large">
+				      			<ui:inputText 
+				      				labelClass="generalLabelForm required"  
+				      				label="Billed Amount List Name"
+				      				required="true"
+				      				class="generalInputForm testScript_business_name" 
+				      				aura:id="billedAmountName_id" 
+				      				value="{!v.billed_amount.Name}" maxlength="80"/>
+				      		</div>
+			      			<div class="slds-col">
+				      			<p class="headerText generalLabelForm">Business Entity</p>
+				      			<h3>{!v.business.Name}</h3>
+				      		</div>
+				      		<div class="slds-col">
+				      			<p class="headerText generalLabelForm">Owner Last Name</p>
+				      			<h3>{!v.billed_amount.Created_By_Contact__r.LastName}</h3>
+				      		</div>
+			      		</div>
+			      	</div>
+			    </div>
+			</div>
+
+			<div class="slds-grid verticalSpacing">
+				<div class="slds-col">
+					<h3 class="slds-m-bottom_medium slds-float_left">
+						Billed Amount List Associations 
+					</h3>
+					<a onclick="{!c.addBilledAmountAssociation}" class="noDecoration hoverChange bodyLink hideOnPrint slds-float_right testScript_bill_association_add">
+						<lightning:icon size="medium" class="addIcon" iconName="utility:new" alternativeText="Add Association"/>
+						Add Billed Amount Association
+					</a>
+				</div>
+			</div>
+
+			<aura:if isTrue="{!v.billed_amount.Billed_Amount_Associations__r.length > 0}">
+				<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_medium">
+					<table class="tableClass" id="billedAssociationId">
+						<thead>
+							 <tr >
+							 	<th class="width45 headerText" data-col="0" data-tableid="billedAssociationId" id="office-header">
+							 		<span class="bodyText">Service Office*</span>
+							 	</th>
+							 	<th class="width45 headerText" data-col="1" data-tableid="billedAssociationId" id="provider-header">
+							 		<span class="bodyText">Provider*</span>
+							 	</th>
+							 	<th class="width10" id="delete-header"></th> 
+							 </tr>
+						</thead>
+
+						<tbody>
+							<aura:iteration items="{!v.billed_amount.Billed_Amount_Associations__r}" var="billed_amount_association">
+								<tr data-value="{!billed_amount_association.Id}" data-index="{!billed_amount_association.index}">
+									<td data-label="Service Location*" 
+										headers="office-header"
+										class="slds-is-sortable width45"
+										data-value="{!billed_amount_association.Id}"  
+				      					data-index="{!billed_amount_association.index}">
+
+										<lightning:select 
+											label="test"
+											class="{!'slds-col slds-size_1-of-1 hideLabel generalInputPicklist uiInput--select testScript_bill_association_sl_' + billed_amount_association.index}" 
+											variant="label-hidden"
+											onchange="{!c.setLocation}"
+											value="{!billed_amount_association.Service_Location__c}"
+											>
+											<option class="picklistOption " value="ALL" text="ALL"/>
+					        				<aura:iteration items="{!v.allLocations}" var="location">
+					             				<option class="{!'picklistOption testScript_bill_assoc_loc_pick_'+ location.Id}" 
+					             					value="{!location.Id}" 
+					             					text="{!location.Service_Location_Name__c }"
+					             					/>
+						        			</aura:iteration>
+						    			</lightning:select>
+
+
+				      				</td>
+				      				<td data-label="Provider*" 
+				      					headers="provider-header"
+				      					class="slds-is-sortable width45" 
+				      					data-value="{!billed_amount_association.Id}"  
+				      					data-index="{!billed_amount_association.index}" >
+
+				      					<lightning:select class="{!'slds-col slds-size_1-of-1 hideLabel generalInputPicklist uiInput--select testScript_bill_association_prov_' + billed_amount_association.index}" 
+											variant="label-hidden"
+				      						onchange="{!c.setProvider}"
+				      						value="{!billed_amount_association.Provider__c}"
+				      						 >
+				      						<option class="picklistOption " text="ALL" value="ALL"/>
+					        				<aura:iteration items="{!v.allProviders}" var="provider">
+					             				<option class="{!'picklistOption testScript_bill_ass_prov_pick_'+ provider.Id}" 
+					             					value="{!provider.Id}" 
+					             					text="{!provider.Name}" 
+					             					/>
+						        			</aura:iteration>
+
+						    			</lightning:select>
+				      				</td>
+				      				<td class="width10 slds-text-align_center slds-p-right_medium" headers="delete-header">
+		        						<a class="{!'headerLink hoverChange testScript_bill_ass_prov_delete_'+billed_amount_association.Id }" onclick="{!c.deleteAssociation}" data-value="{!billed_amount_association.Id}"  data-index="{!billed_amount_association.index}">
+											<lightning:icon size="medium" class="addIcon" iconName="utility:delete" alternativeText="Delete"/>
+										</a>
+									</td>
+								</tr>
+							</aura:iteration>
+						</tbody>
+					</table>
+				</div>
+				<aura:set attribute="else">
+					<h5 class="slds-m-bottom_medium">{!$Label.c.Member_No_Billed_Amount_Associations}</h5>
+				</aura:set>
+			</aura:if>
+
+
+
+
+
+
+
+
+
+
+
+
+
+			<div class="slds-grid verticalSpacing">
+				<div class="slds-col">
+					<h3 class="slds-m-bottom_medium slds-float_left">Billed Amount List Detail</h3>
+
+					<a onclick="{!c.addBilledAmountDetail}" class="noDecoration bodyLink hoverChange hideOnPrint slds-float_right testScript_bill_detail_add" >
+						<lightning:icon size="medium" class="addIcon" iconName="utility:new" alternativeText="Add Association"/>
+						Add Billed Amount Detail
+					</a>
+
+				</div>
+			</div>
+
+			<aura:if isTrue="{!v.billed_amount.Billed_Amount_Details__r.length > 0}">
+				<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_medium">
+					<table class="tableClass" id="billedDetailId">
+						<thead>
+							 <tr >
+							 	<th class="width30 headerText" data-col="0" data-tableid="billedDetailId" id="code">
+							 		<span class="bodyText">Procedure Code*</span>
+							 	</th>
+							 	<th class="width30 headerText" data-col="1" data-tableid="billedDetailId" id="desc">
+							 		<span class="bodyText">Procedure Code Description</span>
+							 	</th>
+
+							 	<th class="width30 headerText" data-col="2" data-tableid="billedDetailId" id="billed">
+							 		<span class="bodyText">Billed Amount*</span>
+							 	</th>
+							 	<th class="width10" id="del"></th> 
+							 </tr>
+						</thead>
+
+						<tbody>
+							<aura:iteration items="{!v.billed_amount.Billed_Amount_Details__r}" var="billed_amount_detail">
+								<tr data-value="{!billed_amount_detail.Procedure_Code__r.Name}" 	
+									data-index="{!billed_amount_detail.index}" 
+									data-id="{!billed_amount_detail.Id}" 
+									>
+									<td headers="code" data-label="Procedure Code*" class="slds-is-sortable width30" data-value="{!billed_amount_detail.Procedure_Code__r.Name}" data-index="{!billed_amount_detail.index}" data-id="{!billed_amount_detail.Id}">
+										
+				        				<ui:inputText placeholder="Procedure Code" 
+				        					class="{!' generalInputForm procCodeInput testScript_bill_detail_name_'+ billed_amount_detail.index + (billed_amount_detail.hasError ? ' has-error' : '')}"
+				        					required="false" 
+				        					blur="{!c.queryProcedureCode}" 
+				        					maxlength="5" 
+				        					value="{!billed_amount_detail.Procedure_Code__r.Name}"/>
+				      				</td>
+				      				<td headers="desc" data-label="Procedure Code Description" class="slds-is-sortable width30" data-value="{!billed_amount_detail.Procedure_Code__r.Description}">
+				      					<aura:if isTrue="{!billed_amount_detail.Procedure_Code__r &amp;&amp; or(billed_amount_detail.Procedure_Code__r.Name == '' , billed_amount_detail.Procedure_Code__r.Description__c != '')  &amp;&amp; billed_amount_detail.Procedure_Code__r.Description__c != $Label.c.Duplicate_Procedure_Code }">
+				      						<span class="bodyText dataSpace" >{!billed_amount_detail.Procedure_Code__r.Description__c}</span>
+
+				      						<aura:set attribute="else">
+				      							<aura:if isTrue="{!billed_amount_detail.Procedure_Code__r.Description__c == ''}">
+				      							
+				      								<span class="bodyText dataSpace errorText" >Procedure Code Not Found.</span>
+				      								<aura:set attribute="else">
+				      									<span class="bodyText dataSpace errorText">{!billed_amount_detail.Procedure_Code__r.Description__c}</span>
+				      								</aura:set>
+				      							</aura:if>
+				      						</aura:set>
+				      					</aura:if>	
+				      				</td>
+				      				<td headers="billed" data-label="Billed Amount*" class="slds-is-sortable width30" data-value="{!billed_amount_detail.Billed_Value__c}">
+				      					<ui:inputCurrency class="{!'testScript_bill_amt_value_' + billed_amount_detail.index+ ' generalInputForm ' + (billed_amount_detail.hasErrorValue ? 'has-error field' : 'field')}"
+				      						value="{!billed_amount_detail.Billed_Value__c}" placeholder="$0.00"/>
+				      						<aura:if isTrue="{!billed_amount_detail.hasErrorValue}">
+				      							<span class="generalErrorMessage_field">{!billed_amount_detail.errorMessage}</span>
+				      						</aura:if>
+				      				</td>
+				      				<td headers="del" class="width10 slds-text-align_center">
+		        						<a class="{!'headerLink hoverChange testScript_bill_amt_delete_' + billed_amount_detail.index}" onclick="{!c.deleteAmount}" data-value="{!billed_amount_detail.Id}" data-index="{!billed_amount_detail.index}"  >
+											<lightning:icon size="medium" class="addIcon" iconName="utility:delete" alternativeText="Delete"/>
+										</a>
+									</td>
+								</tr>
+							</aura:iteration>
+						</tbody>
+					</table>
+				</div>
+				<aura:set attribute="else">
+					<h5 class="slds-m-bottom_medium">{!$Label.c.Member_No_Billed_Amount_Details}</h5>
+				</aura:set>
+				
+			</aura:if>
+			<div class="slds-size_1-of-1  slds-p-around_medium">
+				<div class="slds-text-align_center">
+					<div class="slds-p-right_large inlineBlock">
+						<button class="generalButton inverse testScript_cancel"  onclick="{!c.backToSearchResults}" >Cancel</button>
+					</div>
+					<div class="inlineBlock">
+						<a onclick="{!c.saveBilledAmountDetails}" class="generalButton testScript_bill_detail_save">Save</a>
+					</div>
+				</div>
+			</div>
+			<aura:set attribute="else">
+				<aura:if isTrue="{!or(v.params.id == undefined, v.params.id == '', v.params.id == null)}">
+					<h2 class="slds-m-bottom_medium">Billed Amount Details</h2>
+
+					<div class="slds-grid slds-m-bottom_medium">
+					  	<div class="slds-panel slds-grid slds-grid_vertical slds-nowrap business-entity">
+					    	<div class="slds-form slds-form_stacked">
+					      		<div class="slds-panel__section slds-grid">
+					      			<div class="slds-col">
+						      			<p class="headerText">Business Entity</p>
+						      			<h5>{!v.business.Name}</h5>
+						      		</div>
+						      		
+					      		</div>
+					      	</div>
+					    </div>
+					</div>
+
+					<div>  
+						<ui:inputText 
+							label="New Billed Amount List"
+							labelClass="generalLabelForm"
+							aura:id="billedAmountName"
+							class="field generalInputForm testScript_bill_amount_newName"  
+							maxlength="80" 
+							value="{!v.billedAmountName}">
+						</ui:inputText>
+
+	 				</div>
+
+	 				<div class="slds-m-bottom_medium slds-m-top_medium">
+	 					<button class="generalButton slds-float_right testScript_save_newName" onclick="{!c.saveBilledAmount}">Submit</button>
+	 				</div>
+	 				<div class="clear slds-col slds-size_1-of-1 slds-align_absolute-center">
+	 				</div>
+	 			</aura:if>
+			</aura:set>
+	    </aura:if>
+
+		<div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-show">
+	        <div class="slds-spinner_container">
+	            <div role="status" class="slds-spinner slds-spinner--medium">
+	                <span class="slds-assistive-text">Loading</span>
+	                <div class="slds-spinner__dot-a"></div>
+	                <div class="slds-spinner__dot-b"></div>
+	            </div>
+	        </div>    
+	    </div>
+
+	</div>
+</aura:component>

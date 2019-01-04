@@ -1,0 +1,58 @@
+/*Custom css for service detail edit*/
+    .THIS.serviceOfficeEditWrapper {
+        background-color:white;
+        border:1px solid #ccc !important;
+        padding-left:20px;
+        padding-right:20px;
+        padding-bottom:20px;
+        border-radius:8px;
+        box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .THIS.serviceOfficeEditWrapper .headerBackground {
+        background-color: #616B84;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        margin-right: -20px !important;
+        margin-left: -20px !important;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        width: auto;
+    }
+    .THIS.serviceOfficeEditWrapper .mainHeaderText {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .THIS.serviceOfficeEditWrapper .tableClass .confirmedRow{
+        background-color:#DEF7EC;
+    }
+
+    .THIS.serviceOfficeEditWrapper .newIcon svg, .THIS.serviceOfficeEditWrapper .ddIcon svg{
+    	fill : #0277BD;
+    }
+    .THIS.serviceOfficeEditWrapper .tableClass .newRow{
+        background-color:#FFF6DE;
+    }
+
+    .THIS.serviceOfficeEditWrapper .tableClass .deletedRow{
+        background-color:#FBEFEF;
+    }
+
+    .THIS.serviceOfficeEditWrapper .edit-table-general dt{
+        height: 48px;
+    }
+
+    .THIS.serviceOfficeEditWrapper .edit-table-general dd{
+        height: 48px;
+    }
+
+    .THIS.serviceOfficeEditWrapper .edit-table-general .dtExtra{
+        height: 75px;
+    }
+    
+    .THIS.serviceOfficeEditWrapper .edit-table-general .ddExtra{
+        height: 75px;
+    }
+
+/*END custom css for service detail edit*/

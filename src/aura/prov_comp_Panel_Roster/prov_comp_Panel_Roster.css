@@ -1,0 +1,77 @@
+.THIS.panelRosterContainer .tableClass .headerText{
+        color:white;
+
+    }
+.THIS .generalOutOfNetwork svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+    .THIS.panelRosterContainer .panelRosterTable {
+        margin-top: 25px;
+    }
+
+    .THIS.panelRosterContainer .nameSearch {
+        margin-top: 20px;
+    }
+    .THIS.panelRosterContainer .width10{
+        width: 10%;
+    }
+
+    .THIS.panelRosterContainer .width2{
+        width: 2%;
+    }
+
+	.THIS.panelRosterContainer .printSpacing {
+		padding-top:20px;
+		padding-right:20px;
+	}
+	.THIS.panelRosterContainer .generalLabelForm {
+		border-radius: 0px;
+	}
+    .THIS.panelRosterContainer .header{
+        margin-top:20px;
+        margin-bottom: 20px;
+    }
+
+    .THIS.panelRosterContainer .slds-form-element{
+        width: 90%;
+    }
+
+    .THIS.panelRosterContainer .slds-dropdown.slds-dropdown--left.hide {
+        display: none;
+    }
+
+    .THIS.panelRosterContainer  .dropdown-menu.in{
+        display:block;
+    }
+
+    .THIS.panelRosterContainer .dropdown-menu {
+       margin-top: -15px;
+    }
+    .THIS.panelRosterContainer .pagination {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .THIS.panelRosterContainer .page-count{
+        padding-left: 10px;
+    }
+
+    .THIS.panelRosterContainer .paginate{
+        text-align:right;
+    }
+    .THIS.panelRosterContainer .spacing{
+        margin:0px 10px;
+    }
+    .THIS.panelRosterContainer .footer{
+        margin-top:25px;
+    }
+    .THIS.panelRosterContainer .memSearchButton {
+        margin-top: 15px;
+    }
+    .THIS.panelRosterContainer .noResults {
+        text-align: center;
+    }
+    .THIS.panelRosterContainer .dropdownCol {
+    	margin-right: 20px;
+    }

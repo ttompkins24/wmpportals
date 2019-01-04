@@ -1,0 +1,198 @@
+<aura:component controller="wmp_ctrl_AddMemberPlan" access="global">  
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+	<!--  attribute to display error  -->
+    <aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+    <aura:attribute name="years"
+    				type="Object[]"
+    				description="the array of years" 
+    />
+    
+    <aura:attribute name="nameAdded" 
+    				type="String"
+    				description="the person's name that was successfully added"
+   	/> 
+   	
+   	<aura:attribute name="successfulStep"
+   					type="String"
+   					description="which successful add a plan happened, either self or dependent"
+   	/>
+    
+    <aura:attribute name="step" type="String" />
+    
+    <aura:attribute name="memFirstNameError" type="Boolean" description="error in first name field" default="false" />
+    <aura:attribute name="memLastNameError" type="Boolean" description="error in last name field" default="false" />
+    <aura:attribute name="memIdError" type="Boolean" description="error in member Id field" default="false" />
+    <aura:attribute name="memDOBError" type="Boolean" description="error in date of birth field" default="false" />
+    <aura:attribute name="guardianFirstNameError" type="Boolean" description="error in guardian first name field" default="false" />
+    <aura:attribute name="guardianLastNameError" type="Boolean" description="error in guardian last name field" default="false" />
+    				
+    <div class="slds slds-size_1-of-1">
+		<div class="addDependentPlanContainer">
+			<aura:if isTrue="{!v.bln_isError}">
+				<div class="generalErrorContainer ">
+					<div class="errorInnerContainer">
+						<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+						<span class="errorMessage">{!v.str_errorMsg}</span>
+						</ui:message>
+					</div>
+				</div>
+			</aura:if>				
+			
+			<div class="addMemberWrapper slds-size_1-of-1 slds-medium-size_2-of-3 slds-large-size_1-of-2">
+				<div class="floatLeft ">
+					<a onclick="{!c.goBack}" class="bodyLink"> &lt;&nbsp;Back</a>
+				</div>
+				<div class="title">
+					<h1>{!$Label.c.Add_a_Dependent}</h1> 
+				</div>
+				
+				<div class="elementWrap slds-col slds-size_1-of-1 ">
+					<ui:inputText aura:Id="memberFirstName" placeholder="{!$Label.c.First_Name}" required="true" blur="{!c.checkSpecialCharacters}" maxlength="255"
+								label="{!$Label.c.First_Name}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm "/>
+				</div>
+				<aura:if isTrue="{!v.memFirstNameError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 ">
+					<ui:inputText aura:Id="memberLastName" placeholder="{!$Label.c.Last_Name}" required="true" blur="{!c.checkSpecialCharacters}" maxlength="255"
+					 			label="{!$Label.c.Last_Name}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm "/>
+				</div>
+				<aura:if isTrue="{!v.memLastNameError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+					<div class="slds-col slds-size_1-of-1 generalLabelForm ">{!$Label.c.Date_of_Birth}<span class="requiredLabel">*</span></div>
+					<div class="slds-grid slds-wrap slds-size_1-of-1 ">
+						<!-- MONTH -->
+						<div class="slds-col slds-size_1-of-3 ">
+							<ui:inputSelect class="generalInputForm"  aura:Id="memberDOBMonth">
+								<ui:inputSelectOption label="{!$Label.c.Month}" class="picklistOption picklistOptionDefault" text="0" value="true" />
+								<ui:inputSelectOption label="1" text="1" class="picklistOption" />
+								<ui:inputSelectOption label="2" text="2"  class="picklistOption"  />
+								<ui:inputSelectOption label="3" text="3"  class="picklistOption"  />
+								<ui:inputSelectOption label="4" text="4"  class="picklistOption"  />
+								<ui:inputSelectOption label="5" text="5"  class="picklistOption"  />
+								<ui:inputSelectOption label="6" text="6"  class="picklistOption"  />
+								<ui:inputSelectOption label="7" text="7"  class="picklistOption"  />
+								<ui:inputSelectOption label="8" text="8"  class="picklistOption"  />
+								<ui:inputSelectOption label="9" text="9"  class="picklistOption"  />
+								<ui:inputSelectOption label="10" text="10"  class="picklistOption"  />
+								<ui:inputSelectOption label="11" text="11"  class="picklistOption"  />
+								<ui:inputSelectOption label="12" text="12"  class="picklistOption"  />
+							</ui:inputSelect>
+						</div>
+						<!-- Day -->
+						<div class="slds-col slds-size_1-of-3">
+							<ui:inputSelect class="generalInputForm" aura:Id="memberDOBDay">
+								<ui:inputSelectOption label="{!$Label.c.Day}" class="picklistOption picklistOptionDefault" text="0" value="true" />
+							   	<ui:inputSelectOption label="1" text="1" class="picklistOption" />
+								<ui:inputSelectOption label="2" text="2" class="picklistOption" />
+								<ui:inputSelectOption label="3" text="3" class="picklistOption" />
+								<ui:inputSelectOption label="4" text="4" class="picklistOption" />
+								<ui:inputSelectOption label="5" text="5" class="picklistOption" />
+								<ui:inputSelectOption label="6" text="6" class="picklistOption" />
+								<ui:inputSelectOption label="7" text="7" class="picklistOption" />
+								<ui:inputSelectOption label="8" text="8" class="picklistOption" />
+								<ui:inputSelectOption label="9" text="9" class="picklistOption" />
+								<ui:inputSelectOption label="10" text="10" class="picklistOption" />
+								<ui:inputSelectOption label="11" text="11" class="picklistOption" />
+								<ui:inputSelectOption label="12" text="12" class="picklistOption" />
+								<ui:inputSelectOption label="13" text="13" class="picklistOption" />
+								<ui:inputSelectOption label="14" text="14" class="picklistOption" />
+								<ui:inputSelectOption label="15" text="15" class="picklistOption" />
+								<ui:inputSelectOption label="16" text="16" class="picklistOption" />
+								<ui:inputSelectOption label="17" text="17" class="picklistOption" />
+								<ui:inputSelectOption label="18" text="18" class="picklistOption" />
+								<ui:inputSelectOption label="19" text="19" class="picklistOption" />
+								<ui:inputSelectOption label="20" text="20" class="picklistOption" />
+								<ui:inputSelectOption label="21" text="21" class="picklistOption" />
+								<ui:inputSelectOption label="22" text="22" class="picklistOption" />
+								<ui:inputSelectOption label="23" text="23" class="picklistOption" />
+								<ui:inputSelectOption label="24" text="24" class="picklistOption" />
+								<ui:inputSelectOption label="25" text="25" class="picklistOption" />
+								<ui:inputSelectOption label="26" text="26" class="picklistOption" />
+								<ui:inputSelectOption label="27" text="27" class="picklistOption" />
+								<ui:inputSelectOption label="28" text="28" class="picklistOption" />
+								<ui:inputSelectOption label="29" text="29" class="picklistOption" />
+								<ui:inputSelectOption label="30" text="30" class="picklistOption" />
+								<ui:inputSelectOption label="31" text="31" class="picklistOption" />
+	                    	</ui:inputSelect>
+						</div>
+						<!-- Year -->
+						<div class="slds-col slds-size_1-of-3">
+							<ui:inputSelect class="generalInputForm" aura:Id="memberDOBYear">
+								<!-- <ui:inputSelectOption label="{!$Label.c.Year}" class="picklistOption picklistOptionDefault" text="0" value="true" /> -->
+								<option value="0" class="picklistOption picklistOptionDefault" >{!$Label.c.Year}</option>
+								<aura:iteration items="{!v.years}" var="year">
+									<!-- <ui:inputSelectOption label="{!year.Label}" text="{!year.Value}" class="picklistOption" /> -->
+									<option value="{!year.Value}" class="picklistOption"> {!year.Label}</option>
+								</aura:iteration>
+							</ui:inputSelect>
+						</div>
+					</div>
+				</div><!-- END OF DATE OF BIRTH -->
+				<aura:if isTrue="{!v.memDOBError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 ">
+					<ui:inputText aura:Id="memberId" placeholder="{!$Label.c.Member_Id}" required="true" blur="{!c.checkSpecialCharacters}" maxlength="255"
+								label="{!$Label.c.Member_Id}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm "/>
+				</div>
+				<aura:if isTrue="{!v.memIdError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="metaText slds-col slds-size_1-of-1">
+					{!$Label.c.Member_Id_Description}
+				</div>
+				<div class="metaText slds-col slds-size_1-of-1">
+					{!$Label.c.Call_for_Question}
+				</div>
+				<h3 class=" floatLeft slds-col slds-size_1-of-1 elementWrap">
+					{!$Label.c.Confirm_Guardian_Information}
+				</h3>
+				<div class="bodyText slds-col slds-size_1-of-1">
+					{!$Label.c.Guardian_Description}
+				</div>
+				<div class="elementWrap slds-col slds-size_1-of-1 ">
+					<ui:inputText aura:Id="guardianFirstName" placeholder="{!$Label.c.First_Name}" required="true" blur="{!c.checkSpecialCharacters}" maxlength="255"
+								label="{!$Label.c.First_Name}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm "/>
+				</div>
+				<aura:if isTrue="{!v.guardianFirstNameError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 ">
+					<ui:inputText aura:Id="guardianLastName" placeholder="{!$Label.c.Last_Name}" required="true" blur="{!c.checkSpecialCharacters}" maxlength="255"
+								label="{!$Label.c.Last_Name}" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm "/>
+				</div>
+				<aura:if isTrue="{!v.guardianLastNameError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 slds-text-align_center">
+					<a class="generalButton" onclick="{!c.verifyMember}">{!$Label.c.Next}</a>
+				</div>
+			</div><!-- END OF addMemberWrapper -->
+		</div>
+	</div>
+</aura:component>

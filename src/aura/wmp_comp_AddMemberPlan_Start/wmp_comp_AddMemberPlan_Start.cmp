@@ -1,0 +1,47 @@
+<aura:component controller="wmp_ctrl_AddMemberPlan" access="global"> 
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:attribute name="disableSelfCoverage" 
+    				type="Boolean"
+    				description="setting from the configuration to disable the ability to add coverage for yourself"
+                    default="false"
+    				
+   	/> 
+    <aura:attribute name="step" type="String" />
+    <aura:attribute name="members" type="mock_Member__c[]" description="all of the members that the user has verified" />
+    <aura:registerEvent name="redirect_event" type="c:wmp_event_Redirect" />
+    				
+    <div class="slds slds-size_1-of-1">
+		<div class="addStartPlanContainer">
+			<div class="addMemberWrapper slds-size_1-of-1 slds-medium-size_2-of-3 slds-large-size_1-of-2">
+				<div class="title">
+					<h1>{!$Label.c.Manage_dependent_and_coverage}</h1>
+				</div>
+				<div class="elementWrap slds-col slds-size_1-of-1 intro benefits">
+					{!$Label.c.Manage_benefits}
+				</div>
+				<div class="elementWrap slds-col slds-size_1-of-1 benefitsName bodyText">
+					<ul>
+					<aura:iteration items="{!v.members}" var="member">
+						<li>{!member.FirstName__c}&nbsp;{!member.LastName__c}</li>
+					</aura:iteration>
+					</ul>
+				</div>
+				<div class="elementWrap slds-col slds-size_1-of-1 addDependentButton">
+					<a class="generalButton" onclick="{!c.addDependent}">{!$Label.c.Add_a_Dependent}</a>
+				</div>
+                <aura:if isTrue="{! !v.disableSelfCoverage}">
+                    <div class="elementWrap slds-col slds-size_1-of-1 addSelfButton">
+                        <a class="generalButton" onclick="{!c.selfPlan}">{!$Label.c.Add_coverage_for_yourself}</a>
+                    </div>
+                </aura:if>
+				<div class="elementWrap slds-col slds-size_1-of-1 overviewClass">
+					<a onclick="{!c.redirectHome}" class="headerLink">{!$Label.c.Return_to_Overview}</a>
+				</div>
+				<div class="elementWrap metaText slds-col slds-size_1-of-1 endDescription">
+					{!$Label.c.Member_Id_Description_Member_Plan}
+				</div>
+			</div><!-- END OF addMemberWrapper -->
+		</div>
+	</div>
+</aura:component>

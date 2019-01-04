@@ -1,0 +1,99 @@
+<aura:component controller="wmp_ctrl_MainDentist">
+    
+    <aura:attribute name="officeId" type="String" />
+    <aura:attribute name="dentistId" type="String" />
+    <aura:attribute name="dentistName" type="String" />
+    <aura:attribute name="officeName" type="String" />
+    <aura:attribute name="addressInfo" type="String" />
+    <aura:attribute name="children" type="Object[]" description="children locations for that dentist" />
+    <aura:attribute name="memCovIds" type="String[]" required="true" description="the member coverage guids that are trying to be set" />
+    <aura:attribute name="stageName" type="String" description="the type of modal to be displayed" default="SETLOC"/>
+    <aura:attribute name="memName" type="String" description="if one member is trying to be set, then this will be populated with the members name" />
+    
+    <aura:attribute name="isError" type="Boolean" description="did an error occur" />
+    <aura:attribute name="str_errorMsg" type="String" description="the error message that is displayed" default="{! $Label.c.Generic_Error_MainDentist}"/>
+    
+    <aura:attribute name="memSuccessMap" type="Map" />
+    <aura:attribute name="closeWindow" type="Boolean" default="false"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.closeWindow}" action="{!c.defaultClose}" />
+    
+    <aura:attribute name="closeText" type="String" default="{!$Label.c.Close}"/>
+    <aura:attribute name="setMem_title" type="String" description=""/>
+    <aura:attribute name="setMem_info" type="String" description=""/>
+    <aura:attribute name="setMem_oneMem" type="String" description=""/>
+    <aura:attribute name="setMem_allMem" type="String" description=""/>
+    <aura:attribute name="val_errorTitle" type="String" description=""/>
+    <aura:attribute name="val_approveTitle" type="String" description=""/>
+    <aura:attribute name="val_continue" type="String" description=""/>
+    <aura:attribute name="val_goBack" type="String" description=""/>
+    <aura:attribute name="success_title" type="String" description=""/>
+    <aura:attribute name="success_info" type="String" description=""/>
+
+    <aura:attribute name="chosen_reason" type="String" description="The reason a member wants th change PCD" />
+    
+    <div class="slds">
+    	<div class="main_denitst_popupModal">
+	    	<section role="dialog" style=" height:90%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+	    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open " >
+	        	<div class="slds-modal__container">
+	            	<header class="slds-modal__header">
+	                	<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+	                			 title="{!v.closeText}" onclick="{!c.defaultClose}" style="">
+	                        <div class="closeIcon"></div>
+	                    	<span class="slds-assistive-text">{!v.closeText}</span>
+	                    </a>
+	                    <aura:if isTrue="{!v.headerText != ''}"> 
+	                    	<h3  >
+	                    		{!v.dentistName}
+	                    		
+	                    		<aura:if isTrue="{!and(v.officeName != '', v.officeName != undefined)}">
+	                    		&nbsp;-&nbsp;{!v.officeName} 
+	                    		</aura:if>
+	                    	</h3>
+	                    </aura:if> 
+	                </header>
+	                <div class="slds-modal__content slds-p-around--medium" id="modal-content-1">
+	                	<aura:if isTrue="{!v.isError}">
+							<div class="generalErrorContainer ">
+								<div class="errorInnerContainer">
+									<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+										<span class="errorMessage">{!v.str_errorMsg}</span>
+									</ui:message>
+								</div>
+							</div>
+						</aura:if>
+	                	<aura:if isTrue="{!v.stageName == 'SETLOC'}">
+	                		<c:wmp_comp_MainDentist_SETLOC addressInfo="{!v.addressInfo}" dentistName="{!v.dentistName}" children="{!v.children}"  
+	                			stageName="{!v.stageName}" officeId="{!v.officeId}" officeName="{!v.officeName}" />
+	                    </aura:if>
+	                    
+	                    <aura:if isTrue="{!v.stageName == 'SETMEM'}">
+	                    	
+	                		<c:wmp_comp_MainDentist_SETMEM memCovIds="{!v.memCovIds}" addressInfo="{!v.addressInfo}" stageName="{!v.stageName}" memSuccessMap="{!v.memSuccessMap}"
+	                					setMem_title="{!v.setMem_title}" setMem_info="{!v.setMem_info}" setMem_oneMem="{!v.setMem_oneMem}" setMem_allMem="{!v.setMem_allMem}"
+	                					dentistId="{!v.dentistId}" officeId="{!v.officeId}" dentistName="{!v.dentistName}" officeName="{!v.officeName}"
+	                					isError="{!v.isError}" memName="{!v.memName}" chosen_reason="{!v.chosen_reason}"/>
+	                        
+	                    </aura:if>
+	                    
+	                    <aura:if isTrue="{!v.stageName == 'VAL'}">
+	                		<c:wmp_comp_MainDentist_VAL memCovIds="{!v.memCovIds}" stageName="{!v.stageName}" memSuccessMap="{!v.memSuccessMap}"
+	                		val_errorTitle="{!v.val_errorTitle}" val_approveTitle="{!v.val_approveTitle}" val_continue="{!v.val_continue}" val_goBack="{!v.val_goBack}"
+	                		dentistId="{!v.dentistId}" officeId="{!v.officeId}" closeWindow="{!v.closeWindow}" isError="{!v.isError}"  chosen_reason="{!v.chosen_reason}"/>  
+	                    </aura:if>
+	                    <aura:if isTrue="{!v.stageName == 'SUCCESS'}">
+	                		<c:wmp_comp_MainDentist_SUCCESS success_title="{!v.success_title}" success_info="{!v.success_info}" closeWindow="{!v.closeWindow}"/>  
+	                    </aura:if>
+	                </div>
+	                
+	               <footer class="slds-modal__footer">
+	                    <a class="headerLink"  onclick="{!c.defaultClose}">{!v.closeText}</a>
+	                </footer>
+	            </div>
+	        </section>
+	        <div class="slds-backdrop slds-backdrop--open" ></div>
+		</div>
+    </div>
+</aura:component>

@@ -1,0 +1,110 @@
+<aura:component controller="wmp_ctrl_History" implements="flexipage:availableForAllPageTypes,forceCommunity:availableForAllPageTypes" access="global">
+
+	<aura:attribute name="currMember" type="mock_Member__c" description="current member that is selected" />
+	<aura:attribute name="historyFullList" type="object[]" description="list of elements for the dental history" />
+	<aura:attribute name="historyList" type="object[]" description="list of elements for the dental history" />
+	
+	<aura:attribute name="numResults" type="Integer" default="0"/>
+	<aura:attribute name="pageNum" type="Integer" default="1"/>
+	<aura:attribute name="totalPages" type="Integer" default="1"/>
+	<aura:attribute name="resultsPerPage" type="Integer" /> 
+	
+	<aura:attribute name="dentalHistoryL" type="String" description="dental history label" default="{!$Label.c.Dental_History}"/>
+	<aura:attribute name="dentalHistorySubTextL" type="String" description="dental history label" default="{!$Label.c.Dental_History_Sub_Text}" />
+	<aura:attribute name="descriptionL" type="String" description="dental history label" default="{!$Label.c.Description}" /> 
+	<aura:attribute name="providerL" type="String" description="dental history label" default="{!$Label.c.Provider}" />
+	<aura:attribute name="viewDetailsL" type="String" description="dental history label" default="{!$Label.c.View_details}" />
+	
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+	<div class="slds">
+		<div class="historyContainer slds-grid slds-wrap">
+			<div class="spinnerContainer">
+		        <lightning:spinner variant="brand" size="large" alternativeText="{!$Label.c.loading}" aura:id="loadingSpinner"  class="spinnerClass"/>
+		    </div>	
+		    <!-- <a class="slds-size_1-of-1 bodyLink slds-text-align_right" onclick="{!c.printScreen}">{!$Label.c.Print}</a> -->
+			<h1 class="slds-size_1-of-1">{!v.currMember.FirstName__c} - {!v.dentalHistoryL}</h1>
+			<div class="intro slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_2-of-3">{!v.dentalHistorySubTextL}</div>
+			
+			<aura:if isTrue="{!and(v.historyFullList != undefined, v.historyFullList.length > 0)}"> 
+				<div class="slds-grid slds-wrap slds-size_1-of-1 ">
+					<div class="paginateHistory desktop slds-size_1-of-1">
+						<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+						<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+						<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+						<a class="{!'spacing bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+					</div>
+					<aura:iteration items="{!v.historyList}" var="history">
+						<div class="elementWrap slds-size_1-of-1">
+							<h4>
+								<lightning:formattedDateTime value="{!history.procedureDate}" year="numeric" month="long" day="numeric" timeZone="UTC" />
+							</h4>
+						</div>
+						<div class="elementTableOutside slds-size_1-of-1">
+							<table class="elementTable">
+								<thead>
+									<tr>
+										<th class="descriptionCol" ><h3 class="inverse">{!v.descriptionL}</h3></th>
+										<th class="providerCol"><h3 class="inverse">{!v.providerL}</h3></th>
+										<th class="viewDetailCol"></th>
+									</tr>
+								</thead>
+								<tbody>
+									<aura:iteration items="{!history.lineItems}" var="lineItem">
+										<tr>
+											<td class="descriptionCol" data-label="{!v.descriptionL}">
+												<h5>{! lineItem.description}</h5>
+											</td>
+											<td class="providerCol" data-label="{!v.providerL}">
+												<h5>{! lineItem.provider}</h5>
+											</td>
+											<td class="viewDetailCol">
+												<a data-procedurecode="{!lineItem.procedureCode}" data-partofmouth="{!lineItem.partOfMouth}" 
+													data-claimnumber="{!lineItem.claimNumber}" data-eobname="{!lineItem.eobName}" data-eoburl="{!lineItem.eobUrl}" 
+													data-claimstatus="{!lineItem.claimStatus}" data-planname="{!lineItem.planName}" 
+													data-totalcost="{!lineItem.totalCost}" data-planpay="{!lineItem.planPay}" data-description="{!lineItem.description}"
+													data-youpay="{!lineItem.youPay}" data-provider="{!lineItem.provider}" data-appdate="{!lineItem.appDate}" onclick="{!c.launchDetail}">
+													
+													{!v.viewDetailsL}
+												</a>
+											</td>
+										</tr>
+									</aura:iteration>
+								</tbody>
+							</table>
+						</div>
+					</aura:iteration>
+					<div class="paginateHistoryFooter  slds-size_1-of-1">
+						<div class="desktop">
+							<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+							<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+							<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+							<a class="{!'spacing bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+						</div>
+						<div class="mobile">
+							<table>
+								<tr>
+									<td>
+										<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+									</td>
+									<td>
+										<span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+									</td>
+									<td>
+										&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				
+				<aura:set attribute="else">
+					<div class="historyNoResults slds-size_1-of-1"><h4>{!$Label.c.History_No_results}</h4></div>
+				</aura:set>
+			</aura:if> 
+		</div>
+		{!v.body}
+	</div>
+</aura:component>

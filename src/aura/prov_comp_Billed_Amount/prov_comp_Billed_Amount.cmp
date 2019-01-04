@@ -1,0 +1,155 @@
+<aura:component controller="prov_ctrl_Billed_Amount" 
+	extends="c:prov_comp_Provider_Common" 
+	implements="forceCommunity:availableForAllPageTypes" 
+	access="global">
+	
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+	<aura:attribute access="public" name="billed_amounts" type="Billed_Amount__c[]" />
+	<aura:attribute access="public" name="business" type="Object" />
+	<aura:attribute access="private" name="billedAmountName" type="String" />
+
+	<!-- ERROR ATTRIBUTES -->
+	<aura:attribute name="isError"          	type="Boolean" 						description="boolean variable that controls the visibility of the error message" 				default="false"/>
+	<aura:attribute name="isSuccess"        	type="Boolean" 						description="boolean variable that controls the visibility of the success message" 				default="false" />
+	<aura:attribute name="str_errorMsg"     	type="String"  						description="error message that is displayed " 													default="Please review the errors below" />
+	<aura:attribute name="str_successMsg"   	type="String"  						description="success message that is displayed" 												default="Your record has updated" />
+	
+	<!-- PAGINATION VARIABLES -->
+	<aura:attribute name="pageNum"				type="Integer"						description="the page number of the user is on"													default="1"/>
+	<aura:attribute name="totalResults"			type="Integer"						description="total number records that were returned" 											default="0"/>
+	<aura:attribute name="totalPages"			type="Integer"						description="total number of pages"					 											default="1"/>
+	<aura:attribute name="fieldNameSorted"		type="String"						description="field api name of the field that is being sorted"									default="Name"/>
+	<aura:attribute name="sortDirection"		type="String"						description="sort direction for the query. Possible values: ASC, DESC"							default="ASC"/>
+	
+	
+	<!-- Define Event Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+
+	<div class="billedAmountContainer generalOuterDiv"> 
+		<!-- NOTIFICATIONS -->
+		<aura:if isTrue="{!v.isError}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<span class="errorIcon"></span>
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<aura:if isTrue="{!v.isSuccess}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="successMessageWrap slds-size_1-of-1" severity="success" closable="true">
+					<span class="successIcon"></span>
+					<span class="successMessage">{!v.str_successMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		
+		<h2 class="slds-m-bottom_medium">Billed Amounts</h2>
+
+		<!-- <p class="slds-m-bottom_medium">{!$Label.c.Billed_Amount_Description}</p> -->
+
+		<div class="slds-grid slds-m-bottom_medium">
+		  	<div class="slds-panel slds-grid slds-grid_vertical slds-nowrap business-entity">
+		    	<div class="slds-form slds-form_stacked">
+		      		<div class="slds-panel__section">
+		      			<p class="headerText">Business Entity</p>
+		      			<h5>{!v.business.Name}</h5>
+		      		</div>
+		      	</div>
+		    </div>
+		</div>
+
+		<div class="slds-grid">
+			<div class="slds-col">
+				<h4 class="slds-m-bottom_medium slds-float_left">Results</h4>
+				<aura:if isTrue="{!v.permissions.billedAmount == 'full'}">
+					<a class="hoverChange noDecoration bodyLink slds-float_right testScript_addBilledAmount" onclick="{!c.addBilledAmount}" >
+						<lightning:icon size="medium" class="addIcon" iconName="utility:new" alternativeText="Add Association"/>
+						Add Billed Amount
+					</a>
+				</aura:if>
+			</div>
+		</div>
+
+		<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_medium">
+			<table class="tableClass" id="billedAmountTableId">
+				<thead>
+					 <tr >
+					 	<th class="width40 headerText sortable sortAscend " data-col="0" onclick="{!c.updateColumnSorting}" data-fieldName="Name">
+					 		<span class="bodyText">Billed Amount List Name</span>
+					 	</th>
+					 	<th class="width40 headerText sortable notSorted " data-col="1" onclick="{!c.updateColumnSorting}"  data-fieldName="Owner.Name">
+					 		<span class="bodyText">Billed Amount List Owner</span>
+					 	</th>
+					 	<th class="width20 bodyText headerText" >
+					 		Quick Links
+					 	</th>
+					 </tr>
+				</thead>
+
+				<tbody>
+					<aura:iteration items="{!v.billed_amounts}" var="billed_amount">
+						<tr>
+							<td data-label="Billed Amount Name" class="slds-is-sortable width40" data-value="{!billed_amount.Name}">
+								<a href="" onclick="{!c.viewBilledAmount}" data-billed="{!billed_amount.Id}" class="{!'testScript_billId_'+billed_amount.Id}">
+		        					<span class="bodyText dataSpace clickable">{!billed_amount.Name}</span>
+		        				</a>
+		      				</td>
+		      				<td data-label="Billed Amount Owner" class="slds-is-sortable width40" data-value="{!billed_amount.Created_By_Contact__r.Name}"><span class="bodyText dataSpace" >{!billed_amount.Created_By_Contact__r.Name}</span></td>
+		      				<td data-label="Quick Links" class="width20 slds-text-align_left">
+		      					<!-- <aura:if isTrue="{!or(v.businessVerification.Super_User__c, v.businessVerification.Contact__c == searchCriteria.Created_By_Contact__c)}"> -->
+		      					<a class="{!'headerLink hoverChange editLink ' + 'testScript_editLink_'+billed_amount.Id}" title="Edit" data-billed="{!billed_amount.Id}" onclick="{!c.viewBilledAmount}">
+						 			<lightning:icon size="medium" class="addIcon" iconName="utility:edit" alternativeText="Edit"/>
+						 		</a>
+						 		<!-- <aura:if isTrue="{!or(v.permissions.admin, billed_amount.Created_By_Contact__c == v.currentContact.Id)}"> -->
+							 		<a class="{!'headerLink hoverChange deleteLink ' + 'testScript_deleteLink_'+billed_amount.Id}" title="Delete" data-billed="{!billed_amount.Id}"  onclick="{!c.deleteClick}">
+							 			<lightning:icon size="medium" class="addIcon" iconName="utility:delete" alternativeText="Delete"/>
+							 		</a>
+						 		<!-- </aura:if> -->
+						 	</td>
+						</tr>
+					</aura:iteration>
+				</tbody>
+			</table>
+			 
+			<div class="slds-col slds-size_1-of-1 footer ">
+				<div class="col paginate">
+					<div class="desktop">
+						<a class="{!'testScript_firstD spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+						<a class="{!'testScript_previousD spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+						<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+						<a class="{!'testScript_nextD spacing  bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+					</div>
+					<div class="mobile">
+						<table>
+							<tr>
+								<td>
+									<a class="{!'testScript_firstM spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+								</td>
+								<td>
+									<span class="testScript_previousM spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+								</td>
+								<td>
+									&nbsp;<a class="{!'testScript_nextM spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<!-- SAVING BACKDROP -->
+	    <div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-show">
+	        <div class="slds-spinner_container">
+	            <div role="status" class="slds-spinner slds-spinner--medium">
+	                <span class="slds-assistive-text">Loading</span>
+	                <div class="slds-spinner__dot-a"></div>
+	                <div class="slds-spinner__dot-b"></div>
+	            </div>
+	        </div>    
+	    </div>
+	</div>
+</aura:component>

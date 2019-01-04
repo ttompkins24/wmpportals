@@ -1,0 +1,141 @@
+<!--
+/**********************************************************************************************************************
+Name 						: WMP_comp_knowledgeArticleReader
+Purpose						: A generic reader that helps the admin set up an 'ID card', 'FAQ', 'Contact us' or any 
+							  knowledge article readable in the community/internal interface
+Created on					: 7th August 2017
+Developed by				: WMP- S$
+History
+Version#		Sprint#		Date				by  					Comments
+1.0				1.0			7th August 2017		WMP-S$					See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"
+				controller="WMP_ctrl_IDCardPDF" 
+				access="global">
+    <!-- 
+	   #1 Attribute definitions   
+	-->
+
+    <!-- Creating the design attributes first --> 
+    <aura:attribute name="knwldge_queryFields" 
+    				type="string" />
+
+    <aura:attribute name="knwldge_articleType" 
+    				type="string" />
+    				
+    <aura:attribute name="bln_displayPDF" 
+    				type="boolean" />
+    
+    <aura:attribute name="knwldge_articleTitle" 
+    				type="string" />
+    				
+    <aura:attribute name="language_pref" 
+    				type="string" />
+	
+	<aura:attribute name="portal_configurationText" 
+    				type="string" />
+    
+    <aura:attribute name="src_vfPage" 
+    				type="string" />
+    
+    <aura:attribute name="currentMemberCovPlans" 
+    				type="mock_MemberCoverage__c[]" />
+    				
+    <!--  all member plans associated to the current user -->
+   		<aura:attribute name="currentMemberPlans"
+   					type="Account[]"
+   	/>
+ 			
+   	<!--  the plan configuration records -->
+   	<aura:attribute name="runningPlanConfig"
+   					type="Plan_Configuration__mdt"
+   />	
+   <aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />	
+    <aura:attribute name="currentMember" 
+    				type="mock_Member__c" 
+    />
+    <aura:attribute name="chosen_MemberPlan"
+					type="mock_MemberCoverage__c"
+					
+	/>
+    <!--
+	   #2 Handler definitions 
+	-->
+    <aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" />
+ 	
+ 	<!--  this spinner will only be visible until the page loads 
+ 	<div id="auraIdCardSpinner">
+ 		<lightning:spinner variant="brand" size="large" aura:id="auraIdCardSpinner" />
+ 	</div>-->
+ 	<div class="slds">
+	   
+	
+		<!--  the information on screen -->
+	    <div class="knowledgeRendererClass">
+	        <!--  error container -->
+	        <aura:if isTrue="{!v.bln_isError}">
+	            <div class="generalErrorContainer ">
+					<div  class="errorInnerContainer ">
+						<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+						<span class="errorMessage">{!v.str_errorMsg}</span>
+						</ui:message>
+					</div>
+				</div>
+	        </aura:if>
+	        <aura:if isTrue="{!and(v.knwldge_articleType == $Label.c.ID_Card_Template, not(v.bln_displayPDF))}">
+	        	<c:wmp_comp_NotifMainDentistPending memCovRec="{!v.chosen_MemberPlan}"/>
+				<div class="knwldgeArtcile_IDCard_headerText">
+	                <h1>{!v.currentMember.FirstName__c}&nbsp;{!$Label.c.ID_Card_hypen}</h1>
+	            </div>
+	            <!--<div style="height: 2.8rem;font-family: Lato;font-size: 2rem;line-height: 1.4;text-align: left;color: #212121;margin-bottom:5.6rem;">-->
+	            <div class="knwldgeArtcile_IDCard_surroundingText">
+	                <span class="bodyText">{!$Label.c.ID_card_surrounding_Text}</span>
+	            </div>
+	            <!--  the plan selection for an ID card -->
+	            
+	            <aura:if isTrue="{!v.currentMemberPlans.length > 1}">
+	                <br/>
+	                <div class="picklistContainer">
+	                    <div class="labelName">
+	                        <span class="infoText">{!$Label.c.Plan_Name}</span>
+	                    </div>
+	                    <div>
+	                        <ui:inputselect label=""  change="{!c.changeInPlanId}" class="picklistBox " aura:id="chosenPlanId">
+	                            <aura:iteration items="{!v.currentMemberPlans}" var="iterating_account">
+	                                <option  value="{!iterating_account.guid__c}" data-planId="{!iterating_account.guid__c}"  class="picklistOption"> {!iterating_account.Name}</option>
+	                            </aura:iteration>
+	                        </ui:inputselect>
+	                    </div>
+	                 </div>
+	                 <br/>
+	             </aura:if>
+	        </aura:if> 
+	        <div class="idcardInnerContainer">
+		        <!--  using an iframe to display the vf page -->
+		        <iframe	src="{!v.src_vfPage}" 
+		                width="100%'"
+		                height="{!and(v.knwldge_articleType == $Label.c.ID_Card_Template, not(v.bln_displayPDF))?'442px':'650px'}"
+		                frameBorder="0"
+		                id="knwldgeArticleFrame"    
+		        />
+		        <!--  the footer for ID card -->
+		        <aura:if isTrue="{!and(v.knwldge_articleType == $Label.c.ID_Card_Template, not(v.bln_displayPDF))}">
+		            <div class="idCardFooterText">
+		                <aura:unescapedHtml value="{!$Label.c.ID_card_footer_Text}" /> &nbsp; <a onclick="{!c.redirectContactUs}"> {!$Label.c.Contact_Us}  </a>
+		            </div>
+		        </aura:if>
+	        </div>
+	    </div>
+    </div>
+</aura:component>

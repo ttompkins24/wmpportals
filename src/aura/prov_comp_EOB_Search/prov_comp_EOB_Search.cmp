@@ -1,0 +1,109 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_EOB_Search
+Purpose                     : Allows users to search for EOBs
+Created on                  : May 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             8        May 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_EOB_Search">
+
+    <aura:attribute name="showResults" type="boolean" default="false"/>
+    <aura:attribute name="disableClear" type="boolean" default="true"/>
+
+    <aura:attribute name="paymentMethodOptions" type="String[]" default="[]"/>
+  
+    <aura:attribute name="eobSearchParamMap" type="Map"/>
+
+    <aura:attribute name="selectedPaymentMethod" type="String" default=""/> 
+    <aura:attribute name="checkNumber" type="String"/>
+    <aura:attribute name="payerName" type="String"/>
+    <aura:attribute name="payeeName" type="String"/>
+    <aura:attribute name="startReleasedDate" type="Date"/>
+    <aura:attribute name="endReleasedDate" type="Date"/>
+
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" /> 
+    <!-- change handlers to enable/disable clear all button -->
+    <aura:handler name="change" value="{!v.selectedPaymentMethod}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.checkNumber}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.payerName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.payeeName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.startReleasedDate}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.endReleasedDate}" action="{!c.setDisableClear}"/>
+
+    <div class="generalOuterDiv ">
+        <aura:if isTrue="{!v.showResults}">
+            <c:prov_comp_EOB_Results showResults="{!v.showResults}" selectedPaymentMethodFromSearch="{!v.selectedPaymentMethod}" checkNumberFromSearch="{!v.checkNumber}" payerNameFromSearch="{!v.payerName}" startReleasedDateFromSearch="{!v.startReleasedDate}" endReleasedDateFromSearch="{!v.endReleasedDate}" eobSearchParamMap="{!v.eobSearchParamMap}" paymentMethodOptions="{!v.paymentMethodOptions}" showSpinner="true"/>
+            <aura:set attribute="else">
+                <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1">
+                    <div class="slds-col slds-size_1-of-1 ">
+                        <ul class="">
+                            <h1 class="slds-align_absolute-center slds-p-bottom_small">Explanation of Benefits Search</h1>
+                            <h4 class="slds-align_absolute-center">Search for EOBs by entering any (or none) of the following fields:</h4>
+                        </ul>
+
+                        <div class="slds-size_1-of-1 slds-p-top_large slds-align_absolute-center">
+                            <div class="slds-size_1-of-2">
+                                <ui:inputText class="generalInputForm testScript_checkNumberInput" value="{!v.checkNumber}" label="Check or EFT Trace Number" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                            </div>
+                        </div>
+
+                        <div class=" slds-size_1-of-1 slds-p-top_large slds-align_absolute-center">
+                            <div class="slds-size_1-of-2">
+                                <ui:inputSelect label="Payment Method" class="generalInputForm testScript_paymentMethodInput" value="{!v.selectedPaymentMethod}" labelClass="generalLabelForm">
+                                    <aura:iteration items="{!v.paymentMethodOptions}" var="option">
+                                        <ui:inputSelectOption class="picklistOption" text="{!option}" label="{!option}"/>
+                                    </aura:iteration>
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+
+                        <div class="slds-size_1-of-1 slds-p-top_large slds-align_absolute-center">
+                            <div class="slds-size_1-of-2">
+                                <ui:inputText class="generalInputForm testScript_payerNameInput" value="{!v.payerName}" label="Payer Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}" maxlength="81"/>
+                            </div>
+                        </div>
+
+                        <div class="slds-size_1-of-1 slds-p-top_large slds-align_absolute-center">
+                            <div class="slds-size_1-of-2">
+                                <ui:inputText class="generalInputForm testScript_payeeNameInput" value="{!v.payeeName}" label="Payee Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}" maxlength="81"/>
+                            </div>
+                        </div>
+
+                        <div class="slds-size_1-of-1 slds-p-top_large slds-p-bottom_large slds-align_absolute-center">
+                            <div class="slds-size_1-of-2">
+                                <div class="generalLabelForm slds-size_1-of-1">Released Between</div>
+                                <div class="slds-grid slds-size_1-of-1">
+                                	<ui:inputDate class="generalInputForm slds-col testScript_startReleasedeInput" value="{!v.startReleasedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+    	                            <h5 class="slds-col slds-align_absolute-center">and</h5>
+    	                            <ui:inputDate class="generalInputForm slds-col testScript_endReleasedInput" value="{!v.endReleasedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+    	                        </div>
+                            </div>
+                        </div>
+
+                        <aura:if isTrue="{!v.isError}">
+                            <div  class="headerMessageContainer ">
+                                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                                    <span class="errorMessage">{!v.str_errorMsg}</span>
+                                </ui:message>
+                            </div>
+                        </aura:if>
+
+                        <div class="slds-col slds-grid slds-size_1-of-1 slds-align_absolute-center ">
+                            <button class="generalButton inverse slds-m-right_medium testScript_clearSearchButton" onclick="{!c.clearSearchFields}" disabled="{!v.disableClear}">Clear all</button>
+                            <button class="generalButton testScript_searchButton" onclick="{!c.search}">Search</button>
+                        </div> 
+                    </div>
+                </div>
+            </aura:set>
+        </aura:if>
+    </div>
+</aura:component>

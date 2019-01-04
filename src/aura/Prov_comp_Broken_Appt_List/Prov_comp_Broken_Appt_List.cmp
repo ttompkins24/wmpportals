@@ -1,0 +1,255 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Broken_Appt_List
+Purpose                     : Allows users to search broken appointments by provider and member name/number
+Created on                  : February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             2        February 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Broken_Appt_List">
+
+	<aura:attribute name="apptList" type="Case[]"/>
+	<!-- attributes to hold lists of accounts -->
+	<aura:attribute name="bizList" type="Account[]"/>
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+	<aura:attribute name="page" type="integer" description="for storing currnet page Number"/>
+   	<aura:attribute name="pages" type="integer" description="using for store All Pages page Number"/>
+   	<aura:attribute name="total" type="integer" description="total records count store"/>
+   	<aura:attribute name="sortField" type="String"/>
+   	<aura:attribute name="direction" type="String"/>
+   	<aura:attribute name="noResults" type="boolean"/>
+   	<aura:attribute name="fNameSearch" type="String"/>
+   	<aura:attribute name="lNameSearch" type="String"/>
+   	<aura:attribute name="memberNumber" type="String"/>
+   	<aura:attribute name="birthDate" type="Date"/>
+   	<aura:attribute name="maxResults" type="integer"/>
+   	<aura:attribute name="searchActive" type="boolean"/>
+   	<aura:attribute name="locationError" type="boolean"/>
+   	<aura:attribute name="locationErrorMsg" type="String"/>
+	<aura:attribute name="isAsc" type="boolean" description="boolean flag to pass sorting condition to apex class"/>
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	<div class="generalOuterDiv slds">
+			<aura:if isTrue="{!v.locationError}">
+				<div  class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+						<span class="errorMessage">{!v.locationErrorMsg}</span>
+					</ui:message>
+				</div>
+			</aura:if>
+			<div class="slds-float_left">
+				<h1>Broken Appointments</h1>
+				
+			</div>
+			<aura:if isTrue="{!v.apptList.length > 0}">
+				<div class="slds-float_right footer">
+					<span class="bodyText dataSpace spacing"><a class="testScript_download" onclick="{!c.downloadList}">Download</a></span>
+					<span class="bodyText dataSpace spacing"><a class="testScript_print printIcon" onclick="{!c.printList}">Print</a></span>
+				</div>
+			</aura:if>
+			
+			<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+				<div class="slds-size_1-of-3" ><h3 class="header">1. Select Location</h3>
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="locAccts" label="Location" required="true" labelClass="generalLabelForm required" disabled="{!if(v.locList.length == 1, true, false)}" class="slds-col slds-size_1-of-1 generalInputForm testscript_servLoc" change="{!c.updateLocSearch}">
+		           			<aura:if isTrue="{!v.locList.length > 1}">
+		                		<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Select One" label="Select One"/>
+		                	</aura:if>
+	        				<aura:iteration items="{!v.locList}" var="locAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" label="{!locAcct.Service_Location_Name__c}"/>
+		        			</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3"><h3 class="header">2. Select Provider</h3>
+					<div class="slds-form-element">
+		                <ui:inputSelect aura:id="provAccts" label="Provider" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_provinput" change="{!c.updateProvSearch}">
+							<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any" value="true" />
+	        				<aura:iteration items="{!v.provList}" var="provAcct">
+	             				<ui:inputSelectOption class="picklistOption" text="{!provAcct.Id}" label="{!provAcct.Name}"/>
+	        				</aura:iteration>
+		    			</ui:inputSelect>
+					</div>
+				</div>
+				<div class="slds-size_1-of-3">
+				</div>
+				<lightning:spinner variant="brand" size="large" aura:id="searchSpinnerId" class="slds-hide" alternativeText="Page loading"/>
+		  	</div>
+		  	<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap nameSearch">
+		  		<div class="slds-size_1-of-4">
+		  			<div class="slds-form-element">
+		  				<ui:inputText aura:id="firstNameInput" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_fNameinput" label="Member First Name" placeholder="First Name" required="false"/>
+		  			</div>
+		  		</div>
+		  		<div class="slds-size_1-of-4">
+		  			<div class="slds-form-element">
+		  				<ui:inputText aura:id="lastNameInput" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_lNameinput" label="Member Last Name" placeholder="Last Name" required="false"/>
+		  			</div>
+		  		</div>
+		  		<div class="slds-size_1-of-4">
+		  			<div class="slds-form-element">
+		  				<ui:inputText aura:id="memIdInput" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_memIdinput" label="Member Number" placeholder="Member Number" required="false"/>
+		  			</div>
+		  		</div>
+			  	<div class="slds-size_1-of-4">
+		  			<div class="slds-form-element">
+						<button class="generalButton slds-float_right memSearchButton" onclick="{!c.brokenApptSearch}">Search</button>
+					</div>
+				</div>
+			</div>
+
+		<div class="slds-size_1-of-1">
+			<table class="tableClass brokenApptTable" aura:id="">
+				<thead>
+					<tr>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse testScript_header_mFLame" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_Portal_Member_First_Name__c" data-col="0" >Member First Name</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse testScript_header_mLName" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_Portal_Member_Last_Name__c" data-col="1" >Member Last Name</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse testScript_header_mNumber" onclick="{!c.updateColumnSorting}" data-fieldname="Subscriber_Id__c" data-col="2" >Member Number</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse testScript_header_reason" onclick="{!c.updateColumnSorting}" data-fieldname="Reason_Code__c" data-col="3" >Reason Code</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse sortDescend testScript_header_bappDate" onclick="{!c.updateColumnSorting}" data-fieldname="Service_Date__c" data-col="4" >Broken Appointment Date</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText sortable notSorted inverse testScript_header_provName" onclick="{!c.updateColumnSorting}" data-fieldname="Provider__r.Name" data-col="5" >Provider</span>
+						</th>
+						<aura:if isTrue="{!or(v.permissions.preAuth == 'full', v.permissions.claims == 'full', 
+		                    						  v.permissions.referral == 'full', v.permissions.brokenAppointment == 'full')}">	
+							<th class="width2">
+								<span class="headerText inverse" data-col="6">Quick Links</span>
+							</th>
+						</aura:if>
+					</tr>
+				</thead>
+				<tbody>
+					<aura:if isTrue="{!v.noResults}">
+							<tr>
+								<td class="bodyText dataSpace noResults" colspan="8">{!$Label.c.Broken_appointments}
+								</td>	
+							</tr>
+						</aura:if>
+					<aura:if isTrue="{!v.apptList.length > 0 }">
+						<aura:iteration items="{!v.apptList}" var="appt">
+						<tr>
+							<td data-label="Member First Name" class="slds-is-sortable width10"  >
+		        				<span class="bodyText dataSpace">{!appt.Provider_Portal_Member_First_Name__c}</span>
+		      				</td>
+		      				<td data-label="Member Last Name" class="slds-is-sortable width10"  >
+		        				<span class="bodyText dataSpace">{!appt.Provider_Portal_Member_Last_Name__c}</span>
+		      				</td>
+		      				<td data-label="Member Number" class="slds-is-sortable width10"  >
+		        				<span class="bodyText dataSpace">{!appt.Subscriber_ID__c}</span>
+		      				</td>
+		      				<td data-label="Type of Patient" class="slds-is-sortable width10"  >
+		        				<span class="bodyText dataSpace">{!appt.Reason_Code__c}</span>
+		      				</td>
+		      				<td data-label="Broken Appointment Date" class="slds-is-sortable width10"  >
+		      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!appt.Service_Date__c}" aura:id="serviceDateOutput"/>
+		      				</td>
+		      				<td data-label="Provider" class="slds-is-sortable width10">
+		        				<span class="bodyText dataSpace">{!appt.Provider__r.Name}</span>
+		      				</td>
+		      				<aura:if isTrue="{!or(v.permissions.preAuth == 'full', v.permissions.claims == 'full', 
+		                    						  v.permissions.referral == 'full', v.permissions.brokenAppointment == 'full')}">	
+			      				<td class="width2">
+							    	<li class="slds-dropdown-trigger slds-dropdown-trigger_hover" >
+								    	<div class="dropdown" title="memberSearch">
+		                          			<button aria-haspopup="true" aria-expanded="false" id="dropdownMember" class="slds-button slds-button_icon slds-button_icon-border-filled hideOnPrint dropdown-toggle" title="memberSearch" data-toggle="dropdown">
+						                    	<lightning:icon iconName="utility:down" size="xx-small"/>
+						                    </button>
+		                          			<div class="slds-dropdown dropdown-menu" aria-labelledby="dropdownMember">
+		                          				<ul tabindex="-1" class="slds-dropdown__list" role="menu">
+		                                			<aura:if isTrue="{!v.permissions.claims == 'full'}">
+		                                			<li class="slds-dropdown__item" role="presentation">
+						                                <a tabindex="0" role="menuitem" class="testscript_startclaim" data-value="{!appt.Id}" onclick="{!c.startClaim}"  >
+						                                    <span class="slds-truncate testscript_claim" title="Start A Claim">Start A Claim</span>
+						                                </a>
+		                                			</li>
+		                                			</aura:if>
+		                          					<aura:if isTrue="{!v.permissions.preAuth == 'full'}">
+		                          					<li class="slds-dropdown__item" role="presentation">
+						                                <a tabindex="0" role="menuitem" class="testscript_startpreAuth" data-value="{!appt.Id}" onclick="{!c.startPreAuth}"  >
+						                                    <span class="slds-truncate testscript_preauth" title="Start a Pre-Auth">Start A Pre-Auth</span>
+						                                </a>
+		                                			</li>
+		                                			</aura:if>
+		                                			<aura:if isTrue="{!v.permissions.referral == 'full'}">
+		                                			<li class="slds-dropdown__item" role="presentation">
+						                                <a tabindex="0" role="menuitem" class="testscript_startclaim" data-value="{!appt.Id}" onclick="{!c.startReferral}"  >
+						                                    <span class="slds-truncate testscript_claim" title="Start A Referral">Start A Referral</span>
+						                                </a>
+		                                			</li>
+		                                			</aura:if>
+		                                			<aura:if isTrue="{!v.permissions.brokenAppointment == 'full'}">
+		                                			<li class="slds-dropdown__item" role="presentation">
+						                                <a tabindex="0" role="menuitem" title="Start Broken Appt" data-value="{!appt.Id}" onclick="{!c.startBrokenAppt}" class="testscript_startBA">
+						                                    <span class="slds-truncate testscript_startBAspan" >Start Broken Appt</span>
+						                                </a>
+		                                			</li>
+		                                			</aura:if>
+		                          				</ul>
+		                          			</div>
+								    	</div>
+							    	</li>
+					            </td>
+				            </aura:if>
+						</tr>
+						</aura:iteration>
+					</aura:if>
+				</tbody>
+			</table>
+			<aura:if isTrue="{!v.apptList.length > 0}">
+				<div>
+					<div class="slds-col slds-size_1-of-1 footer ">
+						<div class="col paginate">
+							<div class="desktop">
+								<span class="bodyText dataSpace spacing"><a class="testscript_startAll" onclick="{!c.showAll}">Show All</a></span> 
+								<a class="{!'spacing  bodyLink testscript_first' + (v.page == 1 ? ' hidden' : '') }"  onclick="{!c.firstPage}" >First</a>
+								<a class="{!'spacing  bodyLink  testscript_prev' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous</a>
+								<span class="spacing bodyText pageNum">Page&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>
+								<a class="{!'spacing  bodyLink testscript_next' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextPage}" >Next</a>
+							</div>
+							<div class="mobile">
+								<table>
+									<tr>	
+										<td>
+										<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.page == 1 ? ' hidden' : '') }" onclick="{!c.previousPage}" >Previous</a>&nbsp;
+										</td>
+										<td>
+										<span class="spacing slds-col slds-size_1-of-3 page bodyText">{!v.page}&nbsp;{!v.page}&nbsp;of&nbsp;{!v.pages}</span>							
+										</td>
+										<td>
+										&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pages > v.page ? '' : ' hidden') }" onclick="{!c.nextPage}" >Next</a>
+										</td>
+										</tr>
+								</table>
+							</div>
+						</div>		
+					</div>	
+
+				</div>
+				</aura:if>
+		</div>
+		<a style="display:none;" aura:Id="hiddenDownloadLink" id="hiddenDownloadLink" />
+	</div>
+</aura:component>

@@ -1,0 +1,124 @@
+/***************************************************
+	******************FAD SEARCH******************************
+	***************************************************/
+	.THIS .fadLandingContainer .formContainer .helpSection {
+       display:inline-flex;
+       position:relative;
+       height:0px;
+    }
+    .THIS .fadLandingContainer .formContainer .helpSection  .helpSpecialtyBox:before{
+       /*   z-index: -1;
+        position: absolute;
+        top: 5%;
+        right: 100%;
+        content: '';
+        width: 0;
+        height: 0;
+        border-right: solid 10px #ccc;
+        border-top: solid 10px transparent;
+        border-bottom: solid 10px transparent;
+        border-left: 0;*/
+    }
+     
+    .THIS .fadLandingContainer .formContainer .helpSection  .helpSpecialtyBox{
+        padding:10px; 
+        border:1px solid #ccc; 
+    	box-shadow:0 0 2px 0 rgba(0, 0, 0, 0.1);
+        position: absolute;
+        left: 25px;
+        bottom: 0;
+        background-color: white;
+        width: 500px;
+        border-radius:8px;
+        text-align: left;
+        display:none;
+    }
+     
+    .THIS .fadLandingContainer .formContainer .helpSection  .helpSpecialtyBox.in{
+        display:block;
+    }
+    
+    .THIS .fadLandingContainer .formContainer .helpSection  .header{
+        border-bottom: 1px solid black;
+   		padding: 5px;
+   		float:left;
+   		width:100%;
+    	
+    }
+     
+    .THIS .fadLandingContainer .formContainer .helpSection .specialtyGroup{
+	     display:block;
+	     padding-top:10px;
+	     clear:both;
+    }
+     
+    .THIS .fadLandingContainer .formContainer .helpSection .specialtyGroup .title{
+	    margin-right:5px;
+    }
+	
+	
+	
+	
+	.THIS .fadLandingContainer .formContainer .requiredTextContainer{
+		padding-top:30px;
+		padding-right:30px;
+		text-align:right;
+	} 
+	
+	.THIS .fadLandingContainer .formContainer .FADTitleContainer{
+		text-align:center;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .FADTitleSurroundingContainer{
+		text-align:center;
+		margin-top:10px;
+		padding-left:16.9%;
+		padding-right:16.9%;
+	}
+	.THIS .fadLandingContainer .formContainer .generalSpacing{
+		margin-top:20px;
+	}
+	.THIS .fadLandingContainer .formContainer .twoColumn{
+		padding-right:25px;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .FADInputForm{
+		margin-top:5.6%;
+		padding-left:16.9%;
+		padding-right:16.9%;
+		margin-bottom:3.5%;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .horizontalRuler{
+		border-color: #d6d6d6;
+    	border-width: 1px;
+		height:2px;
+		/* margin-top:52px; */
+		margin-bottom:0px;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .checkboxes{
+		width:30px;
+		height:30px;
+		border: solid 1px #d6d6d6;
+		float:left;
+		padding-right:13px;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .checkBoxText{
+		text-align:left;
+		width:90%;
+		padding-left:13px;
+		padding-top:4px;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .buttonContainer{
+		text-align:center;
+	}
+	
+	.THIS .fadLandingContainer .formContainer .footerBanner{
+		padding:20px 0px;
+	 	/*background-color: #f8f9fa;*/
+	 	width:100%;
+	 	text-align:center;
+	}

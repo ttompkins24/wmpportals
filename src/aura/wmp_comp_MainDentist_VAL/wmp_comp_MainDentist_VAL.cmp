@@ -1,0 +1,74 @@
+<aura:component controller="wmp_ctrl_MainDentist">
+	
+	<aura:attribute name="stageName" type="String" description="the type of modal to be displayed" />
+    <aura:attribute name="memCovIds" type="String[]" description=""/>
+    <aura:attribute name="memSuccessMap" type="Map" />
+    <aura:attribute name="successMemCovIds" type="String[]" />
+    <aura:attribute name="closeWindow" type="Boolean" />
+    <aura:attribute name="isError" type="Boolean" description="did an error occur" />
+    
+    <aura:attribute name="officeId" type="String" />
+	<aura:attribute name="dentistId" type="String" />
+	
+	<aura:attribute name="successList" type="object[]" />
+	<aura:attribute name="openList" type="object[]" />
+	<aura:attribute name="failList" type="object[]" />
+	
+	<aura:attribute name="val_errorTitle" type="String" description="label for the error title "/>
+    <aura:attribute name="val_approveTitle" type="String" description="label for the apprive message"/>
+    <aura:attribute name="val_continue" type="String" description="label for continue button to set the members pcd"/>
+    <aura:attribute name="val_goBack" type="String" description="label to go back to the fad page"/>
+
+    <aura:attribute name="chosen_reason" type="String" description="The reason a member wants th change PCD" />
+
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+	<div class="slds">
+    	<div class="mainDentist_val">
+    		<div class="mainDentist_body ">
+    			<aura:if isTrue="{!v.failList.length > 0}">
+	    			<h4 class="intro slds-text-align_center">{!v.val_errorTitle}</h4>
+	    			
+	    			<aura:iteration items="{!v.failList}" var="mem">
+	    				<div class="elementWrap">
+		    				<h5>{!mem.mName}</h5>
+		    				<div class="bodyText">{!mem.planName}</div>
+		    			</div>
+	    			</aura:iteration>
+	    		</aura:if>
+	    			
+    			<aura:if isTrue="{!v.openList.length > 0}">
+	    			<h4 class="intro slds-text-align_center">{!$Label.c.Val_Open_Request_Pending}</h4>
+	    			
+	    			<aura:iteration items="{!v.openList}" var="mem">
+	    				<div class="elementWrap">
+		    				<h5>{!mem.mName}</h5>
+		    				<div class="bodyText">{!mem.planName}</div>
+		    			</div>
+	    			</aura:iteration>
+				</aura:if>
+				    			
+    			<aura:if isTrue="{!v.successList.length > 0}">
+	    			<h4 class="intro slds-text-align_center">{!v.val_approveTitle}</h4>
+	    			
+	    			<aura:iteration items="{!v.successList}" var="mem">
+	    				<div class="elementWrap">
+		    				<h5>{!mem.mName}</h5>
+		    				<div class="bodyText">{!mem.planName}</div>
+		    			</div>
+	    			</aura:iteration>
+    			</aura:if>
+    			
+    			<aura:if isTrue="{!v.successMemCovIds.length > 0}">
+	    			<div class="slds-text-align_center">
+	    				<a class="bodyLink " onclick="{!c.processPCD}">{!v.val_continue}</a>
+	    			</div>
+    			</aura:if>
+    			<div class="slds-text-align_center slds-m-top_small">
+    				<a class="bodyLink " onclick="{!c.cancelClick}">{!v.val_goBack}</a>
+    			</div>
+    		</div>
+    	</div>
+	</div>
+</aura:component>

@@ -1,0 +1,300 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_Claim_Detail">
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}";
+
+		var claimStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+			// console.log('adding addEventListener');
+
+			//claimStr = event.data;
+			// console.log('event data from vf page' + claimStr);
+			//call function to pass data to apex controller
+
+			if(event.data.type == 'claim'){
+				//call function to pass data to apex controller
+				getClaimDetail(event.data.str);
+			} else if(event.data.type == 'attachments'){
+				//call function to pass data to apex controller
+				getAttachments(event.data.str);
+			} else if (event.data.type == 'attach'){
+				// console.log('in attachment download');
+				getAttachmentDownload(event.data.str);
+			}
+			//getClaimDetail(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			// console.log('claim page complete');
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getClaimDetail(data) {
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Detail.getClaimDetailRemote}',
+				data,
+				function(result, event){
+					if(event.status){
+						var claimDetailString = result;
+						// console.log('claimDetailString ' + JSON.stringify(claimDetailString) );
+						afterLogic(claimDetailString, data);
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        // console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function afterLogic(claimDetailString, data) { 
+			// console.log('claim Detail after logic');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Detail.afterResponseLogic}',
+				claimDetailString,
+				function(result, event){	
+					if(event.status){
+						// console.log('	result ' + JSON.stringify(result ));
+						
+						if(result != null){
+
+							// console.log('result claim' + result.Claim);
+							var newObj = new Object();
+							result.Claim.Header.SubmittedDate = convertDate(result.Claim.Header.SubmittedDate);
+							result.Claim.Header.OriginalDecisionDate = convertDate(result.Claim.Header.OriginalDecisionDate);
+							result.Claim.Header.PatientBirthDate = convertDate(result.Claim.Header.PatientBirthDate);
+							result.Claim.Header.PaymentDate = convertDate(result.Claim.Header.PaymentDate);
+							result.Claim.Header.ReceivedDate = convertDate(result.Claim.Header.ReceivedDate);
+
+							// console.log(result.Claim.Header.BusinessName);
+							result.Claim.Header.MemberName = result.Claim.Header.PatientFirstName + ' ' + result.Claim.Header.PatientLastName;
+
+							if(result.Claim.Header.ProviderNpi != undefined){
+								result.Claim.Header.ProviderName = convertProvName(result.Claim.Header.ProviderNpi, result.Claim.Header.ProviderFirstName, result.Claim.Header.ProviderLastName);
+							}else {
+								result.Claim.Header.ProviderName = convertProvName('', result.Claim.Header.ProviderFirstName, result.Claim.Header.ProviderLastName);
+							}
+							result.Claim.Header.ServiceLocationName = convertServLocation(result.Claim.Header.ProviderNpi, result.Claim.Header.ProviderAddress1, result.Claim.Header.ProviderCity, result.Claim.Header.ProviderState, result.Claim.Header.ProviderZipCode, result.Claim.Header.ServiceOfficeName);
+
+							result.Claim.Header.Business = convertBusiness(result.Claim.Header.BusinessNpi, result.Claim.Header.BusinessName);
+
+
+
+							result.Claim["Lines"].forEach(function(element){
+								element.ServiceDate = convertDate(element.ServiceDate);
+								
+								element.ToothQuadArchSurface = convertToothQuad(element.ToothNumber, element.Quadrant, element.Arch, element.Surface);
+
+							});
+							newObj = {type: "claim", str: result.Claim};
+							// console.log('result claim' + result.Claim);
+						}
+
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					} else {
+						// console.log('message ' + event.message);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					}
+					
+				},
+				{buffer: false, escape: true, timeout: 50000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function getAttachments(data){
+
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Detail.getClaimAttachmentsRemote}',
+				data,
+				function(result, event){
+					if(event.status){
+						
+						if(result != null){
+
+							// console.log('result claim' + result);
+							var newObj = new Object();
+
+							var resultObj = JSON.parse(result);
+							resultObj.forEach(function(element){
+								element.Created = convertDate(element.Created);
+								element.CreatedDate = element.Created;
+							});
+							
+							newObj = {type: "attachments", str: resultObj};
+						}
+						//when do I set the attachment list?
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        // console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+			
+		}
+
+		
+
+		function getAttachmentDownload(attachReqStr){
+			// console.log('attachment data' + attachReqStr);
+			var eob = JSON.parse(attachReqStr);
+			// console.log('parsed' + eob);
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Detail.getAttachRemote}',
+				eob.eobLink,
+				function(result, event){
+					if(event.status){
+						
+						if(result != null){
+
+							// console.log('result claim' + result);
+							
+							var newObj = {type: "attach", name: eob.name, filetype: eob.filetype, str: result};
+						}
+
+						sendToComponent(newObj);
+					} else if(event.type === 'exception'){
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        // console.log('timeout ' + JSON.stringify(timeoutList));
+                        sendToComponent(timeoutList);
+
+					} else {
+						console.log('message ' + event.message);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+			
+		}
+
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+		function convertProvName(providerNpi, providerFirstName, providerLastName){
+			var npi = '';
+            if(providerNpi != ''){
+                npi = ' (#' + providerNpi +') ';
+
+            }
+            return providerFirstName + ' ' + providerLastName + npi;
+		}
+
+		function convertServLocation(ServiceLocationNpi, ProviderAddress1, ProviderCity, ProviderState, ProviderZipCode, ServiceOfficeName){
+			var npi = ' ';
+            var name = '';
+            var city = '';
+            var address = '';
+            var state = '';
+            var location = '';
+            var zip = '';
+            if(ServiceLocationNpi != ''){
+                npi = ' (#' + ServiceLocationNpi +') ';
+
+            }
+            if(ProviderCity != null && ProviderAddress1 != null && ProviderState != null){
+                city = ProviderCity;
+                address = ProviderAddress1;
+                state = ProviderState;
+                zip = ProviderZipCode;
+                name = ServiceOfficeName;
+                location = name + npi + address + ', ' + city + ', '+ state + ' ' + zip;
+            }
+
+            return location;
+		}
+
+		function convertBusiness(BusinessNpi, BusinessName){
+			var bizNpi = '';
+            if(BusinessNpi != ''){
+                bizNpi = ' (#' + BusinessNpi +')';
+
+            }
+            return BusinessName + bizNpi;
+		}
+
+		function convertToothQuad(ToothNumber, Quadrant, Arch, Surface){
+			var tooth = '-';
+            if(ToothNumber != null){
+                tooth = ToothNumber;
+            }
+        
+            var quad = '-';
+            if(Quadrant != null){
+                quad = Quadrant;
+            }
+       
+            var arc = '-';
+            if(Arch != null){
+                arc = Arch;
+            }
+           
+            var surf = '-';
+            if(Surface != null){
+                surf = Surface;
+            }
+
+            return tooth + '/' + quad + '/'+arc + '/'+surf;
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+
+</apex:page>

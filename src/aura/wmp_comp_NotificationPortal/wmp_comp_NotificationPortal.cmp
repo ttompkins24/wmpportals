@@ -1,0 +1,27 @@
+<aura:component controller="wmp_ctrl_NotificationHeader" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,forceCommunity:availableForAllPageTypes" access="global">
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" /> 
+	
+	<aura:attribute name="notifList" type="Notification__c[]" description="" />
+	<aura:attribute name="numUnread" type="Integer" /> 
+	<aura:attribute name="noneMessage" type="String" default="{!$Label.c.No_Notification}" />
+	<aura:attribute name="lang" type="String"  />
+	
+	<!-- THIS HAS BEEN REMOVED BY THE ASK OF UI/UX. THIS MIGHT COME BACK WITH A LATER ITERATION -->
+	
+    <!-- ADDING THIS BACK IN TO CATER FOR REQUIREMENTS IN TICKET 130288-->
+	
+    <div class="slds">
+		<div class="notificationPortal">
+			<aura:iteration items="{!v.notifList}" var="notif">
+				<div class=" portalNotification outsideWrapper slds-grid slds-wrap slds-size_1-of-1 ">
+					<aura:if isTrue="{!v.lang == 'English'}">
+						<div class="slds-col slds-p-around_medium slds-size_1-of-1 "><h5>{!notif.Body_US__c}</h5></div>
+					</aura:if>
+					<aura:if isTrue="{!v.lang == 'Espanol'}">
+						<div class="slds-col slds-p-left_medium slds-size_1-of-1 "><h5>{!notif.Body_ES__c}</h5></div>
+					</aura:if>
+				</div>
+			</aura:iteration>
+		</div>
+	</div> 
+</aura:component>

@@ -1,0 +1,382 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Service_Detail_Edit
+Purpose                     : Allows users to view and edit service office detail
+Created on                  : February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             3.0         February 2018        West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global" controller="prov_ctrl_ServiceOfficeEdit" extends="c:prov_comp_Provider_Common">
+
+    <aura:attribute name="recordId" type="String"/>    
+    <aura:attribute name="serviceOfficeRecord" type="Account"/>
+    <aura:attribute name="dentistList" type="Providers_Service_Locations__c[]"/>
+    <aura:attribute name="newDentistList" type="Account[]"/>    
+    <aura:attribute name="availableDentists" type="Account[]"/>
+    <aura:attribute name="editServiceOffice" type="boolean" default="false"/>
+    <aura:attribute name="serviceOfficeUpdates" type="Map"/>
+    <aura:attribute name="servOfficeHours" type="Map"/>
+    <aura:attribute name="notes" type="String" />
+    <aura:attribute name="selectedProviderName" type="String" default="test"/>
+
+    <aura:attribute name="fieldNameSorted" type="String" default="Name"/>
+    <aura:attribute name="sortDirection" type="String" default="ASC"/>
+
+    <aura:attribute name="isUpdateSuccess" type="boolean"/>    
+    <aura:attribute name="isUpdateError" type="boolean"/>
+    <aura:attribute name="serviceOfficeUpdateSuccessMsg" type="String"/>
+    <aura:attribute name="serviceOfficeUpdateErrorMsg" type="String"/>
+    <aura:attribute name="isSubmitError" type="boolean"/>
+    <aura:attribute name="serviceOfficeSubmitErrorMsg" type="String"/>
+    <aura:attribute name="isProviderError" type="boolean"/>
+    <aura:attribute name="providerErrorMsg" type="String"/>
+
+    <aura:attribute name="caseId" type="Id"/>
+	<aura:attribute name="showSpinner" type="Boolean"/>    
+	<aura:attribute name="refreshLocation" type="Boolean"/>
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <div class="slds serviceOfficeEditWrapper">
+        <aura:if isTrue="{!v.isSubmitError}">
+            <div class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.serviceOfficeSubmitErrorMsg}</span>
+                </ui:message>
+                </div>
+        </aura:if>
+
+        <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-m-bottom_large headerBackground">
+            <div class="slds-size_11-of-12 slds-col mainHeaderText">
+                <h1 class="inverse">Edit Service Office Detail</h1>
+            </div>
+            <div class="slds-size_1-of-12 slds-col mainHeaderText">
+                <div class="slds-float_right">
+                    <button class="generalButton inverse testScript_cancelButton" onclick="{!c.edit}">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="elementWrap slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+            <!--Information-->
+            <div class="slds-size_1-of-1 slds-p-bottom_medium slds-grid slds-wrap" >                 
+                <div class="slds-size_8-of-12 slds-col generalLabelForm">
+                    Update and submit Service Office details on this form to request a change.
+                </div>
+                <div class="slds-size_4-of-12 slds-col ">
+                      <span class="slds-float_right" title="Help">Why do I have to log a Help Request to make changes?<lightning:helptext content="{!$Label.c.Edit_Provider_Detail}" /></span>
+                </div>               
+            </div>
+
+            <div class="slds-size_1-of-1 slds-p-bottom_medium slds-grid">
+                <div class="slds-col slds-size_1-of-1">
+                    <div>
+                        <ul class="slds-border_bottom slds-p-bottom_x-small">
+                            <li class="header3">Service Office Name</li>
+                            <li>Updates made to this section will be applied to all records associated with this Service Office.</li>
+                        </ul>
+                    </div>
+                    <div class="slds-p-top_medium slds-p-bottom_small">
+                        <ui:inputText aura:id="serviceRecName" required="true" label="Service Office Name" labelClass="generalLabelForm required" class="generalInputForm testScript_serviceOfficeNameInput" value="{!v.serviceOfficeRecord.Name}" maxlength="255" change="{!c.fieldChange}"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-size_1-of-1 slds-grid">
+                <div class="slds-col slds-size_1-of-2">
+                    <div>
+                        <ul class="slds-border_bottom slds-p-bottom_x-small">
+                            <li class="header4">General Information</li>
+                            <li>Updates made to this section will be applied to all records associated with this Service Office.</li>
+                        </ul>
+                    </div>
+
+                    <div class="slds-p-top_medium">
+                        <dl class="slds-list_horizontal slds-wrap edit-table-general ">
+                            <dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+                            <dd class="slds-item_detail bodyText" title="NPI">
+                                <ui:inputText aura:id="serviceRecNPI" class="generalInputForm testScript_npiInput" value="{!v.serviceOfficeRecord.npi__c}" maxlength="15" change="{!c.fieldChange}" label="NPI" labelClass="slds-hide"/>
+                            </dd>
+                        
+                            <dt class="slds-item_label generalLabelForm dtExtra" title="Street">Street:</dt>
+                            <dd class="slds-item_detail bodyText ddExtra" title="Street">
+                                <ui:inputTextArea aura:id="serviceRecStreet" class="generalInputForm testScript_streetInput" value="{!v.serviceOfficeRecord.BillingStreet}" maxlength="255" change="{!c.fieldChange}" label="Street" labelClass="slds-hide"/>
+                            </dd>
+                        
+                            <dt class="slds-item_label generalLabelForm" title="City">City:</dt>
+                            <dd class="slds-item_detail bodyText" title="City">
+                                <ui:inputText aura:id="serviceRecCity" class="generalInputForm testScript_cityInput" value="{!v.serviceOfficeRecord.BillingCity}" maxlength="40" change="{!c.fieldChange}" label="City" labelClass="slds-hide"/>
+                            </dd>
+                        
+                            <dt class="slds-item_label generalLabelForm" title="State">State:</dt>
+                            <dd class="slds-item_detail bodyText" title="State">
+                                <ui:inputText aura:id="serviceRecState" class="generalInputForm testScript_stateInput" value="{!v.serviceOfficeRecord.BillingState}" maxlength="2" change="{!c.fieldChange}" label="State" labelClass="slds-hide"/>
+                            </dd>
+                        
+                            <dt class="slds-item_label generalLabelForm" title="Zipcode">Zipcode:</dt>
+                            <dd class="slds-item_detail bodyText" title="Zipcode">
+                                <ui:inputText aura:id="serviceRecPostal" class="generalInputForm testScript_zipcodeInput" value="{!v.serviceOfficeRecord.BillingPostalCode}" maxlength="20" change="{!c.fieldChange}" label="Zipcode" labelClass="slds-hide"/>
+                            </dd>
+
+                            <dt class="slds-item_label generalLabelForm" title="Wheelchair">Wheelchair Accessible:</dt>
+                            <dd class="slds-item_detail bodyText" title="Wheelchair">
+                                <ui:inputCheckbox aura:id="serviceRecWheelchair" class="testScript_wheelchairInput" value="{!v.serviceOfficeRecord.has_handicap_access__c}" change="{!c.fieldChange}" label="Wheelchair Accessible" labelClass="slds-hide"/>
+                            </dd>
+                        </dl>
+                    </div>                    
+                </div>
+
+                <div class="slds-col slds-size_1-of-2">
+                    <div>
+                        <ul class="slds-border_bottom slds-p-bottom_x-small">
+                            <li class="header4">Contact Information</li>
+                            <li>&zwnj;</li>
+                        </ul>
+                    </div>
+
+                    <div class="slds-p-top_medium">
+                        <dl class="slds-list_horizontal slds-wrap edit-table-general ">
+                            <dt class="slds-item_label generalLabelForm" title="Phone">Phone:</dt>
+                            <dd class="slds-item_detail bodyText" title="Phone">
+                                <ui:inputPhone aura:id="serviceRecPhone" class="generalInputForm testScript_phoneInput" value="{!v.serviceOfficeRecord.Phone}" maxlength="40" change="{!c.fieldChange}" label="Phone" labelClass="slds-hide"/>
+                            </dd>
+                            <dt class="slds-item_label generalLabelForm" title="Fax">Fax:</dt>
+                            <dd class="slds-item_detail bodyText" title="Fax">
+                                <ui:inputPhone aura:id="serviceRecFax" class="generalInputForm testScript_faxInput" value="{!v.serviceOfficeRecord.Fax}" maxlength="40" change="{!c.fieldChange}" label="Fax" labelClass="slds-hide"/>
+                            </dd>                            
+                            <dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+                            <dd class="slds-item_detail bodyText" title="Email">
+                                <ui:inputEmail aura:id="serviceRecFax" class="generalInputForm testScript_emailInput" value="{!v.serviceOfficeRecord.Email__c}" maxlength="40" change="{!c.fieldChange}" label="Email" labelClass="slds-hide"/>
+                            </dd>
+                        </dl>
+                    </div>                    
+                </div>
+            </div> 
+        </div>
+        <!--END Information-->
+
+        <!--Hours-->
+        <div class="slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+            <div class="slds-size_1-of-1">
+                <div class="slds-col">
+                    <h3>Hours</h3>
+                </div>
+                <div class="resultsTable slds-col">
+                    <table class="tableClass" id="hoursTable">
+                        <thead>
+                             <tr >
+                                <th class=""><span class="headerText">Sunday</span></th>
+                                <th class=""><span class=" headerText">Monday</span></th>
+                                <th class=""><span class=" headerText">Tuesday</span></th>
+                                <th class=""><span class=" headerText">Wednesday</span></th>
+                                <th class=""><span class=" headerText">Thursday</span></th>
+                                <th class=""><span class=" headerText">Friday</span></th>
+                                <th class=""><span class=" headerText">Saturday</span></th>
+                             </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="">
+                                    <lightning:input class="slds-align_absolute-center testScript_sunOpenInput" aura:id="serviceRecSunOpen" type="time" label="Sunday Open" variant="label-hidden" value="{!v.servOfficeHours.SunOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center testScript_sunCloseInput" aura:id="serviceRecSunClose" type="time" label="Sunday Close" variant="label-hidden" value="{!v.servOfficeHours.SunClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">
+                                    <lightning:input class="slds-align_absolute-center testScript_monOpenInput" aura:id="serviceRecMonOpen" type="time" label="Monday Open" variant="label-hidden" value="{!v.servOfficeHours.MonOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center testScript_monCloseInput" aura:id="serviceRecMonClose" type="time" label="Monday Close" variant="label-hidden" value="{!v.servOfficeHours.MonClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">                                 
+                                    <lightning:input class="slds-align_absolute-center testScript_tuesOpenInput" aura:id="serviceRecTuesOpen" type="time" label="Tuesday Open" variant="label-hidden" value="{!v.servOfficeHours.TuesOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center testScript_tuesCloseInput" aura:id="serviceRecTuesClose" type="time" label="Tuesday Close" variant="label-hidden" value="{!v.servOfficeHours.TuesClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">                                 
+                                    <lightning:input class="slds-align_absolute-center testScript_wedOpenInput" aura:id="serviceRecWedOpen" type="time" label="Wednesday Open" variant="label-hidden" value="{!v.servOfficeHours.WedOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center testScript_wedCloseInput" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center" aura:id="serviceRecWedClose" type="time" label="Wednesday Close" variant="label-hidden" value="{!v.servOfficeHours.WedClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">                                 
+                                    <lightning:input class="slds-align_absolute-center testScript_thursOpenInput" aura:id="serviceRecThursOpen" type="time" label="Thursday Open" variant="label-hidden" value="{!v.servOfficeHours.ThursOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center testScript_thursCloseInput" aura:id="serviceRecThursClose" type="time" label="Thursday Close" variant="label-hidden" value="{!v.servOfficeHours.ThursClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">                                 
+                                    <lightning:input class="slds-align_absolute-center testScript_friOpenInput" aura:id="serviceRecFriOpen" type="time" label="Friday Open" variant="label-hidden" value="{!v.servOfficeHours.FriOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center testScript_friCloseInput" aura:id="serviceRecFriClose" type="time" label="Friday Close" variant="label-hidden" value="{!v.servOfficeHours.FriClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                                <td class="">                                 
+                                    <lightning:input class="slds-align_absolute-center slds-p-right_large testScript_satOpenInput" aura:id="serviceRecSatOpen" type="time" label="Saturday Open" variant="label-hidden" value="{!v.servOfficeHours.SatOpen}" onchange="{!c.fieldChange}"/>
+                                    <lightning:icon class="ddIcon slds-align_absolute-center slds-p-right_large" iconName="utility:dash" size="xx-small"/>
+                                    <lightning:input class="slds-align_absolute-center slds-p-right_large testScript_satCloseInput" aura:id="serviceRecSatClose" type="time" label="Saturday Close" variant="label-hidden" value="{!v.servOfficeHours.SatClose}" onchange="{!c.fieldChange}"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+        <!--END Hours-->
+
+        <!--Dentist List-->
+        <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+            <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                <div class="slds-size_8-of-12 slds-col">
+                    <h3>Providers At This Location</h3>
+                </div>
+                <div class="slds-size_4-of-12 slds-col generalLabelForm">
+                    <a onclick="{!c.addDentist}" class="slds-float_right testScript_addProviderButton">
+                        <lightning:icon iconName="utility:new" size="medium" class="addIcon" alternativeText="Add a Provider from Roster"/>
+                        &nbsp;Add a Provider from Roster
+                    </a>
+                </div>
+            </div>
+            <aura:if isTrue="{!v.isProviderError}">
+                <div class="headerMessageContainer slds-size_1-of-1">
+                    <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                        <span class="errorMessage">{!v.providerErrorMsg}</span>
+                    </ui:message>
+                    </div>
+            </aura:if>
+            <div class="slds-col">
+                <table class="tableClass" id="providerTable">
+                    <thead>
+                        <tr>
+                            <th class="">
+                                <span class="headerText sortable sorted sortAscend testScript_providerNameSort" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_Name__c" data-col="0" data-tableid="providerTable">Provider Name</span>
+                            </th>
+                            <th class="">
+                                <span class="headerText sortable notSorted testScript_npiSort" onclick="{!c.updateColumnSorting}" data-fieldname="Provider_NPI__c" data-col="1" data-tableid="providerTable">NPI</span>
+                            </th>
+                            <th class="">
+                                <span class="headerText sortable notSorted testScript_treatAgesSort" onclick="{!c.updateColumnSorting}" data-fieldname="treats_ages_from__c" data-col="2" data-tableid="providerTable">Min Age</span>
+                            </th>
+                            <th class="">
+                                <span class="headerText sortable notSorted testScript_treatAgesSort" onclick="{!c.updateColumnSorting}" data-fieldname="treats_ages_to__c" data-col="3" data-tableid="providerTable">Max Age</span>
+                            </th>
+                            <th class="">
+                                <span class="headerText ">Accepting New Patients</span>
+                            </th>
+                            <th class="">
+                                <span class="headerText"></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <aura:if isTrue="{!v.newDentistList.length > 0}">
+                            <aura:iteration items="{!v.newDentistList}" var="newDentist" indexVar="index">
+                                <tr id="{!index}" class="{!newDentist.changeType =='confirmed' ? 'confirmedRow' : 
+                                                            newDentist.changeType == 'new' ? 'newRow' : ''}">
+                                    <aura:if isTrue="{!newDentist.changeType == 'new'}">
+                                        <td class="">
+                                            <ui:inputSelect label="{!index}" labelClass="slds-hide" aura:id="selectedProvider" class="generalInputForm bodyText dataSpace testScript_addProviderInput" required="true" change="{!c.setProviderId}" value="{!newDentist.selectedProvider}" >
+                                                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Select" label="Select"  />
+                                                <aura:iteration items="{!v.availableDentists}" var="availDentist">
+                                                    <ui:inputSelectOption class="picklistOption" text="{!availDentist.Id}" label="{!availDentist.Name}"/>
+                                                </aura:iteration>
+                                            </ui:inputSelect>
+                                        </td>
+                                    </aura:if>
+                                    <aura:if isTrue="{!newDentist.changeType != 'new'}">
+                                        <td data-label="Name" class="" data-value="{!newDentist.selectedProvider}">
+                                            <span class="bodyText dataSpace" >{!newDentist.Name}</span>
+                                        </td>
+                                    </aura:if>
+                                    <td data-label="NPI" class="" data-value="{!newDentist.NPI}">
+                                        <span class="bodyText dataSpace" >{!newDentist.NPI}</span>
+                                    </td>
+                                    <td class="">
+                                        <span class="bodyText dataSpace">&nbsp;</span>
+                                    </td>
+                                    <td class="">
+                                        <span class="bodyText dataSpace">&nbsp;</span>                                            
+                                    </td>
+                                    <td class="">
+                                        <span class="bodyText dataSpace">&nbsp;</span>
+                                    </td>
+                                    <td class="" >
+                                        <aura:if isTrue="{!newDentist.changeType != 'deleted'}">
+                                            <a onclick="{!c.deleteNewRow}" data-value="{!newDentist.index}" class="testScript_deleteNewProviderButton">
+                                                <lightning:icon class="ddIcon" iconName="utility:delete" alternativeText="Delete Row"/>
+                                            </a>
+                                        </aura:if>
+                                        <aura:if isTrue="{!newDentist.changeType == 'new' &amp;&amp; newDentist.selectedProvider != 'Select'}">
+                                            <a onclick="{!c.confirmNewRow}" data-value="{!newDentist.index}" label="index" class="testScript_confirmNewProviderButton" >
+                                                <lightning:icon class="ddIcon" iconName="utility:check" alternativeText="Confirm Row"/>
+                                            </a>
+                                        </aura:if>
+                                        <aura:if isTrue="{!newDentist.changeType == 'confirmed'}">
+                                            <a onclick="{!c.editNewRow}" data-value="{!newDentist.index}" label="index" class="testScript_editNewProviderButton">
+                                                <lightning:icon class="ddIcon" iconName="utility:edit" alternativeText="Edit Row"/>
+                                            </a>
+                                        </aura:if>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                        </aura:if>
+                        <aura:iteration items="{!v.dentistList}" var="dentist">
+                            <tr class="{!dentist.changeType == 'deleted' ? 'deletedRow' : ''}">
+                                <td data-label="Provider Name" class=" slds-is-sortable " data-value="{!dentist.Provider_Name__c}">
+                                    <span class="bodyText dataSpace" >{!dentist.Provider_Name__c}</span>
+                                </td>
+                                <td data-label="NPI" class="slds-is-sortable " data-value="{!dentist.Provider_NPI__c}">
+                                    <span class="bodyText dataSpace" >{!dentist.Provider_NPI__c}</span>
+                                </td>
+                                <td data-label="MinAge" class="slds-is-sortable " data-value="{!if(dentist.treats_ages_from__c == undefined, '0', dentist.treats_ages_from__c)}">
+                                    <span class="bodyText dataSpace">{!dentist.treats_ages_from__c}</span>
+                                </td>
+                                <td data-label="MaxAge" class="slds-is-sortable " data-value="{!if(dentist.treats_ages_to__c == undefined, '0', dentist.treats_ages_to__c)}">
+                                    <span class="bodyText dataSpace">{!dentist.treats_ages_to__c}</span>
+                                </td>
+                                <td data-label="Accepting New Patients" class="">
+                                    <ui:outputCheckbox class="bodyText dataSpace" value="{!dentist.is_accepting_new_patients__c}"/>
+                                </td>
+                                <td class="" >
+                                    <aura:if isTrue="{!dentist.changeType != 'deleted'}">
+                                        <a onclick="{!c.deleteExistingRow}" data-value="{!dentist.index}" class="testScript_deleteExistingProviderButton">
+                                            <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:delete" alternativeText="Delete Row"/>
+                                        </a>
+                                    </aura:if>
+                                    <aura:if isTrue="{!dentist.changeType == 'deleted'}">
+                                        <a onclick="{!c.undeleteExistingRow}" data-value="{!dentist.index}" class="testScript_undeleteExistingProviderButton">
+                                            <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:undelete" alternativeText="Undelete Row"/>
+                                        </a>
+                                    </aura:if>
+                                </td>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>          
+        </div>
+        <!--END Dentist List-->
+
+        <!--Submit Footer-->
+        <div class="slds slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+            <div class="slds-align_absolute-center">
+                <ul >
+                    <li class="header3 slds-align_absolute-center">Does everything look correct?</li>
+                    <li class="slds-align_absolute-center slds-p-top_small">Please make sure all information is correct and include any additional notes or instructions below.</li>
+                    <li class="slds-align_absolute-center slds-p-top_medium">
+                        <ui:inputTextArea aura:id="comments" class="generalInputForm testScript_commentsInput" placeholder="Additional notes" rows="5" value="{!v.notes}"/>
+                    </li>
+                    <li class="slds-p-top_medium slds-align_absolute-center ">
+                        <button class="generalButton testScript_submitButton" onclick="{!c.submit}">Submit Change Request</button>
+                    </li>
+                    <li class="slds-p-top_medium slds-align_absolute-center">{!$Label.c.Dentist_Processing}</li>
+                </ul>
+            </div>
+        </div>
+        <!-- END Submit Footer -->
+    </div>
+    <!--END MAIN DIV-->
+</aura:component>

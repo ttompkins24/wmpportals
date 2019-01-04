@@ -1,0 +1,121 @@
+<!--
+/*******************************************************************************************************
+Name 						: prov_comp_SearchCriteria_Manage
+Purpose						: Displays list of saved search criterias. Allows user to edit, open, delete the saved search criteria records.
+Created on					: 13rd January 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			13rd January 2018		West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component access="global" controller="prov_ctrl_SearchCriteria" extends="c:prov_comp_Provider_Common">
+	
+	<aura:attribute name="businessId" 			type="String" 					description="holds the business id " />
+	<aura:attribute name="searchCriteriaList" 	type="Search_Criteria__c[]" 	description="list of search criteria items" />
+	
+	<!-- PAGINATION VARIABLES -->
+	<aura:attribute name="pageNum"				type="Integer"						description="the page number of the user is on"											default="1"/>
+	<aura:attribute name="totalResults"			type="Integer"						description="total number records that were returned" 									default="0"/>
+	<aura:attribute name="totalPages"			type="Integer"						description="total number of pages"					 									default="1"/>
+	<aura:attribute name="fieldNameSorted"		type="String"						description="field api name of the field that is being sorted"							default="LastModifiedDate"/>
+	<aura:attribute name="sortDirection"		type="String"						description="sort direction for the query. Possible values: ASC, DESC"					default="DESC"/>
+	
+	<!-- AURA Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+<div class="slds">
+	<div class="searchCriteriaModalWrapper slds-grid slds-wrap slds-size_1-of_1">
+		<!-- SPINNER -->
+		<lightning:spinner variant="brand" size="large" aura:id="spinnerIdModal" class=""/>
+		<!-- MODAL -->
+		<div class="popupModal">
+	    	<section role="dialog" style=" height:100%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+	    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open popModalInner" >
+	        	<div class="slds-modal__container">
+	            	<header class="slds-modal__header">
+	            		<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+	                			 title="{!v.closeText}" onclick="{!c.defaultClose}" style="" aria-label="Close">
+	                        <div class="closeIcon"></div>
+	                    	<span class="slds-assistive-text">{!v.closeText}</span>
+	                    </a>
+	                    <h2  class="popupModalHeader" >Your Saved Searches</h2>
+	                    <div class="slds-text-align_center intro">
+	                    	{!$Label.c.Member_Eligibility_Modal_Subtext	}
+	                    </div>
+	                </header>
+					<div class="slds-modal__content slds-p-around--medium" id="modal-content-1">
+				
+						<!-- Search Criteria Table -->
+						<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1">
+							<table class="tableClass " id="searchCriteriaModalTableId">
+								<thead>
+									 <tr >
+									 	<th class="width50 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="0" data-fieldname="Name">
+								 			<span class=" " >Name</span>
+									 	</th>
+									 	<th class="width25 sortable sortDescend headerText slds-text-align_center" onclick="{!c.updateColumnSorting}" data-col="1" data-fieldname="LastModifiedDate">
+									 		<span class=" " >Last Updated</span>
+									 	</th>
+									 	<th class="width25 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="2" data-fieldname="Created_By_Contact__r.Name">
+									 		<span class=" " >Created By</span>
+									 	</th>
+									 	
+									 </tr> 
+								</thead>
+								<!--  BODY OF THE TABLE -->
+								<tbody>
+									<aura:iteration items="{!v.searchCriteriaList}" var="searchCriteria">
+									<tr>
+										<td data-label="Name" class="slds-is-sortable width50" >
+					        				<a class="bodyLink  scNameOutput" onclick="{!c.redirectUrl}" data-loc="{!searchCriteria.Id}">
+					        					{!searchCriteria.Name}
+					        				</a>
+					        				<ui:inputText class="hide dataSpace generalInputForm scNameInput"  maxlength="80" />
+					      				</td>
+					      				<td data-label="Last Updated" class="width25 slds-text-align_center" data-value="{!searchCriteria.LastModifiedDate}" >
+					      					<lightning:formattedDateTime value="{!searchCriteria.LastModifiedDate}" year="numeric" month="numeric" day="numeric"  hour="2-digit" minute="2-digit" timeZoneName="short" />
+					      				</td>
+					      				<td data-label="Created By" class="width25" >
+					      					{!searchCriteria.Created_By_Contact__r.Name}
+					      				</td>
+					      				
+									</tr>
+									</aura:iteration>
+								</tbody>
+							</table>
+							<div class="slds-col slds-size_1-of-1 footer ">
+								<div class="col paginate">
+									<div class="desktop">
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+										<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+										<a class="{!'spacing  bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</div>
+									<div class="mobile">
+										<table>
+											<tr>
+											
+												<td>
+													<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+												</td>
+												<td>
+													<span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+												</td>
+												<td>
+													&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+												</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+             	</div>
+          </section>
+      </div>
+	</div>
+</div>
+</aura:component>

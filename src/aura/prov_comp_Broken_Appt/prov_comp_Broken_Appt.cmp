@@ -1,0 +1,233 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Broken_Appt
+Purpose                     : Allows users to create broken appointments
+Created on                  : February 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             2        February 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Broken_Appt">
+	
+
+	<aura:attribute name="isSubmitError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+	<aura:attribute name="isSubmitSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" default="false" />
+
+	<aura:attribute name="isSearchError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+	<aura:attribute name="isSearchSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" default="false" /> 
+	<aura:attribute name="submitBAError" type="string"/>
+	<aura:attribute name="isDateError" type="Boolean" default="false"/>
+	<aura:attribute name="dateErrorMsg" type="String"/>
+	<aura:attribute name="isProvError" type="Boolean" default="false"/>
+	<aura:attribute name="provErrorMsg" type="String"/>
+	<aura:attribute name="isReqError" type="Boolean" default="false"/>
+	<aura:attribute name="reqFieldMsg" type="String"/>
+	<aura:attribute name="isMemFieldError" type="Boolean" default="false"/>
+	<aura:attribute name="memFieldErrorMsg" type="String"/>
+
+
+	<aura:attribute name="newBrokenAppt" type="prov_ctrl_Broken_Appt.BrokenApptWrapper[]" />
+	<!-- use this to reference each field on the page, then use JS controller -->
+    <!-- attributes to hold lists of accounts -->
+    <aura:attribute name="patientTypes" type="String[]"/>
+    <aura:attribute name="serviceCategories" type="String[]"/>
+    <aura:attribute name="reasonCodes" type="String[]"/>
+	<aura:attribute name="bizList" type="Account[]"/>
+	<aura:attribute name="locList" type="Account[]"/> 
+	<aura:attribute name="provList" type="Account[]"/> 
+	
+	<!-- 
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="bizAcctRecId" type="String"/>
+	<aura:attribute name="locAcctRecId" type="String"/>
+	<aura:attribute name="provAcctRecId" type="String"/>
+	 -->
+	<aura:attribute name="locAcctRec" type="Account"/>
+	<aura:attribute name="provAcctRec" type="Account"/>
+	<aura:attribute name="page" type="integer" description="for storing currnet page Number"/>
+   	<aura:attribute name="pages" type="integer" description="using to store All Pages page Number"/>
+   	<aura:attribute name="total" type="integer" description="total records count store"/>
+   	<aura:attribute name="sortField" type="String"/>
+   	<aura:attribute name="direction" type="String"/>
+   	<aura:attribute name="noResults" type="boolean"/>
+   	<aura:attribute name="fNameSearch" type="String"/>
+   	<aura:attribute name="lNameSearch" type="String"/>
+   	<aura:attribute name="maxResults" type="integer"/>
+   	<aura:attribute name="searchActive" type="boolean"/>
+   	<aura:attribute name="memResult" type="Object"/>
+
+   	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	
+    <aura:method name="initMethod" action="{!c.doInit}" description="controller initialization function" /> 
+    
+    <div class="generalOuterDiv slds broken_appt_container">
+	<div class="slds-grid slds-wrap slds-size_1-of-1">
+		<div class="slds-size_3-of-4 ">
+			<h1 class="broken_header">Create a Broken Appointment</h1>	
+			
+		</div>
+	</div>
+		<!-- Notification when the broken appointment is submitted successfully/with errors -->
+		<aura:if isTrue="{!v.isSubmitError}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+					<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!v.submitBAError}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<aura:if isTrue="{!v.isDateError}">
+				<div  class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!v.dateErrorMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+		<aura:if isTrue="{!v.isProvError}">
+				<div  class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!v.provErrorMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+
+		<aura:if isTrue="{!v.isReqError}">
+				<div  class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+					<span class="errorMessage">{!v.reqFieldMsg}</span>
+				</ui:message>
+			</div>
+		</aura:if>
+
+
+		<aura:if isTrue="{!v.isSubmitSuccess}">
+			<div  class="headerMessageContainer ">
+				<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+					<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+					<span class="successMessage">{!$Label.c.Broken_Appt_Submit_Success}</span>
+				</ui:message>
+			</div>				
+		</aura:if>				
+			<!-- business,location,provider section -->
+			<div class="slds-size_1-of-1 slds-col slds-m-bottom_small">
+				<h3>Provide broken appointment details</h3>
+			</div>
+				
+			<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap generalShadowBox">
+				<c:Prov_comp_BLPpicklists locAcctRec="{!v.locAcctRec}" provAcctRec="{!v.provAcctRec}" />				
+		  	</div>
+			<lightning:spinner variant="brand" size="large" aura:id="searchSpinnerId" class="slds-hide" alternativeText="Page loading"/>
+
+<!-- member search section -->
+			<div class="slds-grid slds-wrap generalShadowBox inverse">
+				<div class="slds-size_1-of-1 slds-col">
+					<h3 class="appt-header">Member Information</h3>
+					<aura:if isTrue="{!v.isSearchError}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+								<span class="errorIcon"></span>
+								<span class="errorMessage">{!$Label.c.Member_Not_Found}</span>
+							</ui:message>
+						</div>
+					</aura:if>
+					<aura:if isTrue="{!v.isSearchSuccess}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+								<span class="successIcon"></span>
+								<span class="successMessage">{!$Label.c.Member_Found}</span>
+							</ui:message>
+						</div>
+					</aura:if>	
+					<aura:if isTrue="{!v.isMemFieldError}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+								<span class="errorIcon"></span>
+								<span class="errorMessage">{!v.memFieldErrorMsg}</span>
+							</ui:message>
+						</div>
+					</aura:if>	
+				</div>
+				<div class="slds-col slds-size_1-of-5"> 
+					<ui:inputText aura:id="memberFName" class="generalInputForm testscript_memFirst" labelClass="generalLabelForm" label="Member First Name" value="{!v.newBrokenAppt.memberFirstName}"></ui:inputText>
+				</div>
+				<div class="slds-col slds-size_1-of-5">
+					<ui:inputText aura:id="memberLName" class="generalInputForm testscript_memLast" labelClass="generalLabelForm" label="Member Last Name" value="{!v.newBrokenAppt.memberLastName}"></ui:inputText>
+				</div>		
+				<div class="slds-col slds-size_1-of-5">
+					<ui:inputText aura:id="memberNumber" class="generalInputForm testscript_memNum" labelClass="generalLabelForm" label="Member Number" value="{!v.newBrokenAppt.memberNumber}"></ui:inputText>
+				</div>
+				<div class="slds-col slds-size_1-of-5">
+					<ui:inputDate aura:id="memberBirthDate" displayDatePicker="true" required="true" class="generalInputForm testscript_memBD" labelClass="generalLabelForm required" label="Date of Birth" value="{!v.newBrokenAppt.memBirthDate}" format="MM/DD/YYYY" blur="{!c.fixDate}"></ui:inputDate>
+				</div>
+				<div class="slds-col slds-size_1-of-5">
+					<div class="slds-float_right">
+						<button label="Search" onclick="{!c.handleSearchMember}" aura:id="memSearch" class="generalButton ">Search</button>
+					</div>
+				</div>
+				
+			</div>
+
+			<div class="slds-grid slds-wrap generalShadowBox">
+				<div class="slds-size_1-of-1 slds-col">
+					<h3 class="header">Appointment Information</h3>	
+				</div>
+				<div class="slds-col slds-size_1-of-2 spaceClass"> 
+					<ui:inputSelect aura:id="patientType" class="generalInputForm testscript_PatType" required="true" labelClass="generalLabelForm required" label="Patient Type" value="{!v.newBrokenAppt.patientType}" change="{!c.updatePatType}">
+						<aura:if isTrue="{!v.patientTypes.length > 1}">
+		                	<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="" label="Select One"/>
+		                </aura:if>
+					    <aura:iteration items="{!v.patientTypes}" var="type">
+             				<ui:inputSelectOption text="{!type.value}" label="{!type.label}"/>
+             			</aura:iteration>
+					</ui:inputSelect>
+				</div>
+				<div class="slds-col slds-size_1-of-2 spaceClass">
+					<ui:inputDate aura:id="dateReported" displayDatePicker="true" class="generalInputForm testscript_DateReported" labelClass="generalLabelForm " label="Date Reported" value="{!v.newBrokenAppt.dateReported}" format="MM/DD/YYYY" blur="{!c.fixDate}"></ui:inputDate>
+				</div>				
+				<div class="slds-col slds-size_1-of-2 spaceClass">
+					<ui:inputSelect aura:id="serviceCat" class="generalInputForm testscript_servCat"  required="true" labelClass="generalLabelForm required" label="Service Category" value="{!v.newBrokenAppt.serviceCat}" change="{!c.updateServiceCategory}">
+						<aura:if isTrue="{!v.serviceCategories.length > 1}">
+		                	<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="" label="Select One"/>
+		                </aura:if>
+					    <aura:iteration items="{!v.serviceCategories}" var="cat">
+             				<ui:inputSelectOption text="{!cat.value}" label="{!cat.label}"/>
+             			</aura:iteration>
+					</ui:inputSelect>
+				</div> 
+				<div class="slds-col slds-size_1-of-2 spaceClass">
+					
+					<ui:inputDate aura:id="serviceDate" displayDatePicker="true" required="true" 
+                                  class="generalInputForm testscript_servDate" labelClass="generalLabelForm required" 
+                                  label="Service Date" format="MM/DD/YYYY" value="{!v.newBrokenAppt.serviceDate}" 
+                                  blur="{!c.fixDate}"></ui:inputDate>
+				</div> 
+				<div class="slds-col slds-size_1-of-2 spaceClass">
+					<ui:inputSelect aura:id="reasonCode" class="generalInputForm testscript_reasonCode" required="true" labelClass="generalLabelForm required" label="Reason Code" value="{!v.newBrokenAppt.reasonCode}" change="{!c.updateReasonCode}">
+						<aura:if isTrue="{!v.reasonCodes.length > 1}">
+		                	<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="" label="Select One"/>
+		                </aura:if>
+					    <aura:iteration items="{!v.reasonCodes}" var="code">
+             				<ui:inputSelectOption text="{!code.value}" label="{!code.label}"/>
+             			</aura:iteration>
+					</ui:inputSelect>
+				</div> 			
+				<div class="slds-col slds-size_1-of-2 spaceClass">
+					<ui:inputTextArea aura:id="notes" class="generalInputForm testscript_notes" labelClass="generalLabelForm" cols="20" rows="2" label="Notes" value="{!v.newBrokenAppt.notes}"></ui:inputTextArea>
+				</div>
+				<div class="slds-col slds-size_1-of-2">
+					<div class="slds-float_right">
+						<button label="Cancel" class="generalButton testscript_CancelBA slds-m-right_medium inverse" onclick="{!c.handleCancel}">Cancel</button>
+						<button label="Submit" onclick="{!c.handleSubmitBrokenAppt}"  aura:id="submitAppt" class="generalButton testscript_SubmitBA">Submit</button> 
+					</div>
+				</div> 
+			</div> 
+		</div>
+</aura:component>

@@ -1,0 +1,125 @@
+<!--  
+/**********************************************************************************************************************
+Name                        : WMP_vf_IDCardPDF
+Purpose                     : It is the visualforce page that renders as a PDF. The VF page will be displayed  within a
+                                Lightning component - WMP_comp_knowledgeArticleReader
+Created on                  : 8th August 2017
+Developed by                : WMp- S$
+History
+Version#        Sprint#     Date                by                      Comments
+1.0             1.0         8th August 2017     WMP-S$                  See header - purpose
+
+**********************************************************************************************************************/
+-->
+<apex:page renderAs="{!strng_pageRendering}"  
+           controller="WMP_ctrl_IDCardPDF"
+           showHeader="false" 
+           sidebar="false"
+           standardStylesheets="false"
+          >    
+    <head>    
+        <!--  stylesheet for the styling -->
+        <!-- <apex:stylesheet value="{!$Resource.IDCardCSS}" />-->
+        <apex:stylesheet value="{!URLFOR($Resource.IDCardCSSWithImages,'/css/standard.css')}"/>     
+    </head>
+    <!--  body of the page -->
+    <body style="font-family:san-serif;font-family:Lato;{!IF(bln_isNonPDFIdCard,'zoom:150%;padding:10px;','zoom:130%;padding:10px;')} max-width:1000px;">
+    
+        <apex:outputPanel rendered="{!!bln_isNonPDFIdCard}">
+            <!--  looping through the list of fields from the string query -->
+            <apex:repeat value="{!listOfStringsToDisplay}"
+                            var="iterating_field"
+                            id="fieldLooper">
+            
+                <apex:outputtext styleClass="float:left" value="{!iterating_field}" escape="false"/>
+            </apex:repeat>
+        </apex:outputPanel>
+        
+        <!--  show the print/download button only is strng_pageRendering is not null -->
+        <apex:outputPanel rendered="{!bln_isNonPDFIdCard}">
+            <div>
+                <div class="desktopContainer">
+                    <!--  looping through the list of fields from the string query -->
+                    <span style="width:100%;">
+                        <apex:repeat value="{!listOfStringsToDisplay}"
+                                        var="iterating_field"
+                                        id="fieldLooper_nonPDFIDCard">
+                            <div style="float:left;padding-left:34.8px;padding-top:10px;">
+                                <apex:outputText value="{!iterating_field}" escape="false" />
+                            </div>
+                        </apex:repeat>
+                        <div class="printIDCardContainer" style="zoom:75%;">
+                            <a href="{!redirectURL}" target="_blank" class="noTextDecoration" style="width:100px;{!if(pcdRequestInProgress,'cursor:default; pointer-events:none;','')}">
+                                <div class="printIDCardButton {!if(pcdRequestInProgress,'notActive','')}">
+                                    <div class="printIDCardText " style="font-family:Arial;"> 
+                                        {!$Label.Print_ID_Card}
+                                    </div>
+                                </div>
+                            </a>
+                            <br/>
+                            <a href="{!redirectURL}" target="_blank" class="noTextDecoration" download="{!memberName} {!$Label.ID_Card}" 
+                               style="{!if(pcdRequestInProgress,'cursor:default; pointer-events:none;','')}">
+                                <div class="downloadIDCardButton">
+                                    <div class="downloadIDCardText " style="font-family:Arial;{!if(pcdRequestInProgress,'color:#999;','')}"> 
+                                        {!$Label.Download_ID_card}
+                                    </div>
+                                </div>
+                            </a>
+                            <br/>
+                        </div>
+                    </span>
+                </div>
+                <div class="mobileContainer">
+                    <!--  Mobile view  -->
+                    <!--  person's name -->
+                    
+                    <!--  looping through the list of fields from the string query -->
+                    <span style="width:100%;zoom:70%">
+                        <div class="printIDCardContainer">
+                            <a href="{!redirectURL}" target="_blank" class="noTextDecoration" style="{!if(pcdRequestInProgress,'cursor:default; pointer-events:none;','')}">
+                                <div class="printIDCardButton {!if(pcdRequestInProgress,'notActive','')}">
+                                    <div class="printIDCardText " style="font-family:Arial;"> 
+                                        {!$Label.Print_ID_Card}
+                                    </div>
+                                </div>
+                            </a>
+                            <br/>
+                            <a href="{!redirectURL}" target="_blank" class="noTextDecoration" style="{!if(pcdRequestInProgress,'cursor:default; pointer-events:none;','')}">
+                                <div class="downloadIDCardButton">
+                                    <div class="downloadIDCardText" style="font-family:Arial;{!if(pcdRequestInProgress,' color:#999;','')}"> 
+                                        {!$Label.Download_ID_card}
+                                    </div>
+                                </div>
+                            </a>
+                            <br/>
+                        </div>
+                        <apex:repeat value="{!listOfStringsToDisplay}"
+                                        var="iterating_field"
+                                        id="fieldLooper_nonPDFIDCard_mobile">
+                            <div style="float:left;padding-left:34.8px;padding-top:10px;">
+                                <apex:outputText value="{!iterating_field}" escape="false" />
+                            </div>
+                        </apex:repeat>
+                    </span>
+                </div>
+            </div>
+            <!-- 
+            <div style="width:100%;float:left;">
+                <br/>
+                <br/>
+                <div style="width:50%;float:left;">
+                    <br/><br/>
+            <br/> 
+                    <a href="{!redirectURL}" target="_blank" class="btn" style="text-decoration:none;"> Print </a>
+                </div>
+                <div style="width:50%;float:left;">
+                    <br/>
+                    <a href="{!redirectURL}" target="_blank" class="btn" style="text-decoration:none;"> Download </a>
+                </div>
+            </div>
+             -->
+        </apex:outputPanel>
+        
+        
+    </body>
+</apex:page>

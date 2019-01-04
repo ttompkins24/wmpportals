@@ -1,0 +1,83 @@
+<aura:component controller="wmp_util_Cache" implements="forceCommunity:themeLayout" >
+    
+	<!-- <aura:attribute name="search" type="Aura.Component[]" />
+	<aura:attribute name="profileMenu" type="Aura.Component[]" />
+	<aura:attribute name="navBar" type="Aura.Component[]" />
+	<aura:attribute name="newHeader" type="Aura.Component[]" /> -->
+	
+	<aura:attribute name="onUserDropdown" type="Boolean" description="show the mobile version or desktop version" default="false"/>
+	<aura:attribute name="currSubId" type="String" description="the current subscriber the user is on" />
+	<aura:attribute name="currPlanId" type="String" description="the current plan the user is on" />
+	<aura:attribute name="currPage" type="String" description="the current page the user is on" />
+	<aura:attribute name="refreshNav" type="Boolean" description="the current page the user is on" />
+	
+	<aura:attribute name="isAvailable" type="Boolean" description="is ww available/ there was an error in loading the cache" />
+	
+	<aura:attribute name="staticResource" type="String" description="name of the static resource" />
+	<aura:attribute name="staticResourcePicked" type="Boolean" description="static resource found" default="false" />
+	<aura:attribute name="displayPage" type="Boolean" description="static resource found" default="false" />
+	
+				<!-- '/resource/' + v.staticResource + '/css/standard.css', 
+					'/resource/' + v.staticResource + '/css/LiveAgentDeployment.js',
+					'/resource/' + v.staticResource + '/css/LiveAgentButton4.js' -->
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler event="c:wmp_event_Redirect" action="{!c.redirectEventHandler}"/>
+	<ltng:require styles="{!join(',', 
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/css/bootstrap.css')}"
+		scripts="{!join(',', 
+			$Resource.jquery_3_2_1,
+			
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/js/bootstrap.js')}"
+			/>
+			<div class="slds govPortalContainer"> 
+	<aura:if isTrue="{!v.staticResourcePicked}">
+		<!--  LOAD THE CSS and Live AGENT and display portal -->
+		<ltng:require styles="{!join(',', 
+					$Resource.SLDS_2_3_2 + '/assets/styles/salesforce-lightning-design-system.min.css',
+					$Resource.TexasPortal + '/css/standard.css?v=1.0'
+				)}"
+				scripts="{!join(',', 
+					'/resource/' + v.staticResource + '/css/LiveAgentDeployment.js?v=1.0',
+					'/resource/' + v.staticResource + '/css/GoogleAnalyticScript.js?v=1.0'
+					
+				)}"
+				afterScriptsLoaded="{!c.showBodyText}"
+		/>
+		<aura:if isTrue="{!v.displayPage}">	
+			<div class=" bodyContainer">
+				<div class="nav-Wrapper">
+					<c:wmp_comp_CommHeader refreshNav="{!v.refreshNav}" onUserDropdown="{!v.onUserDropdown}" currSubId="{!v.currSubId}" currPlanId="{!v.currPlanId}" currPage="{!v.currPage}" />
+				</div>
+				
+				<div class="bodyWrapper clear">
+					<div class="{!'bodyInternalWrap' + if(or(v.currPage == 'find-a-dentist', v.currPage == 'find-a-dentist-result'), 'fadPage', '')}">
+						{!v.body}
+					</div>
+				</div>
+				
+				<div class="footerWrapperOuter clear">
+					<div class="footerWrapperInner ">
+						<c:wmp_comp_communityFooter />
+					</div>
+				</div>
+			</div>
+			<aura:set attribute="else">
+				<div class="slds-spinner_container " >
+			      <div class="slds-spinner slds-spinner-medium" role="alert">
+			        <div class="slds-spinner__dot-a"></div>
+			        <div class="slds-spinner__dot-b"></div>
+			      </div>
+			    </div>
+			</aura:set>
+		</aura:if>
+		<aura:set attribute="else">
+			<div class="slds-spinner_container " >
+		      <div class="slds-spinner slds-spinner-medium" role="alert">
+		        <div class="slds-spinner__dot-a"></div>
+		        <div class="slds-spinner__dot-b"></div>
+		      </div>
+		    </div>
+		</aura:set>
+	</aura:if>
+		</div>
+</aura:component>

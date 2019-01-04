@@ -1,0 +1,30 @@
+.THIS.serviceDetailWrapper .generalInputForm{
+	width: 90%;
+}
+
+.THIS.serviceDetailWrapper .paginate{
+    text-align:right;
+    }
+
+.THIS.serviceDetailWrapper .spacing{
+    margin:0px 10px;
+    }
+.THIS.serviceDetailWrapper .footer{
+    margin-top:25px;
+}
+
+.THIS.serviceDetailWrapper .paddingRight {
+	padding-right: 20px;
+}
+
+.THIS.serviceDetailWrapper .iconSpaceRight{
+	padding-right:5px;
+}
+.THIS.serviceDetailWrapper .header-div {
+	border-bottom: 1px solid gray;
+	width: 90%;
+}
+
+.THIS.serviceDetailWrapper .verticalSpacer{
+	padding-top:20px;
+}

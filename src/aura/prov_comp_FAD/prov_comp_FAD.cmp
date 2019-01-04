@@ -1,0 +1,19 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" controller="prov_ctrl_FAD" access="global">
+	
+	<aura:attribute name="isSearch" type="Boolean" description="should be showing the search page. If false, show the result component" default="true" />
+	<aura:attribute name="paramMap" type="object" description="map of the params the user is searching" />
+	<aura:attribute name="isModal" type="Boolean" description="is this component inside a modal?"  access="public" default="false" />
+
+	<aura:attribute name="closeModal" type="Boolean" default="false"/>
+	
+	<div class="slds">
+		<div class="fadContainer ">
+			<aura:if isTrue="{!v.isSearch}">
+				<c:prov_comp_FAD_Search isSearch="{!v.isSearch}" paramMap="{!v.paramMap}" isModal="{!v.isModal}"/>
+				<aura:set attribute="else">
+					<c:prov_comp_FAD_Result isSearch="{!v.isSearch}" paramMap="{!v.paramMap}" isModal="{!v.isModal}" closeModal="{!v.closeModal}"/>
+				</aura:set> 
+			</aura:if>
+		</div>
+	</div> 
+</aura:component>

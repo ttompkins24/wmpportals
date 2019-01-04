@@ -1,0 +1,93 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_Member_Detail_Claims">
+    
+    <script type="text/javascript">
+        //where message is coming from
+        var correctOrigin = "{!portalURL}";
+
+        var claimStr = '';
+
+        //capture message from Lightning component
+        window.addEventListener("message",function(event) {
+            // console.log('event ' + JSON.stringify(event));
+            // console.log('vf page event origin ' + event.origin);
+            // console.log('vf page correct origin ' + correctOrigin);
+            if(event.origin != correctOrigin){
+                //reject message
+                console.log('rejected message for incorrect origin');
+                return; 
+            }
+            // console.log('type ' +JSON.parse(event.data).ClaimType);
+            //call function to pass data to apex controller
+            if(JSON.parse(event.data).ClaimType == 'AUTH') {
+                getClaims(event.data, 'AUTH');
+
+            } else if (JSON.parse(event.data).ClaimType == 'CLAIM'){
+                getClaims(event.data, 'CLAIM');
+                
+            }
+
+        }, false);
+
+        function onLoadComplete(){
+            // console.log('claim page complete');
+            sendToComponent('pageLoaded');
+        }
+
+         //passes the data to apex controller
+        function getClaims(data, type) {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.prov_ctrl_Member_Detail_Claims.searchClaimsRemote}',
+                data,
+                function(result, event){
+                    if(event.status){
+
+                        if(result == null){
+                            // console.log('time out error');
+                            var errorList= {
+                                error: {}
+                                };
+                            // console.log('error ' + JSON.stringify(errorList));
+                            sendToComponent(errorList);
+                        } else {            
+                            // console.log('result ' + result);        
+                            //holds the results object
+                            var resultObj = JSON.parse(result);
+                            if(type == 'CLAIM'){
+                                var message = {type:"claims", result:resultObj};
+                            sendToComponent(message);   
+                            } else if(type == 'AUTH'){
+                                var message = {type:"preAuth", result:resultObj};
+                            sendToComponent(message);   
+                            }
+                        }
+                    } else if(event.type === 'exception'){
+                        //handle errors
+                        console.log('exception message ' + event.message);
+                        console.log('exception where ' + event.where);
+                        var errorList= {
+                            error: {}
+                            };
+                        // console.log('error ' + JSON.stringify(errorList));
+                        sendToComponent(errorList);
+                    } else {
+                        console.log('message ' + event.message);
+                    }
+                }, {buffer: false, escape: false, timeout:100000}
+            );
+        }
+
+        function sendToComponent(resultStr) {
+            parent.postMessage(resultStr, correctOrigin);
+        }
+
+        function onLoadComplete(){
+            // console.log('claims vf page load complete');
+            var message = {type:"load", result:"pageLoaded"};
+
+            sendToComponent(message);
+        }
+
+    </script>
+    <body onload="onLoadComplete();">   </body>
+
+</apex:page>

@@ -1,0 +1,82 @@
+<aura:component controller="wmp_ctrl_NotificationHeader" > 
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<!-- <aura:handler name="refreshNotifications" event="force:refreshView" action="{!c.recallNotifications}" /> -->
+	
+	<aura:attribute name="notifList" type="Notification__c[]" description="" />
+	<aura:attribute name="numUnread" type="Integer" /> 
+	<aura:attribute name="noneMessage" type="String" default="{!$Label.c.No_Notification}" />
+	<aura:attribute name="lang" type="String"  />
+	<aura:attribute name="notifL" type="String" default="{!$Label.c.Notifications}"/>
+	 
+	<div class="slds notificationHeaderContainer">
+		<div class="desktop">
+			<aura:if isTrue="{!v.notifList.length > 0}">
+				<div class="dropdown" >
+					<a class="notifLink" data-toggle="dropdown" aria-haspopup="true" id="notificationDropdown" aria-expanded="false" onclick="{!c.readNotifs}">
+						<h4 class="linkColor">{!v.notifL}</h4>
+						<aura:if isTrue="{!v.numUnread > 0}">
+							<div class="unreadItemsC"></div>
+							<div class="unreadItems ">{!v.numUnread}</div>
+						</aura:if>
+					</a>
+					<ul class="dropdown-menu notifDropdownContainer " aria-labelledby="notificationDropdown">
+						<aura:iteration items="{!v.notifList}" var="notif">
+							<aura:if isTrue="{!v.lang == 'English'}">
+								<li class=" slds-p-around--medium"><h5>{!notif.Body_US__c}</h5></li>
+							</aura:if>
+							<aura:if isTrue="{!v.lang == 'Espanol'}">
+								<li class="slds-p-around--medium"><h5>{!notif.Body_ES__c}</h5></li>
+							</aura:if>
+						</aura:iteration>
+					</ul>
+				</div>	
+				<aura:set attribute="else">
+					<div class="noNotifications">
+						<div class="dropdown" >
+							<a class="dropdown-toggle " data-toggle="dropdown" aria-haspopup="true" id="noNotificationDropdown" aria-expanded="false">
+								<h4 class="linkColor">{!v.notifL}</h4>
+							</a>
+							<ul class="noNotifDropdownContainer dropdown-menu" aria-labelledby="noNotificationDropdown">
+								<li class="notif-item slds-p-around--medium"><h5>{!v.noneMessage}</h5></li>
+							</ul>
+						</div>
+					</div>
+				</aura:set>
+			</aura:if>
+		</div> 
+		<div class="mobile Notification">
+			<aura:if isTrue="{!v.notifList.length > 0}">
+				<div class="dropdown " >
+					<a class="dropdown-toggle notifLink" data-toggle="dropdown" aria-haspopup="true" id="notificationDropdown" aria-expanded="false" onclick="{!c.readNotifs}">
+						<span class="glyphicon glyphicon-bell"></span>
+						<div class="notificationItemsIcon"></div>
+					</a>
+					<ul class=" dropdown-menu notifDropdownContainer " aria-labelledby="notificationDropdown">
+						<li class=" slds-p-around--medium title"><h5>{!v.notifL}</h5></li>
+						<aura:iteration items="{!v.notifList}" var="notif">
+							<aura:if isTrue="{!v.lang == 'English'}">
+								<li class=" slds-p-around--medium notifMessage"><h5>{!notif.Body_US__c}</h5></li>
+							</aura:if>
+							<aura:if isTrue="{!v.lang == 'Espanol'}">
+								<li class="slds-p-around--medium notifMessage"><h5>{!notif.Body_ES__c}</h5></li>
+							</aura:if> 
+						</aura:iteration>
+					</ul>
+				</div>	
+				<aura:set attribute="else">
+					<div class="noNotifications">
+						<div class="dropdown" >
+							<a class="dropdown-toggle notifLink" data-toggle="dropdown" aria-haspopup="true" id="noNotificationDropdown" aria-expanded="false">
+								<div class="notificationNoItemsIcon"></div>
+							</a>
+							<ul class=" noNotifDropdownContainer dropdown-menu " aria-labelledby="noNotificationDropdown">
+								<li class=" slds-p-around--medium title">{!v.notifL}</li>
+								<li class="notif-item slds-p-around--medium notifMessage">{!v.noneMessage}</li>
+							</ul>
+						</div>
+					</div>
+				</aura:set>
+			</aura:if>
+		</div>
+	</div>
+</aura:component>

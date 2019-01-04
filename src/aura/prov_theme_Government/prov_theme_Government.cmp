@@ -1,0 +1,86 @@
+<aura:component controller="prov_util_Cache" implements="forceCommunity:themeLayout">
+	
+	<aura:attribute name="isAvailable" type="Boolean" description="is ww available/ there was an error in loading the cache" />
+	
+	<aura:attribute name="staticResource" type="String" description="name of the static resource" />
+	<aura:attribute name="staticResourcePicked" type="Boolean" description="static resource found" default="false" />
+	
+	<aura:attribute name="currPage" type="String" description="the current page the user is on" />
+	<aura:attribute name="currTab" type="String" description="the current page the user is on" />
+	<aura:attribute name="refreshNav" type="Boolean" description="the current page the user is on" />
+	<aura:attribute name="navBar" type="Aura.Component[]" required="false"/>
+	<aura:attribute name="displayNav" type="Boolean" default="false" />
+	
+	<aura:attribute name="hasOpenNotification" type="Boolean" description="false"  />
+
+    <aura:attribute access="private" name="pagename" type="String" />
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler event="c:prov_event_Redirect" action="{!c.redirectEventHandler}"/>
+	<ltng:require styles="{!join(',', 
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/css/bootstrap.css')}"
+		scripts="{!join(',', 
+			$Resource.jquery_3_2_1,
+			$Resource.bootstrap_3_3_7 + '/bootstrap-3.3.7-dist/js/bootstrap.js')}"
+	/>
+<!---->
+	<ltng:require scripts="{!$Resource.lodash}" />
+	
+	<!-- '/resource/' + v.staticResource +  '/css/standard.css?v=1' -->
+	<aura:if isTrue="{!v.staticResourcePicked}">
+		<!--  LOAD THE CSS and Live AGENT and display portal -->
+		<ltng:require styles="{!join(',', 
+				$Resource.SLDS_2_3_2 + '/assets/styles/salesforce-lightning-design-system.min.css',
+				$Resource.GOV_Provider_CSS +  '/css/standard.css?v=1'
+				
+			)}"
+			scripts="{!join(',', 
+				$Resource.GOV_Provider_CSS + '/css/JS/table_sort_function.js?v=1',		
+				'/resource/' + v.staticResource + '/css/JS/GoogleAnalyticScript.js?v=1'
+			)}"
+		/>
+
+		
+	</aura:if>
+			<!-- scripts="{!join(',', 
+				'/resource/' + v.staticResource + '/css/LiveAgentDeployment.js?v=1',
+				
+			)}"-->
+	
+	<div class="slds govProviderContainer">
+      
+      
+		<aura:if isTrue="{!v.displayNav}">
+			<div class=" bodyContainer">
+				<div class="nav-Wrapper ">
+					<c:prov_comp_NavHeader currPage="{!v.currPage}" currTab="{!v.currTab}" hasOpenNotification="{!v.hasOpenNotification}"/> 
+					<!-- {!v.navBar} -->
+				
+	
+	
+					<!-- <c:wmp_comp_CommHeader refreshNav="{!v.refreshNav}" onUserDropdown="{!v.onUserDropdown}" currSubId="{!v.currSubId}" currPlanId="{!v.currPlanId}" currPage="{!v.currPage}" /> -->
+				</div>
+			
+				<div class="{!'' + if(v.currPage == '', '  ' , 'bodyWrapper clear ')}" >
+					<div class="bodyInternalWrap" role="main">
+                        
+						{!v.body}
+                       
+					</div>
+				</div>
+				
+			
+				<div class="footerWrapperOuter clear">
+					<div class="footerWrapperInner " role="contentinfo">
+						<c:prov_comp_communityFooter /> 
+					</div>
+				</div> 
+			</div>
+			<aura:set attribute="else">
+				<!-- SPINNER -->
+			<lightning:spinner variant="brand" size="large" aura:id="globalSpinner" class="slds-show" alternativeText="Page loading"/>
+			
+			</aura:set>	
+		</aura:if>
+	</div>
+</aura:component>

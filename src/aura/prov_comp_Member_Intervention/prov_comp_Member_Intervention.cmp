@@ -1,0 +1,303 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Member_Intervention
+Purpose                     : Allows users to update member Intervention statuses
+Created on                  : May 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             8       May 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_Member_Intervention">
+
+
+    <!-- page variable attributes -->
+    <aura:attribute name="intPages" type="String"/>
+    <aura:attribute name="intPage" type="String"/>
+    <aura:attribute name="intTotal" type="String"/>
+    <aura:attribute name="maxResults" type="integer"/>
+
+    <!-- attributes to hold lists of accounts -->
+    <aura:attribute name="locList" type="Account[]"/>
+    <aura:attribute name="provList" type="Account[]"/>
+    <aura:attribute name="bizAcctRec" type="Account"/>
+    <!-- attributes to hold accounts -->
+    <aura:attribute name="locAcctRecId" type="String"/>
+    <aura:attribute name="provAcctRecId" type="String"/>
+
+    <aura:attribute name="fNameSearch" type="String"/>
+    <aura:attribute name="lNameSearch" type="String"/>
+    <aura:attribute name="memberNumberSearch" type="String"/>
+    <aura:attribute name="priorEventDate" type="String"/>
+    <aura:attribute name="startPriorEventDate" type="String"/>
+    <aura:attribute name="stopPriorEventDate" type="String"/>
+
+    <aura:attribute name="manageMultiValue" type="String"/>  
+    <aura:attribute name="isSelectAll" type="boolean" default="false" description="select all checkbox value"/>
+    <aura:attribute name="atLeastOneSelected" type="boolean" default="false" description="any single row has been selected"/>
+    <aura:attribute name="memInts" type="Member_Intervention__c[]" default="[]"/>
+    <aura:attribute name="selAction" type="String"/>
+
+    <aura:attribute name="isDeleteSuccess" type="Boolean" default="false"/>
+    <aura:attribute name="deleteSuccessMsg" type="string"/>
+    <aura:attribute name="isSubmitSuccess" type="Boolean" default="false"/>
+    <aura:attribute name="submitSuccessMsg" type="string"/>
+    <aura:attribute name="isSubmitError" type="Boolean" default="false"/>
+    <aura:attribute name="submitErrorMsg" type="string"/>
+    <aura:attribute name="interventActionOptions" type="String[]" default="[]"/>
+    <aura:attribute name="isReqLocation" type="Boolean"/>
+    <aura:attribute name="requiredLocationMsg" type="String"/>
+    <aura:attribute name="intMeasures" type="String[]"/>
+    <aura:attribute name="intMeasure" type="String"/>
+
+    <aura:attribute name="direction" type="String"/>
+    <aura:attribute name="sortfield" type="String"/>
+
+    <aura:attribute name="showSpinner" type="boolean"/>
+    <aura:attribute name="noResults" type="boolean" default="false"/>
+    <aura:attribute name="searchActive" type="boolean"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+
+    <div class="slds generalOuterDiv memberInterventionWrapper">
+        <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="slds-hide" alternativeText="Loading..."/>
+                <!-- <aura:if isTrue="true"> -->
+                <aura:if isTrue="{!v.isSubmitSuccess}">
+                    <div class="headerMessageContainer">
+                        <ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+                            <lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+                            <span class="successMessage">{!v.submitSuccessMsg}</span>
+                        </ui:message>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!v.isReqLocation}">
+                    <div  class="headerMessageContainer">
+                        <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                            <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+                            <span class="errorMessage">{!v.requiredLocationMsg}</span>
+                        </ui:message>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!v.isSubmitError}">
+                    <div  class="headerMessageContainer ">
+                        <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                            <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+                            <span class="errorMessage">{!v.submitErrorMsg}</span>
+                        </ui:message>
+                    </div>
+                </aura:if>
+        <div>
+            
+        <div>
+            
+        <h1 class="slds-p-bottom_medium slds-float_left">Member Intervention </h1>
+        
+
+        <span class="bodyText  slds-float_right dataSpace spacing"><a onclick="{!c.printList}" class="printIcon testscript_print">Print</a></span>
+        </div>  
+
+        </div>
+
+        <div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap hideOnPrint">
+            <div class=" slds-size_1-of-1 slds-p-bottom_medium">
+            <h5 >{!$Label.c.Member_Intervention_Description}</h5>
+            </div>
+
+
+                <div class="slds-size_1-of-3" ><h3 class="header">1. Select Location</h3>
+                    <div class="slds-form-element">
+                        <ui:inputSelect aura:id="locAccts" label="Service Location" required="true" labelClass="generalLabelForm required" disabled="{!if(v.locList.length == 1, true, false)}" class="testScript_SLDrop slds-col slds-size_1-of-1 generalInputForm width90" change="{!c.updateLocSearch}">
+                            <aura:if isTrue="{!v.locList.length > 1}">
+                                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Select One"/>
+                            </aura:if>
+                            <aura:iteration items="{!v.locList}" var="locAcct">
+                                <ui:inputSelectOption class="picklistOption" text="{!locAcct.Id}" label="{!locAcct.Service_Location_Name__c}"/>
+                            </aura:iteration>
+                        </ui:inputSelect>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-3"><h3 class="header">2. Select Provider</h3>
+                    <div class="slds-form-element">
+                        <ui:inputSelect aura:id="provAccts" label="Provider" labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testScript_providerDrop width90" change="{!c.updateProvSearch}">
+                            <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="Any" value="true" />
+                            <aura:iteration items="{!v.provList}" var="provAcct">
+                                <ui:inputSelectOption class="picklistOption" text="{!provAcct.Id}" label="{!provAcct.Name}"/>
+                            </aura:iteration>
+                        </ui:inputSelect>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-3">
+                </div>
+            </div>
+            <div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap nameSearch hideOnPrint">
+                <div class="slds-size_1-of-4">
+                    <div class="slds-form-element slds-p-top_large">
+                        <ui:inputText aura:id="firstNameInput" labelClass="generalLabelForm" value="{!v.fNameSearch}" class="slds-col slds-size_1-of-1 generalInputForm width90 testScript_memFirst" label="Member First Name" placeholder="First Name" required="false"/>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-4">
+                    <div class="slds-form-element slds-p-top_large">
+                        <ui:inputText aura:id="lastNameInput" labelClass="generalLabelForm" value="{!v.lNameSearch}" class="slds-col slds-size_1-of-1 generalInputForm width90 testScript_memLast" label="Member Last Name" placeholder="Last Name" required="false"/>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-4">
+                    <div class="slds-form-element slds-p-top_large">
+                        <ui:inputText aura:id="memNumInput" labelClass="generalLabelForm" value="{!v.memberNumberSearch}" class="slds-col slds-size_1-of-1 generalInputForm width90 testScript_memNum" label="Member Number" placeholder="1234" required="false"/>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-4">
+                </div>
+                
+            </div>
+
+            <div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap eventStartFilter hideOnPrint">
+                <div class="slds-size_1-of-3">
+                        <div class="generalLabelForm slds-size_1-of-1 slds-p-top_large slds-align_left">Last Service Date Between</div>
+                        <div class="slds-grid slds-size_1-of-1">
+                            <ui:inputDate aura:id="startPriorEventDate" required="true" class="generalInputForm slds-col testScript_startPriorEventDateInput" value="{!v.startPriorEventDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" />
+                            <h5 class="slds-col slds-align_absolute-center">and</h5>
+                            <ui:inputDate aura:id="stopPriorEventDate" class="generalInputForm slds-col testScript_stopPriorEventDateInput" value="{!v.stopPriorEventDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+                        </div>
+                </div>
+                <div class="slds-size_1-of-3">
+                </div>
+                <div class="slds-size_1-of-3">
+
+                    <div class="slds-form-element">
+                        <button class="generalButton slds-float_right memSearchButton testScript_memInt_search" onclick="{!c.memberIntSearch}">Search</button>
+                    </div>
+                    <div class="slds-form-element ">
+                        <button  aura:id="clearSearch" class="generalButton slds-float_right slds-m-right_large testscript_clearSearch" onclick="{!c.clearSearchFields}">Clear</button>
+                    </div>
+                    
+                </div>
+
+            </div>
+
+
+        <!-- member TABLE -->
+        <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_small">
+            <div class="slds-size_1-of-1">
+                <div class="slds-col">
+                    <table class="tableClass" id="memberIntResultsTable">
+                        <thead>
+                            <tr >
+                                <th class="" id="inputCheckHead">
+                                    <ui:inputCheckbox class="testScript_selectRowInput" value="{!v.isSelectAll}" change="{!c.handleSelectAllInts}" aura:id="selectAll"/>
+                                </th>
+                                <th class="" id="interMeasHead">
+                                    <span class="headerText sortable notSorted inverse testScript_eligibilitySort" onclick="{!c.updateColumnSorting}" data-fieldname="Intervention_Measure__c" data-col="1" data-tableid="memberIntResultsTable">Measure</span>
+                                </th>
+                                <th class="" id="interStepsHead">
+                                    <span class="headerText sortable notSorted inverse testScript_eligibilitySort" onclick="{!c.updateColumnSorting}" data-fieldname="Intervention_Steps__c" data-col="2" data-tableid="memberIntResultsTable">Steps</span>
+                                </th>
+                                <th class="" id="memSubHead">
+                                    <span class="headerText sortable notSorted inverse testScript_eligibilitySort" onclick="{!c.updateColumnSorting}" data-fieldname="Member_Subscriber_Id__c" data-col="3" data-tableid="memberIntResultsTable">Member Number</span>
+                                </th>
+                                <th class="" id="memLastHead">
+                                    <span class="headerText sortable notSorted inverse testScript_memberNameSort" onclick="{!c.updateColumnSorting}" data-fieldname="Member_Last_Name__c" data-col="4" data-tableid="memberIntResultsTable">Member Name</span>
+                                </th>
+                                <th class="" id="memBirthHead">
+                                    <span class="headerText sortable notSorted inverse testScript_birthdateSort" onclick="{!c.updateColumnSorting}" data-fieldname="Member_Birthdate__c" data-col="5" data-tableid="memberIntResultsTable">Member Birthdate</span>
+                                </th>
+                                <th class="" id="memPhoneHead">
+                                    <span class="headerText sortable notSorted inverse testScript_memePhoneSort" onclick="{!c.updateColumnSorting}" data-fieldname="Member_Phone__c" data-col="6" data-tableid="memberIntResultsTable">Member Phone</span>
+                                </th>
+
+                                <th class="" id="serviceDateHead">
+                                    <span class="headerText sortable sorted sortAscend inverse testScript_lastServiceSort" onclick="{!c.updateColumnSorting}" data-fieldname="Last_Service_Date__c" data-col="7" data-tableid="memberIntResultsTable">Last Service Date</span>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.noResults}">
+                                <tr>
+                                    <td headers="inputCheckHead" class="bodyText dataSpace noResults slds-text-align_center" colspan="8">{!$Label.c.Member_interventions}
+                                    </td>   
+                                </tr>
+                            </aura:if>
+
+                            <aura:if isTrue="{!v.memInts.length > 0}">
+                                <aura:iteration items="{!v.memInts}" var="int" indexVar="index">
+                                    <tr id="{!index}">
+                                        <td headers="inputCheckHead">
+                                            <ui:inputCheckbox aura:id="checkInt" class="testscript_InputCheck" text="{!index}" change="{!c.handleSelectSingleRow}"/>
+                                        </td>
+                                        <td headers="interMeasHead" data-label="Intervention Measure" class="slds-is-sortable" data-value="{!int.Intervention_Measure__c}">
+                                            <span class="bodyText dataSpace">{!int.Intervention_Measure__c}</span>
+                                        </td>
+                                        <td headers="interStepsHead" data-label="Intervention Steps" class="slds-is-sortable" data-value="{!int.Intervention_Steps__c}">
+                                            <span class="bodyText dataSpace">{!int.Intervention_Steps__c}</span>
+                                        </td>
+
+                                        <td headers="memSubHead" data-label="Member Number" class="slds-is-sortable" data-value="{!int.Member_Subscriber_Id__c}">
+                                            <span class="bodyText dataSpace">{!int.Member_Subscriber_Id__c}</span>
+                                        </td>
+                                        <td headers="memLastHead" data-label="Member Name" class="slds-is-sortable" data-value="{!int.Member_Last_Name__c}">
+                                            <span class="bodyText dataSpace">{!int.Member_Last_Name__c}, {!int.Member_First_Name__c}</span>
+                                        </td>
+                                        
+                                        <td headers="memBirthHead" data-label="Member Birth Date" class="slds-is-sortable" data-value="{!int.Member_Birthdate__c}">
+                                            <ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!int.Member_Birthdate__c}"/>
+                              
+                                        </td>
+                                        <td headers="memPhoneHead" data-label="Member Phone" class="slds-is-sortable" data-value="{!int.Member_Phone__c}">
+                                            <span class="bodyText dataSpace">{!int.Member_Phone__c}</span>
+                                        </td>
+                                        <td headers="serviceDateHead" data-label="Service Date" class="slds-is-sortable" data-value="Last_Service_Date__c">
+
+                                            <ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!int.Last_Service_Date__c}"/>
+                                       
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+
+
+                    <aura:if isTrue="{!v.memInts.length > 0}">
+                    <div>
+                        <div class="slds-col slds-size_1-of-1 footer">
+                            <div class="col paginate">
+                                <div class="desktop">
+                                    <span class="bodyText dataSpace spacing"><a onclick="{!c.showAllInts}">Show All</a></span> 
+                                    <a class="{!'spacing  bodyLink testscript_firstPage' + (v.intPage == 1 ? ' hidden' : '') }"  onclick="{!c.firstIntPage}" >First</a>
+                                    <a class="{!'spacing  bodyLink testscript_prevPage' + (v.intPage == 1 ? ' hidden' : '') }" onclick="{!c.previousIntPage}" >Previous</a>
+                                    <span class="spacing bodyText pageNum">Page&nbsp;{!v.intPage}&nbsp;of&nbsp;{!v.intPages}</span>
+                                    <a class="{!'spacing  bodyLink testscript_nextPage' + (v.intPages > v.intPage ? '' : ' hidden') }" onclick="{!c.nextIntPage}" >Next</a>
+                                </div>
+                                <div class="mobile">
+                                    <table>
+                                        <tr>    
+                                            <td>
+                                            <a class="{!'spacing slds-col slds-size_1-of-3 bodyLink testscript_prevPageMobile' + (v.intPage == 1 ? ' hidden' : '') }" onclick="{!c.previousIntPage}" >Previous</a>&nbsp;
+                                            </td>
+                                            <td>
+                                            <span class="spacing slds-col slds-size_1-of-3 page bodyText">Page&nbsp;{!v.intPage}&nbsp;{!v.intPage}&nbsp;of&nbsp;{!v.intPages}</span>                            
+                                            </td>
+                                            <td>
+                                            &nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink testscript_nextPageMobile' + (v.intPages > v.intPage ? '' : ' hidden') }" onclick="{!c.nextIntPage}" >Next</a>
+                                            </td>
+                                            </tr>
+                                    </table>
+                                </div>
+                            </div>      
+                        </div>  
+
+                    </div>
+                </aura:if>
+                </div>
+            </div>
+        </div>
+        <!-- END DRAFT TABLE -->
+        <div class="slds-align_absolute-center slds-p-top_large">
+            <button class="generalButton testScript_submitButton hideOnPrint" disabled="{!!v.atLeastOneSelected}" onclick="{!c.updateInterventions}">Dismiss selected Member Interventions</button>
+        </div>
+    </div>{!v.body}
+
+</aura:component>

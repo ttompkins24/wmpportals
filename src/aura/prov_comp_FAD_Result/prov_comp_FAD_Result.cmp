@@ -1,0 +1,165 @@
+<!--
+/**********************************************************************************************************************
+Name 						: prov_comp_FAD_Result
+Purpose						: Find a Dentist Result component will do the following 
+								# will query for the dentist/service locations that meet the criteria
+								# can sort by name and distance
+								# grouped by office or dentist
+								# pagination of the results
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			1 April 2018		Todd Tompkins			See header - purpose
+ 
+**********************************************************************************************************************/-->
+<aura:component controller="prov_ctrl_FAD" extends="c:prov_comp_Provider_Common" access="global">
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+	<!-- VAIRABLES FOR THE PAGE -->
+	<aura:attribute name="locSearched" type="String" description="what the user used for the location" />
+	<aura:attribute name="showSelected" type="String" description="what the fad results are showed as"  default="dentist"/>
+	<aura:attribute name="sortedBySelected" type="String" description="what the fad results are sorted by" default="distance"/>
+	<aura:attribute name="paramMap" type="object" description="map of the params the user is searching" />
+	<aura:attribute name="memCovIds" type="String[]" />
+	<aura:attribute name="resultList" type="prov_wrap_FAD[]" />
+	<aura:attribute name="fullResultList" type="prov_wrap_FAD[]" />
+	<aura:attribute name="numResults" type="Integer" />
+	<aura:attribute name="pageNum" type="Integer" />
+	<aura:attribute name="totalPages" type="Integer" />
+	<aura:attribute name="resultsPerPage" type="Integer" />
+	<aura:attribute name="isSearch" type="Boolean" />
+	<aura:attribute name="isModal" type="Boolean" access="public" description="is this component inside a modal?"  />
+	<aura:attribute name="closeModal" type="Boolean" default="false"/>
+
+	<!-- LABELS -->
+	<aura:attribute name="sortByL" type="String" description="sort by text" default="{!$Label.c.Sort_By}" />
+	<aura:attribute name="sortedByL" type="String" description="sorted by text" default="{!$Label.c.Sorted_by}" />
+	<aura:attribute name="showL" type="String" description="show text" default="{!$Label.c.Show}" />
+	<aura:attribute name="dentistsL" type="String" description="dentist text"  default="Providers"/>
+	<aura:attribute name="officesL" type="String" description="office text" default="{!$Label.c.Offices}" />
+	<aura:attribute name="nameL" type="String" description="name text" default="{!$Label.c.Name}" />
+	<aura:attribute name="distanceL" type="String" description="distance text" default="{!$Label.c.Distance}" />
+	<aura:attribute name="fromL" type="String" description="from text" default="{!$Label.c.from}" />
+	<aura:attribute name="viewInfoL" type="String" description="view info for button" default="{!$Label.c.View_Info}"/>
+	<aura:attribute name="noResults" type="String" description="if no results are found" default="{!$Label.c.No_Results}"/>
+
+	<div class="slds">
+		<div class="{!' clear fadResult slds-grid slds-wrap ' + if(v.isModal != true , ' generalOuterDiv ', '')}" >
+			<div class=" slds-size_1-of-1 slds-grid slds-wrap" >
+				<div class="slds-col slds-size_1-of-1 slds-grid">
+					<!-- Breadcrumbs -->
+					<div class="breadCrumbWrapper">
+							<aura:if isTrue="{!v.isModal != true}">
+								<span class="bodyText" >Find a Provider</span>
+								&nbsp;>&nbsp;
+								<aura:set attribute="else">
+									&nbsp;&lt;&nbsp;
+								</aura:set>
+							</aura:if>
+							<a onclick="{!c.backToSearch}" class=" bodyLink">Back to Search</a>
+					</div>
+				</div>
+
+				<div class="slds-grid slds-wrap slds-size_1-of-1">
+					<div class=" slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-large-size_2-of-12 slds-grid slds-wrap">
+						
+						<div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-1 slds-large-size_1-of-1 showByContainer ">
+							<div class="">
+								<div class="intro">
+									{!v.showL}
+								</div>
+								<ul>
+									<li class="{!v.showSelected == 'dentist' ? 'selected' : ''}"><a onclick="{!c.changeShow}" data-name='dentist' class="{!v.showSelected == 'dentist' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.dentistsL}</h4></a></li>
+									<li class="{!v.showSelected == 'office' ? 'selected' : ''}"><a onclick="{!c.changeShow}" data-name='office' class="{!v.showSelected == 'office' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.officesL}</h4></a></li>
+								</ul>
+							</div>
+							
+						</div>
+					
+						<div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-1 slds-large-size_1-of-1 sortByContainer">
+							<div class="intro">
+								{!v.sortByL}
+							</div>
+							<ul>
+								<li class="{!v.sortedBySelected == 'name' ? 'selected' : ''}"><a onclick="{!c.changeSortedBy}" data-name='name'  class="{!v.sortedBySelected == 'name' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.nameL}</h4></a></li>
+								<li class="{!v.sortedBySelected == 'distance' ? 'selected' : ''}"><a onclick="{!c.changeSortedBy}" data-name='distance'  class="{!v.sortedBySelected == 'distance' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.distanceL}</h4></a></li>
+							</ul>
+							
+						</div>
+					</div>
+					
+					<div class="clearBoth mainContainer slds-col slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_10-of-12 slds-grid slds-wrap" >
+						<div class="header slds-col slds-size_1-of-1 inlineBlock">
+							<div class=" title slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_3-of-4 inlineBlock">
+								 
+								 <aura:if isTrue="{!v.showSelected == 'office'}">
+								 		<h4>{!v.numResults}&nbsp;{!v.officesL}</h4>
+								 	<aura:set attribute="else">
+								 		<h4>{!v.numResults}&nbsp;{!v.dentistsL}</h4>
+								 	</aura:set>
+								 </aura:if>
+								 <span class="subTitle">
+									 <aura:if isTrue="{!v.sortedBySelected == 'name'}">
+									 		<div class="metaText">({!v.sortedByL}&nbsp;{!v.nameL}&nbsp;{!v.fromL}&nbsp;{!v.locSearched})</div>
+									 	<aura:set attribute="else">
+									 		<div class="metaText">({!v.sortedByL}&nbsp;{!v.distanceL}&nbsp;{!v.fromL}&nbsp;{!v.locSearched})</div>
+									 	</aura:set>
+									 </aura:if>
+								 </span>
+							</div>
+							<div class=" slds-col slds-medium-size_1-of-4 slds-large-size_1-of-4  ">
+								<aura:if isTrue="{!v.numResults > 0}">
+									<div class="paginate ">
+										<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+										<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+										<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+										<a class="{!'spacing bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</div>
+								</aura:if>
+							</div>
+						</div>
+						
+						<div class="clear fadBody slds-col slds-size_1-of-1">
+							<aura:if isTrue="{!v.numResults > 0}">
+								<aura:if isTrue="{!v.showSelected == 'office'}">
+									<aura:iteration items="{!v.resultList}" var="office" >
+										<c:prov_comp_FAD_OfficeDetail office="{!office}" memCovIds="{!v.memCovIds}"	isModal="{!v.isModal}" closeModal="{!v.closeModal}"/>
+									</aura:iteration>
+									<aura:set attribute="else">
+										<aura:iteration items="{!v.resultList}" var="dentist" >
+											<c:prov_comp_FAD_DentistDetail dentist="{!dentist}" memCovIds="{!v.memCovIds}"	isModal="{!v.isModal}" closeModal="{!v.closeModal}"/>
+										</aura:iteration>
+									</aura:set>
+								</aura:if>
+								
+								<aura:set attribute="else">
+									{!v.noResults}
+								</aura:set>
+							</aura:if>
+							
+						</div> 
+						<aura:if isTrue="{!v.numResults > 0}">
+							<div class="slds-col slds-size_1-of-1 footer ">
+								<div class="col paginate">
+									<div class="">
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+										<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+										<a class="{!'spacing  bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</div>
+									
+								</div>
+							</div>
+						</aura:if>
+					</div>
+				</div>
+			</div>
+			<div class="slds-spinner_container slds-hide" aura:Id="uploadSpinner_FAD">
+		      <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="alert">
+		        <div class="slds-spinner__dot-a"></div>
+		        <div class="slds-spinner__dot-b"></div>
+		      </div>
+		    </div>
+		</div>
+	</div>
+</aura:component>

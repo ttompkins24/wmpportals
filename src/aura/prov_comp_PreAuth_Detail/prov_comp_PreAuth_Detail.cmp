@@ -1,0 +1,337 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_PreAuth_Detail
+Purpose                     : Allows users to view Details about pre authorizations
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             5        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_PreAuth_Detail"> 
+	<aura:attribute name="preAuthDetail" type="prov_wrap_Claim.ClaimDetailResultClaimWrapper"/>
+	<aura:attribute name="preAuthDetailRequest" type="Map" />
+	<aura:attribute name="claimAttachRequest" type="Map" />
+	<aura:attribute name="claimAttachments" type="Object"/>
+	<aura:attribute name="isAppealSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="appealSuccessMsg" type="string"/>
+	<aura:attribute name="attachDetails" type="prov_wrap_Claim.ClaimDetailResponseAttachWrapper[]"/>
+	<aura:attribute name="vfHost" type="String" default="{!$Label.c.Member_Eligibility_VF_URL}"/>
+	<aura:attribute name="preAuthLabel" type="String"/>
+	<aura:handler name="modalSuccessEvent" event="c:prov_event_Claim_Modal" action="{!c.handleModalSuccess}"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:attribute name="attachmentUrl" type="String" />
+    
+	<div class="slds generalOuterDiv">
+
+		<!-- SPINNER -->
+		<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class=""/>
+		<div class="slds-col slds-size_1-of-1">
+		
+		<div class="slds-float_left">
+				<h1>{!v.preAuthLabel}
+				</h1>
+				<aura:if isTrue="{!v.preAuthDetail.Header.ClaimNumber != null}">
+				<div class="slds-grid"> 
+				<div class="slds-col">
+					<h3 class="slds-p-top_x-small">#{!v.preAuthDetail.Header.ClaimNumber}</h3>
+				</div>
+				<div class="slds-col">
+					<ui:message class="acceptedMessage" severity="confirm">
+						<span class="accepted">{!v.preAuthDetail.Header.StatusCategory}</span>
+					</ui:message>
+				</div>
+				</div>
+				<p>Submitted: <ui:outputDateTime value="{!v.preAuthDetail.Header.SubmittedDate}"/></p>
+				</aura:if>
+				<aura:if isTrue="{!v.isAppealSuccess}">
+					<div  class="headerMessageContainer ">
+						<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+							<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+							<span class="successMessage">{!v.appealSuccessMsg}</span>
+						</ui:message>
+					</div>
+				</aura:if>
+		</div>
+		<div class="slds-float_right">
+				<span class="bodyText dataSpace spacing "><button onclick="{!c.printList}" aura:id="claimDetailPrint" class="generalButton inverse printIcon testscript_preAuthDetailPrint">Print</button></span>
+		</div>
+		</div>
+
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+			<aura:if isTrue="{!v.preAuthDetail.Header.StatusCategory == 'Finalized'}">
+			<span class="bodyText dataSpace spacing "><button 
+					data-claimnumber="{!v.preAuthDetail.Header.ClaimNumber}"
+					data-claimtype="{!v.preAuthDetail.Header.ClaimTypeCategory}"
+					data-business="{!v.preAuthDetail.Header.Business}"
+					data-office="{!v.preAuthDetail.Header.ServiceLocationName}" 
+					data-dentist="{!v.preAuthDetail.Header.ProviderName}"
+					data-bizguid="{!v.preAuthDetail.Header.BusinessGuid}"
+					data-provguid="{!v.preAuthDetail.Header.TreatingProviderGuid}"
+					data-locguid="{!v.preAuthDetail.Header.ServiceOfficeGuid}"
+					data-membername="{!v.preAuthDetail.Header.MemberName}"
+					data-memberdob="{!v.preAuthDetail.Header.PatientBirthDate}"
+					data-membernumber="{!v.preAuthDetail.Header.SubmittedMemberId}"
+					onclick="{!c.handlePreAuthAppeal}" class="generalButton testscript_claimDetailAppeal">Request Reconsideration/Appeal</button></span>
+				<span class="bodyText dataSpace spacing "><button 
+					onclick="{!c.handleStartClaim}" class="generalButton testscript_claimDetailAppeal">Start a Claim</button></span>
+				</aura:if>
+		</div>
+
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Member Information</li>
+                </ul>
+			</div>
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Provider Information</li>
+                </ul>		
+			</div>	
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Name">Member Name:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Name" data-value="Member Name">{!v.preAuthDetail.Header.MemberName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">D.O.B.</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="DOB" data-value="DOB"><lightning:formattedDateTime value="{!v.preAuthDetail.Header.PatientBirthDate}" year="numeric" day="numeric" month="numeric" timeZone="{! $Locale.timezone }"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Number">Member Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Number" data-value="Member Number">{!v.preAuthDetail.Header.SubmittedMemberId}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Plan">Plan:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Plan" data-value="Plan">{!v.preAuthDetail.Header.PlanName}</dd>
+				</dl>			
+			</div>
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Provider">Provider:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Provider" data-value="Provider">{!v.preAuthDetail.Header.ProviderName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Service Location">Service Location:</dt>
+					<dd class="slds-item_detail generalLabelForm" title="Service Location" data-value="Service Location">{!v.preAuthDetail.Header.ServiceLocationName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Business">Business:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Business" data-value="Business">{!v.preAuthDetail.Header.Business}</dd>
+								
+				</dl>			
+			</div>
+
+		
+
+			<div class="slds-size_1-of-3">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Pre-Authorization Information</li>
+                   
+                </ul>
+			</div>
+			<div class="slds-size_1-of-3">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">&zwnj;</li>
+                </ul>
+			</div>	
+
+			<div class="slds-size_1-of-3">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">&zwnj;</li>
+                </ul>
+			</div>
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-size_1-of-1 slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="POS">P.O.S:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="POS" data-value="POS">{!v.preAuthDetail.Header.PlaceOfTreatment}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="OfficeRef">Office Reference #:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="OfficeRef" data-value="OfficeRef">{!v.preAuthDetail.Header.OfficeReferenceNumber}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ReferralNum">Referral #:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ReferralNum" data-value="ReferralNum">{!v.preAuthDetail.Header.ReferralNumber}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDPrimary">ICD Code (primary):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDPrimary" data-value="ICDPrimary">{!v.preAuthDetail.Header.IcdCode1}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDSecondary">ICD Code (secondary):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDSecondary" data-value="ICDSecondary">{!v.preAuthDetail.Header.IcdCode2}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDThird">ICD Code (third):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDThird" data-value="ICDThird">{!v.preAuthDetail.Header.IcdCode3}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDFourth">ICD Code (fourth):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDFourth" data-value="ICDFourth">{!v.preAuthDetail.Header.IcdCode4}</dd>
+								
+				</dl>			
+			</div>
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-size_1-of-1 slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Total Billed Amount">Total Billed Amount:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Total Billed Amount" data-value="Total Billed Amount"><ui:outputCurrency value="{!v.preAuthDetail.Header.TotalBilledAmount}"></ui:outputCurrency></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Received Date">Received Date:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Received Date" data-value="Received Date"><lightning:formattedDateTime value="{!v.preAuthDetail.Header.ReceivedDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText" title="OriginalDecisionDate">Final Decision Date:</dt> 
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="OriginalDecisionDate" data-value="Final Decision Date"><lightning:formattedDateTime value="{!v.preAuthDetail.Header.OriginalDecisionDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText" title="ExpirationDate">Expiration Date:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ExpirationDate" data-value="ExpirationDate"><lightning:formattedDateTime value="{!v.preAuthDetail.Header.ExpirationDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Notes">Notes:</dt>
+					<dd class="slds-item_detail generalLabelForm" title="Notes" data-value="Notes">
+                        <ui:outputText value="{!v.preAuthDetail.Header.Notes}"/>
+                    </dd>
+								
+				</dl>			
+			</div>	
+
+
+
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Service Information</li>
+                </ul>	
+			</div>	
+
+
+			<table class="tableClass" aura:id="">
+				<thead>
+					<tr>
+						<th class="width10" id="procedure">
+						 	<span class="headerText inverse">Procedure Code</span>
+						</th>
+						<th class="width10" id="tooth">
+						 	<span class="headerText inverse">Tooth/Quad/Arch/Surface</span>
+						</th>
+						<th class="width10" id="quantity">
+						 	<span class="headerText inverse">Qty</span>
+						</th>
+						<th class="width10" id="status">
+						 	<span class="headerText inverse">Status</span>
+						</th>
+						<th class="width10" id="policies">
+						 	<span class="headerText inverse">Processing Policies</span>
+						</th>
+						<th class="width10" id="billed">
+						 	<span class="headerText inverse">Billed</span>
+						</th>
+					</tr>
+				</thead>	
+				<tbody>
+					<aura:iteration items="{!v.preAuthDetail.Lines}" var="servLine">
+					<tr>
+						<td data-label="Procedure Code" class="width10" headers="procedure">
+							<span class="bodyText dataSpace">{!servLine.ProcedureCodeDescConcat}</span>
+						</td>
+						<td data-label="Tooth/Quad/Arch/Surface" class="width10" headers="tooth">
+							<span class="bodyText dataSpace">{!servLine.ToothQuadArchSurface}</span>
+						</td>
+						<td data-label="Qty" class="width10" headers="quantity">
+							<span class="bodyText dataSpace">{!servLine.Quantity}</span>
+						</td>
+						<td data-label="Status" class="width10" headers="status">
+							<span class="bodyText dataSpace">{!servLine.LineStatus}</span>
+						</td>
+						<td data-label="ProcessingPoliciesCode" headers="policies" class="width10">
+							<span class="bodyText dataSpace">{!servLine.ProcessingPolicies}</span>
+						</td>
+						<td data-label="Billed" class="width10" headers="billed">
+							<span class="bodyText dataSpace"><ui:outputCurrency value="{!servLine.AllowedFee}"></ui:outputCurrency></span>
+						</td>
+					</tr>
+
+					<tr>
+						<td colspan="3">
+							<div>
+								<span class="bodyText dataSpace spacing-right boldText">ICD Codes :
+								</span>
+								<span class="bodyText">{!servLine.ICDPositions}</span>
+							</div>
+						</td>
+					</tr>
+
+					</aura:iteration>
+				</tbody>
+			</table>
+
+			<aura:if isTrue="{!v.preAuthDetail.Header.ProcessingPolicies.length > 0}">
+				
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Processing Policies</li>
+                </ul>	
+			</div>	
+
+			<table class="tableClass" aura:id="">
+				<thead>
+					<tr>
+						<th class="width10" id="code">
+						 	<span class="headerText inverse">Code</span>
+						</th>
+						<th class="width10" id="desc">
+						 	<span class="headerText inverse">Description</span>
+						</th>
+					</tr>
+				</thead>	
+				<tbody>
+					<aura:iteration items="{!v.preAuthDetail.Header.ProcessingPolicies}" var="policy">
+						
+					<tr>
+						<td class="width10" headers="code"> 
+							<span class="bodyText dataSpace">{!policy.MessageCode}</span>
+						</td>
+						<td class="width10" headers="desc">
+							<span class="bodyText dataSpace">{!policy.Description}</span>
+						</td>
+					</tr>		
+
+					</aura:iteration>
+				</tbody>	
+			</table>
+			</aura:if>
+
+
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Attachments</li>
+                </ul>
+			</div>	
+
+
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-1" >
+				<dl>
+					<aura:if isTrue="{!v.attachDetails.length > 0 }">
+					<aura:iteration items="{!v.attachDetails}" var="attch">
+					<dd class="slds-item_detail generalLabelForm" ><a class="testscript_claimDetailAttach" data-value="{!attch.AttachmentLink}" data-name="{!attch.OriginalFileName}" data-filetype="{!attch.FileExtension}" onclick="{!c.handleDownloadAttach}">{!attch.OriginalFileName}</a></dd>
+
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName2" data-value="MemberName2">Uploaded on: <ui:outputDateTime value="{!attch.CreatedDate}"/></dd>
+					</aura:iteration>
+					</aura:if>
+
+					<aura:if isTrue="{!v.preAuthDetail.Header.Attachments.length > 0}">
+					<aura:iteration items="{!v.preAuthDetail.Header.Attachments}" var="attch">
+					<dd class="slds-item_detail generalLabelForm" ><a class="testscript_preAuthDetailAttach" data-value="{!attch.AttachmentId}" href="{!'../servlet/servlet.FileDownload?file='+attch.AttachmentId}">{!attch.OriginalFileName}</a></dd>
+
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName2" data-value="MemberName2">Uploaded on: <ui:outputDateTime value="{!attch.CreatedDate}"/></dd>
+					</aura:iteration>
+					</aura:if>		
+				</dl>			
+			</div>
+
+			
+			</div>
+			<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_PreAuthDetail'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+	</div>{!v.body}					
+			
+</aura:component>

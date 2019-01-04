@@ -1,0 +1,15 @@
+.THIS .slds-context-bar__item.slds-is-active::before{
+    background: #ebd6a7 !important;
+}
+.THIS .slds-context-bar__item.slds-is-active:hover{
+    x-border-bottom: 3px solid transparent !important;
+}
+.THIS .slds-context-bar__item:hover{
+    x-border-bottom: 3px solid #ebd6a7 !important;
+}
+
+.THIS .bodyWrapper{
+	background-image: linear-gradient( #f8faff, #f2f4f9 );
+	padding:2%; 
+	margin:auto;
+}

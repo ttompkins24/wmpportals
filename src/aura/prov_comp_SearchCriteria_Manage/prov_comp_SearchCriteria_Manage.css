@@ -1,0 +1,30 @@
+.THIS .searchCriteriaWrapper .breadCrumbWrapper{
+		padding:10px;
+	}
+ 
+    
+   .THIS .searchCriteriaWrapper .closeButton{
+   		margin-left:20px;
+   		margin-top:10px;
+   }
+   .THIS .searchCriteriaWrapper .deleteIcon{
+	    margin-left:20px;
+   } 
+  
+   .THIS .searchCriteriaWrapper .hide{
+   		display:none;
+   } 
+   
+   .THIS .searchCriteriaWrapper .tableClass .actionWrapper{
+   		line-height:60px;	
+   }
+   
+   .THIS .searchCriteriaWrapper .paginate{
+		text-align:right;
+	}
+	.THIS .searchCriteriaWrapper  .spacing{
+		margin:0px 10px;
+	}
+	.THIS .searchCriteriaWrapper .footer{
+		margin-top:25px;
+	}

@@ -1,0 +1,153 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_Referral_Search">
+
+	<script type="text/javascript">
+		//where message is coming from
+		var correctOrigin = "{!portalURL}"; 
+
+		//holds passed in eligiblity information
+		var eligibilityStr = '';
+
+		//capture message from Lightning component
+		window.addEventListener("message",function(event) {
+			//console.log('event ' + JSON.stringify(event));
+			//console.log('vf page event origin ' + event.origin);
+			//console.log('vf page correct origin ' + correctOrigin);
+			if(event.origin != correctOrigin){
+				//reject message
+				//console.log('rejected message for incorrect origin');
+				return;	
+			}
+
+			//call function to pass data to apex controller
+			getReferralSearchJS(event.data);
+		}, false); 
+		
+		function onLoadComplete(){
+			////console.log('panel roster page complete');
+			sendToComponent('pageLoaded');
+		}
+
+		 //passes the data to apex controller
+		function getReferralSearchJS(data) {
+			////console.log('dataMap::'+data);
+			var dataMap = JSON.parse(data);
+			var businessId = dataMap.bid;
+			var json = JSON.stringify(dataMap.searchParam); 
+			////console.log('json::'+json);
+			
+			var resultTemp = {};
+			resultTemp['SearchResult'] = [];
+			resultTemp['QueryTotalTimeMs'] = '300';
+			resultTemp['TotalCount'] =0;
+			//call next method to avoid continuation callout
+			afterLogic(JSON.stringify(resultTemp), data);
+			return;
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Search.referralHeaders_contin}',
+				json,businessId,
+				function(result, event){
+					if(event.status){
+						var referralString = result; 
+						//console.log('referralString ' + referralString );
+						if({!useMockData}){
+							sendToComponent(referralString);
+						} else {
+							afterLogic(referralString, data);
+						}
+					} else if(event.type === 'exception'){
+						////console.log('exception message ' + event.message);
+						////console.log('exception where ' + event.where);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        sendToComponent(timeoutList);
+
+					} else {
+						//console.log('message ' + event.message);
+                        var timeoutList= {
+                            timeout: {}
+                            };
+                        sendToComponent(timeoutList);
+					}
+				},
+				{buffer: false, escape: false, timeout: 50000}
+			);
+		}
+	
+		//passes the data to apex controller
+		function afterLogic(referralString, data) { 
+			//console.log('referral search after time'); 
+			var dataMap = JSON.parse(data);
+			var businessId = dataMap.bid;
+			var header = dataMap.searchParam;
+			////console.log('sending to after logic method');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Referral_Search.afterResponseLogic}',
+				referralString, businessId, JSON.stringify(header),
+				function(result, event){	
+					if(event.status){
+						//console.log('	result ' + JSON.stringify(result ));
+						
+						if(result != null){
+							
+							//dates are being returned in as UTC number, need to convert back to date
+							result.calloutSuccess.forEach(function(element) {
+								element.SubmittedDate = convertDate(element.SubmittedDate);
+								
+                                if(element.SalesforceId != undefined && element.SalesforceId != ''){
+                                	element.DetailRedirectId = element.SalesforceId;    
+                                } else {
+                                    element.DetailRedirectId  = element.ClaimNumber;
+                                }
+							});
+						}
+						//console.log('result final ::' +JSON.stringify(result));
+						sendToComponent(result);
+					} else if(event.type === 'exception'){
+						//console.log('exception message ' + event.message);
+						//console.log('exception where ' + event.where);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					} else {
+						//console.log('message ' + event.message);
+						var timeoutList= {
+	                        timeout: {}
+	                        };
+	                    sendToComponent(timeoutList);
+					}
+					
+				},
+				{buffer: false, escape: true, timeout: 10000}
+			);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+		function convertDate(dateStr) {
+			var d = new Date(dateStr);
+			var dYear = d.getUTCFullYear();
+			var dMonth = d.getUTCMonth()+1;
+			var dDate = d.getUTCDate();
+
+		    //add leading zeros
+		    dMonth = dMonth.toString().length == 1 ? '0'+dMonth : dMonth;
+		    dDate = dDate.toString().length == 1 ? '0'+dDate : dDate;
+
+		    //create date string
+			var dStr = dYear + '-' + dMonth + '-' + dDate;
+			
+			return dStr;
+		}
+
+	</script>
+	
+	<body onload="onLoadComplete();">
+	
+	</body>
+</apex:page>

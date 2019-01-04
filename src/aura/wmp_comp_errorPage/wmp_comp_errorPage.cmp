@@ -1,0 +1,9 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global">
+	
+	<div class="slds ">
+		<div class="errorPage slds-text-align_center slds-size_1-of-1 slds-p-bottom_lar">
+			<h1>{!$Label.c.Error_Page_Text}</h1>
+			<div class="intro">{!$Label.c.Error_Page_Subtext}</div>
+		</div>
+	</div>
+</aura:component>

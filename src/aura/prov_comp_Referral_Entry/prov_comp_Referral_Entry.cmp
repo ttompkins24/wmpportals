@@ -1,0 +1,619 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				extends="c:prov_comp_Provider_Common" 
+				controller="prov_ctrl_Referral_Entry">
+
+  	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+	<aura:attribute access="public" name="claim" type="Claim__c" default="{}" />
+	<aura:attribute access="private" name="eligibilityHasRun" type="Boolean" default="false" />
+	<aura:attribute access="private" name="isEligible" type="Boolean" default="false" />
+	<aura:attribute access="private" name="isReferral" type="Boolean" default="false" />
+	<aura:attribute access="public" name="statePicklists" type="List" default="[]"/>
+	<aura:attribute access="private" name="eligData" type="Object" />
+    <aura:attribute access="private" name="specialtyOptions" type="String[]" default="[]"/>
+	<aura:attribute access="public" name="claimIsSubmitted" type="Boolean" default="false" />
+
+	<aura:attribute access="public" name="hideDisclaimer" type="Boolean" default="true" />
+	<aura:attribute access="private" name="historySearchWrapper" type="Object" />
+	<aura:attribute access="private" name="memberCoverage" type="Object" default="{}" />
+  	<aura:attribute access="private" name="hasRequestTypeError" type="Boolean" default="false" />
+  	<aura:attribute access="private" name="requestTypeErrorMessage" type="String"  />
+  	<aura:attribute access="private" name="hasProviderError" type="Boolean" default="false" />
+  	<aura:attribute access="private" name="providerErrorMessage" type="String"  />
+    <aura:attribute access="private" name="claimSubmitErrorMessage" type="String"  default=""/>
+    <aura:attribute access="private" name="draftSaved" type="Boolean" default="false" />
+	<aura:attribute access="public" name="loadDraft" type="Boolean" default="false" />
+	<aura:attribute access="public" name="finishedInit" type="Boolean" default="false" />
+	<aura:attribute access="public" name="hideReferralDisclaimer" type="Boolean" default="true" />
+
+    <!-- ADDED BY MIKE -->
+	<aura:attribute name="showClaimsPage" type="Boolean" default="false" description="determines if the claims page should be shown" />
+	<aura:attribute name="memCovSelected" type="Object" description="holds the selected member coverage value" />
+	<aura:attribute name="serviceLocationId" type="String" description="holds the selected SFDC Service Location Id" />
+	<aura:attribute name="providerId" type="String" description="holds the selected SFDC Provider ID" />
+	<aura:attribute name="eligibilityChecked" type="Boolean" default="false" description="determines if the eligiblity component should be in search or show mode" />
+	<aura:attribute name="runCheckAgain" type="Boolean" default="false" description="when this equals true, run eligibility check again"/>
+	<!-- end added by mike -->
+
+
+	<!-- Define Event Handlers -->
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+	<aura:handler event="c:prov_event_FAD_Modal" action="{!c.handleDentistPopulated}"/>
+	<aura:handler name="change" value="{!v.showClaimsPage}" action="{!c.handleValueChange}"/>
+
+	<div class="referralEntryContainer generalOuterDiv">
+		<!-- Breadcrumbs -->
+		<div class="slds-col slds-size_1-of-1 slds-grid">
+			<aura:if isTrue="{!v.showClaimsPage}">
+				<div class="breadCrumbWrapper">
+					&#60;&nbsp;
+					<a class="bodyLink" onclick="{!c.swapComponents}">Edit Eligibility Information</a>
+				</div>
+			</aura:if>
+		</div>
+		<div class="slds-grid">
+
+			<div class="slds-col">
+				<h1>Request Referral or Transfer</h1>
+				<aura:if isTrue="{!v.showClaimsPage}">
+					<h3>Step 2 of 2</h3>
+					<aura:set attribute="else">
+						<h3>Step 1 of 2</h3>
+					</aura:set>
+				</aura:if>
+				<p>{!$Label.c.Referral_Form_Entry_Usage}</p>
+			</div>
+		</div>
+
+
+		<aura:if isTrue="{!v.claimIsSubmitted &amp;&amp; v.claimSubmitErrorMessage != ''}">
+			<div class="slds-grid">
+				<div class="slds-col slds-size_1-of-1">
+					<div  class="headerMessageContainer ">
+						<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+							<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+							<span class="errorMessage">{!v.claimSubmitErrorMessage}</span>
+						</ui:message>
+					</div>
+				</div>
+			</div>
+		</aura:if>
+
+
+		<div class="slds-grid">
+			<div class="slds-col">
+				<aura:if isTrue="{!v.hideDisclaimer}">
+					<a class="header4" href="javascript:void(0);" onclick="{!c.showDisclaimer}">Show Disclaimer</a>
+					<aura:set attribute="else">
+						<p class="header5">{!$Label.c.Referral_Entry_Disclaimer}</p>
+						<a class="header4" href="javascript:void(0);" onclick="{!c.hideDisclaimer}">Hide Disclaimer</a>
+					</aura:set>
+				</aura:if>
+			</div>
+		</div>
+
+
+
+		<aura:if isTrue="{!v.finishedInit}" >
+			<c:prov_comp_MemberEligibility_ClaimEntry runCheckAgain="{!v.runCheckAgain}"
+				claim="{!v.claim}" 
+				claimType="REFFERAL"
+				serviceLocationId="{!v.serviceLocationId}" 
+				providerId="{!v.providerId}" 
+				serviceDate="{!v.claim.Service_Date__c}"
+				birthdate="{!v.claim.Patient_Birth_Date__c}"
+				memberNumber="{!v.claim.Subscriber_ID__c}"
+				lastName="{!v.claim.Patient_Last_Name__c}"
+				firstName="{!v.claim.Patient_First_Name__c}"
+				lastCheckedEligibility="{!v.claim.Last_Eligibility_Check__c}" 
+				useServiceDate="true" 
+				showClaimsPage="{!v.showClaimsPage}" 
+				eligibilityChecked="{!v.eligibilityChecked}" 
+				memCovSelected="{!v.memberCoverage}" /> 
+		</aura:if>
+
+		<aura:if isTrue="{!v.showClaimsPage}" >
+
+			<div class="slds-m-bottom_medium frame slds-clearfix">
+				<div class="slds-grid slds-size_1-of-1  slds-clearfix">
+					<div class="slds-col slds-size_5-of-6">
+						<div class="slds-size_1-of-1">						
+							<span>
+							<span class="nameText bold">
+								{!v.claim.Patient_First_Name__c}&nbsp;{!v.claim.Patient_Last_Name__c}&nbsp; &nbsp;
+							</span>
+							<span class="bodyText headerText">
+								<a href="" onclick="{!c.serviceLookupOpen}">Search Service History</a>
+							</span>
+							</span>  
+						</div>
+						<div class="slds-grid">
+						
+							<div>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Eligible'}">
+									<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Eligible"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Out of Network'}">
+									<lightning:icon size="medium" class="generalOutOfNetwork" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Ineligible'}">
+									<lightning:icon size="medium" class="generalIneligible" variant="inverse" iconName="utility:error" alternativeText="Not Eligible"/>
+								</aura:if>
+								<aura:if isTrue="{!v.claim.Last_Eligibility_Status__c == 'Not Found'}">
+									<lightning:icon size="medium" class="generalNotFound" variant="inverse" iconName="utility:clear" alternativeText="Not Found"/>
+								</aura:if>
+							</div>
+							<div class="slds-col slds-size_10-of-12">
+								
+
+								<ui:outputText aura:Id="detailText" class="bold" value="{!v.claim.Last_Eligibility_Check_Information__c}"/>
+								<div>
+									<aura:unescapedHtml aura:Id="planName" value="{!v.claim.Plan_Text__c}"/>
+								</div>
+							</div>
+						</div>
+						</div>
+
+					<div class="slds-col slds-size_1-of-6 slds-clearfix slds-p-right_small slds-float_right slds-text-align_right">
+						<div>
+				        	<button class="generalButton testScript_searchButton" onclick="{!c.refreshCheck}">Refresh</button>
+						</div>
+						<aura:if isTrue="{!v.claim.Last_Eligibility_Check__c}">
+							<div class="">
+								<span class="bodyText dataSpace"> Checked on </span>
+		                    	<lightning:formattedDateTime class="bodyText dataSpace" value="{!v.claim.Last_Eligibility_Check__c}" year="numeric" month="2-digit" day="2-digit"/>						
+		                	</div>
+						</aura:if>
+				    </div>
+				</div>
+
+			</div>
+		
+			<!-- END ADDED BY MIKE -->
+
+
+			<!-- RQUEST TYPE START -->
+			<aura:if isTrue="{!v.claim &amp;&amp; v.claim.Id}">
+				
+
+				<div class="slds-m-bottom_medium frame">
+					<div class="slds-grid slds-m-bottom_small">
+						<div class="slds-col slds-size_2-of-12">
+							<h3>Choose Referral Type</h3>
+						</div>
+					</div>
+
+					<div class="slds-grid">
+						<div class="slds-col">
+							<aura:if isTrue="{!v.hideReferralDisclaimer}">
+								<a href="javascript:void(0);" onclick="{!c.showReferralDisclaimer}">Show Disclaimer</a>
+								<aura:set attribute="else">
+									<p>{!$Label.c.Referral_Type_Entry_Disclaimer}</p>
+									<a href="javascript:void(0);" onclick="{!c.hideReferralDisclaimer}">Hide Disclaimer</a>
+								</aura:set>
+							</aura:if>
+						</div>
+					</div>
+
+
+					<aura:if isTrue="{!v.hasRequestTypeError}">
+						<div class="slds-grid">
+							<div class="slds-col slds-size_1-of-1">
+								<div  class="headerMessageContainer ">
+									<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+										<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+										<span class="errorMessage">{!v.requestTypeErrorMessage}</span>
+									</ui:message>
+								</div>
+							</div>
+						</div>
+					</aura:if>
+
+					<div class="slds-form--inline">
+
+						<div class="slds-form-element">
+
+							<ui:inputRadio aura:id="interim" 
+								class="testScript_claim_e_rad_ict" 
+								labelClass="radio-label" 
+								name="interim" 
+								label="Interim Care Transfer" 
+								change="{!c.changeType}" 
+								value="{!v.claim.Internal_Care_Transfer__c}" />
+						</div>
+						<div class="slds-form-element">
+							<ui:inputRadio aura:id="referral" 
+								class="testScript_claim_e_rad_ict_no" 
+								labelClass="radio-label" 
+								name="referral" 
+								label="Referral" 
+								change="{!c.changeType}" 
+								value="{!!v.claim.Internal_Care_Transfer__c}" />
+						</div>
+					</div>
+					<hr/>
+
+					<aura:if isTrue="{!v.isReferral}">
+						<div class="slds-grid slds-gutters">
+							<div class="slds-col slds-size_1-of-2">
+								<ui:inputSelect label="Type of Referral" 
+									labelClass="generalLabelForm required" 
+									class="generalInputPicklist uiInput_select testScript_referral_type" 
+									value="{!v.claim.Type_of_Referral__c}"
+									required="true">
+					                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="E" label="Standard"/>
+					                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="U" label="Urgent"/>
+					                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="03" label="Emergency"/>
+					            </ui:inputSelect>
+							</div>
+
+							<div class="slds-col slds-size_1-of-2">
+								<ui:inputSelect label="Specialty Requested" 
+									labelClass="generalLabelForm required" 
+									required="true"
+									class="generalInputPicklist uiInput_select testScript_referral_specialty" 
+									value="{!v.claim.Requested_Specialty__c}">
+					               	<ui:inputSelectOption class="picklistOption" text="" label="Select"/>
+	                                <aura:iteration items="{!v.specialtyOptions}" var="option">
+	                                    <ui:inputSelectOption class="picklistOption" text="{!option.Value}" label="{!option.Label}"/>
+	                                </aura:iteration>
+
+					            </ui:inputSelect>
+							</div>
+						</div>
+
+						<aura:if isTrue="{!v.claim.Type_of_Referral__c == '03'}">
+							<div class="slds-grid slds-gutters slds-m-top_small">
+								<div class="slds-col slds-size_1-of-1">
+									<ui:inputTextArea label="Emergency Palliative Care Description" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+										maxlength="255"
+										class="generalInputForm slds-align_absolute-center slds-m-bottom_small testScript_refer_notes" cols="20" rows="2" 
+										value="{!v.claim.Remarks2__c}">
+									</ui:inputTextArea>
+								</div>
+							</div>
+						</aura:if>
+
+
+						<aura:if isTrue="{!v.claim.Type_of_Referral__c != '03'}">
+							<div class="slds-grid slds-gutters">
+								<div class="slds-col slds-size_1-of-1 slds-m-top_small">
+									<ui:inputTextArea label="Reason for Referral" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+										class="generalInputForm testScript_referral_specialty slds-m-bottom_small " 
+										value="{!v.claim.Remarks2__c}" maxlength="255">
+						            </ui:inputTextArea>
+								</div>
+							</div>
+						</aura:if>
+					</aura:if>
+
+					<aura:if isTrue="{!!v.isReferral}">
+						<div class="slds-grid slds-gutters">
+							<div class="slds-col slds-size_1-of-1">
+								<ui:inputTextArea label="Reason for Interim Care" 
+									labelClass="generalLabelForm required" 
+									required="true"
+									class="generalInputForm slds-align_absolute-center slds-m-bottom_small testScript_refer_notes" cols="20" rows="2" 
+									maxlength="255" 
+									value="{!v.claim.Remarks2__c}">
+								</ui:inputTextArea>
+
+							</div>
+						</div>
+					</aura:if>
+
+					<c:prov_comp_File_Upload parentId="{!v.claim.Id}" type="Claim" isReferral="true" />
+				</div>
+				<!-- REQUEST TYPE END -->
+
+
+				
+	  
+				<div class="slds-m-bottom_medium frame">
+
+					<!-- PROVIDER SELECTION START -->
+					<div class="slds-grid slds-m-bottom_small">
+						<div class="slds-col slds-size_2-of-12">
+							<h3>Selected Provider Details</h3>
+						</div>
+					</div>
+				
+					<aura:if isTrue="{!v.hasProviderError}">
+						<div class="slds-grid">
+							<div class="slds-col slds-size_1-of-1">
+								<div  class="headerMessageContainer ">
+									<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+										<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+										<span class="errorMessage">{!v.providerErrorMessage}</span>
+									</ui:message>
+								</div>
+							</div>
+						</div>
+					</aura:if>
+
+					<div class="slds-grid">
+						<div class="slds-col">
+							<p>{!$Label.c.Claim_Entry_Disclaimer}</p>
+						</div>
+						<div class="slds-col">
+							<div class="slds-float_right">
+								<button onclick="{!c.findADentist}" class="slds-button generalButton testScript_refer-find-dentist">Find a Provider</button>
+							</div>
+						</div>
+					</div>
+
+					{!v.body}
+
+
+
+					<div class="slds-grid slds-gutters provider-fields">
+						<div class="slds-col slds-size_1-of-2">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+								    <ui:inputText label="Name" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+										class="generalInputForm testScript_claim_e_comp_elig_last" 
+								    	value="{!v.claim.Referral_Treating_Provider_Name__c}">
+								    </ui:inputText>
+								</div>
+				    		</div>
+						</div>
+
+
+						<div class="slds-col slds-size_1-of-4">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+								    <ui:inputText label="Provider NPI Number" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+										class="generalInputForm testScript_claim_e_comp_elig_last"  
+								    	value="{!v.claim.Referral_Treating_Provider_NPI_Number__c}">
+								    </ui:inputText>
+								</div>
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-4">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+									<ui:inputPhone label="Phone Number" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+										aura:Id="phoneNumber" 
+										placeholder="(123) 456-7890" 
+										blur="{!c.fixPhone}" maxlength="15" 
+										class="slds-col slds-size_1-of-1 generalInputForm testScript_phoneNumberInput" 
+										value="{!v.claim.Service_Location_Phone__c}"/>
+								</div>
+				    		</div>
+						</div>
+
+					</div>
+
+					<div class="slds-grid slds-gutters">
+						<div class="slds-col slds-size_1-of-2">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+								    <ui:inputText label="Address" 
+										labelClass="generalLabelForm required" 
+										required="true" 
+								    	class="generalInputForm testScript_claim_e_comp_elig_last" 
+								    	value="{!v.claim.Referral_Service_Location_Address__c}" />
+								</div>
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-4">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+								    <ui:inputText label="City" 
+										labelClass="generalLabelForm required" 
+										required="true"
+										class="generalInputForm testScript_claim_e_comp_elig_last" 
+								    	value="{!v.claim.Referral_Treating_Provider_City__c}" />
+								</div>
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-8">
+							<div class="slds-form-element">
+								<ui:inputSelect label="State" 
+									labelClass="generalLabelForm required" 
+									required="true"
+									class="generalInputPicklist uiInput_select generalLabelForm testScript_referral_type" 
+									value="{!v.claim.Referral_Treating_Provider_State__c}">
+					                <ui:inputSelectOption class="picklistOption picklistOptionDefault" text="" label=""/>
+					                <aura:iteration items="{!v.statePicklists}" var="state">
+					                	<ui:inputSelectOption class="picklistOption picklistOptionDefault" text="{!state.abbreviation}" label="{!state.abbreviation}"/>
+					                </aura:iteration>
+					            </ui:inputSelect>
+
+				    		</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-8">
+							<div class="slds-form-element">
+								<div class="slds-form-element__control">
+								    <ui:inputText label="Zip Code" 
+									labelClass="generalLabelForm required" 
+									required="true"
+									class="generalInputForm testScript_claim_e_comp_elig_last" 
+									value="{!v.claim.Referral_Treating_Provider_Zip__c}" />
+								</div>
+				    		</div>
+						</div>
+
+					</div>
+				</div>
+
+
+				<!-- PROVIDER SELECTION END -->
+			</aura:if>
+
+			<!-- SERVICE HISTORY MODAL-->
+	        <div aura:id="service-modal" id="service-modal" role="dialog" tabindex="-1" aria-labelledby="service-search" class="slds-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	<button class="slds-button slds-button--icon-inverse slds-modal__close" onclick="{!c.serviceLookupClose}">
+	                        <span>Close</span>
+	                    </button>
+
+	                    <h2 class="slds-text-heading--medium">Search Member Service History</h2>
+	                </div>
+	                <div class="slds-modal__content slds-p-around--medium">
+	                	
+	                	<div class="slds-grid slds-gutters">
+							<div class="slds-col slds-size_3-of-12">
+				    			<div class="slds-form-element">
+								  	<label class="slds-form-element__label">Service Date From</label>
+								  	<div class="slds-form-element__control">
+								  		<ui:inputDate displayDatePicker="true" class="slds-item_detail slds-truncate testScript_claim_e_comp_hist_from" blur="{!c.fixDate}" format="MM/DD/YYYY" value="{!v.historySearchWrapper.startDate}"/>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+								  	<label class="slds-form-element__label">Service Date To</label>
+								  	<div class="slds-form-element__control">
+								  		<ui:inputDate displayDatePicker="true" class="slds-item_detail slds-truncate testScript_claim_e_comp_hist_to" blur="{!c.fixDate}" format="MM/DD/YYYY" value="{!v.historySearchWrapper.endDate}"/>
+								  	</div>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_3-of-12">
+								<div class="slds-form-element">
+									<label class="slds-form-element__label">Procedure Code</label>
+									<div class="slds-form-element__control">
+									    <ui:inputText class="generalInputForm testScript_claim_e_comp_serv_proc" value="{!v.historySearchWrapper.procedureCode}"></ui:inputText>
+									</div>
+					    		</div>
+							</div>
+
+							<div class="slds-col slds-size_1-of-12">
+								<div class="slds-form-element clear_button">
+									<a onclick="{!c.clearServiceHistory}" class="testScript_claim_e_comp_serv_hist_clear" title="Clear">
+										Clear
+									</a>
+								</div>
+							</div>
+
+							<div class="slds-col slds-size_2-of-12">
+								<div class="slds-form-element">
+									<button onclick="{!c.searchServiceHistory}" class="slds-button generalButton testScript_claim_e_comp_serv_hist_sub" aria-describedby="help" title="Search ICD">
+										Search
+									</button>
+					    		</div>
+							</div>
+						</div>
+
+
+						<aura:if isTrue="{!v.availableHistory &amp;&amp; v.availableHistory.length == 0 &amp;&amp; !v.isLoading }">
+							No service history.
+						</aura:if>
+
+
+
+
+						<aura:if isTrue="{!v.availableHistory &amp;&amp; v.availableHistory.length > 0 }">
+		                	<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_small">
+								<table class="tableClass" id="history">
+									<thead>
+										 <tr >
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Service Date</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Procedure Code</span>
+										 	</th>
+										 	<th class="headerText" data-tableid="code">
+										 		<span class="bodyText">Tooth/Quad/Arch/Surface</span>
+										 	</th>
+										 </tr>
+									</thead>
+
+									<tbody>
+										<aura:iteration items="{!v.availableHistory}" var="history">
+											<tr>
+												<td data-label="Service Date" class="slds-is-sortable " data-value="{!history.ProcedureDate__c}">
+							        				<span class="bodyText dataSpace"><ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!history.ProcedureDate__c}"/></span>
+							      				</td>
+							      				<td data-label="Procedure Code" class="slds-is-sortable " data-value="{!history.ProcedureCode__c}">
+							      					<span class="bodyText dataSpace" >{!history.ProcedureCode__c}</span>
+							      				</td>
+
+							      				<td data-label="Tooth/Quad/Arch/Surface" class="slds-is-sortable " data-value="{!history.Description__c}">
+							      					<span class="bodyText dataSpace" >{!history.ToothCode__c}/{!history.OralCavityQuadCode__c}/{!history.OralCavityArchCode__c}/{!history.ToothSurfaces__c}</span>
+							      				</td>
+											</tr>
+										</aura:iteration>
+									</tbody>
+								</table>
+							</div>
+						</aura:if>
+	                </div>
+	            </div>
+	        </div>
+	        <!-- SERVICE HISTORY MODAL END -->
+
+
+			<!-- CLAIM SUBMIT MODAL-->
+	        <div aura:id="claim-submit-modal" id="claim-submit-modal" role="dialog" tabindex="-1" aria-labelledby="claim-submit-modal" class="slds-modal">
+	            <div class="slds-modal__container">
+	                <div class="slds-modal__header">
+	                	
+	                    <h2 class="slds-text-heading--medium">Referral Submitted</h2>
+	                </div>
+	                <div class="slds-modal__content slds-p-around--medium">
+	                	<p>Your referral is submitted successfully under referral number: {!v.claim.Claim_Number__c}</p>
+	                </div>
+
+	                <footer class="slds-modal__footer">
+	                	<button onclick="{!c.submitAnotherClaim}" class="slds-button generalButton testScript_claim_success_button">Submit Another Referral</button>
+						<button onclick="{!c.dismissClaimSuccessModal}" class="slds-button generalButton testScript_claim_success_button">OK</button>
+				    </footer>
+	            </div>
+	        </div>
+
+	        <div id="modal-backdrop" class="slds-backdrop"></div>
+
+	        <aura:if isTrue="{!v.claim &amp;&amp; v.claim.Id}">
+		        <div class="slds-page-header footerContainer">
+				  	<div class="slds-media">
+					    <div class="slds-media__body">
+
+					    	<h4 class="slds-align_absolute-center">Does everything look correct?</h4>
+
+					      	
+
+							<aura:if isTrue="{!v.claim &amp;&amp; v.claim.Id}">
+								<div class="slds-align_absolute-center">
+								
+							        <button onclick="{!c.submitClaim}" class="slds-button slds-m-top_small slds-m-bottom_small generalButton testScript_dent_comp_submit_change">
+										Submit
+									</button>
+								</div>
+						        <aura:set attribute="else">
+						        	<button disabled="true" class="slds-button slds-align_absolute-center slds-m-bottom_small generalButton testScript_dent_comp_submit_change">
+										Submit
+									</button>
+						        </aura:set>
+						    </aura:if>
+
+
+
+							<!-- <p class="slds-align_absolute-center">{!$Label.c.Dentist_Processing}</p> -->
+					    </div>
+				  	</div>
+				</div>
+			</aura:if>
+		</aura:if>
+
+
+	</div>
+</aura:component>

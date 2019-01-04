@@ -1,0 +1,448 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_Claim_Detail
+Purpose                     : Allows users to view Details about Claims
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             4        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  extends="c:prov_comp_Provider_Common" access="global"
+	controller="prov_ctrl_Claim_Detail">
+	<aura:attribute name="isVoidSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="isAppealSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="voidSuccessMsg" type="string"/>
+	<aura:attribute name="appealSuccessMsg" type="string"/>
+	<aura:attribute name="isFinalized" type="Boolean" default="false"/>
+	<aura:attribute name="isAccepted" type="Boolean" default="false"/>
+	<aura:attribute name="claimDetail" type="prov_wrap_Claim.ClaimDetailResultClaimWrapper"/>
+	<aura:attribute name="attachDetails" type="prov_wrap_Claim.ClaimDetailResponseAttachWrapper[]"/>
+	<aura:attribute name="claimNum" type="String"/>
+	<aura:attribute name="memberDate" type="String"/>
+	<aura:attribute name="claimDetailRequest" type="Map" />
+	<aura:attribute name="claimAttachRequest" type="Map" />
+	<aura:attribute name="claimAttachments" type="Object"/>
+	<aura:attribute name="checkButtonDisabled" type="Boolean" default="true" />
+	<aura:attribute name="sourceString" type="String"/>
+	<aura:attribute name="caseNum" type="String"/>
+	
+	<aura:attribute name="vfHost" type="String" default="{!$Label.c.Member_Eligibility_VF_URL}"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:handler name="modalSuccessEvent" event="c:prov_event_Claim_Modal" action="{!c.handleModalSuccess}"/>
+
+	<div class="slds generalOuterDiv">
+		<!-- SPINNER -->
+		<lightning:spinner variant="brand" size="large" aura:id="spinnerId" class=""/>
+
+			
+		<div class="slds-col slds-size_1-of-1">
+			<aura:if isTrue="{!v.isAppealSuccess}">
+					<div  class="headerMessageContainer ">
+						<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+							<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success" />
+							<span class="successMessage">{!v.appealSuccessMsg}</span>
+						</ui:message>
+					</div>
+				</aura:if>
+				<aura:if isTrue="{!v.isVoidSuccess}">
+					<div  class="headerMessageContainer ">
+						<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+							<span class="successIcon"></span>
+							<span class="successMessage">{!v.voidSuccessMsg}</span>
+						</ui:message>
+					</div>
+				</aura:if>
+			<div class="slds-float_left">
+				<h1>Claim
+				</h1>
+				<aura:if isTrue="{!v.claimDetail.Header.ClaimNumber != null}">
+				<div class="slds-grid">
+				
+				<div class="slds-col">
+					
+					<h3 class="slds-p-top_x-small">#{!v.claimDetail.Header.ClaimNumber}</h3>
+				</div>
+				<div class="slds-col">
+					<ui:message class="acceptedMessage" severity="confirm">
+						<span class="accepted">{!v.claimDetail.Header.StatusCategory}</span>
+					</ui:message>
+				</div>
+				</div>
+				<p>Submitted: <ui:outputDateTime value="{!v.claimDetail.Header.SubmittedDate}"/></p>
+				</aura:if>
+						
+				
+			</div>
+			
+			<div class="slds-float_right footer">
+				<span class="bodyText dataSpace spacing "><a onclick="{!c.printList}" aura:id="claimDetailPrint" class=" printIcon testscript_claimDetailPrint">Print</a></span>
+			</div>
+		</div>
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+			<aura:if isTrue="{!v.claimDetail.Header.StatusCategory == 'Finalized' || v.claimDetail.Header.StatusCategory == 'Void'}">
+				
+			<div class="slds-float_left">
+				<span class="bodyText dataSpace spacing"><button 
+					data-claimnumber="{!v.claimDetail.Header.ClaimNumber}"
+					data-business="{!v.claimDetail.Header.Business}"
+					data-office="{!v.claimDetail.Header.ServiceLocationName}" 
+					data-dentist="{!v.claimDetail.Header.ProviderName}"
+					data-bizguid="{!v.claimDetail.Header.BusinessGuid}"
+					data-provguid="{!v.claimDetail.Header.TreatingProviderGuid}"
+
+					data-locguid="{!v.claimDetail.Header.ServiceOfficeGuid}"
+					data-memFirstName="{!v.claimDetail.Header.PatientFirstName}"
+					data-memLastName="{!v.claimDetail.Header.PatientLastName}"
+					onclick="{!c.voidClaim}" disabled="{!if(v.isVoidSuccess, true, if(v.claimDetail.Header.StatusCategory == 'Void', true, false))}"   class="generalButton testscript_claimDetailVoid">Void Claim </button></span>
+				<span class="bodyText dataSpace spacing "><button 
+					data-claimnumber="{!v.claimDetail.Header.ClaimNumber}"
+					data-business="{!v.claimDetail.Header.Business}"
+					data-office="{!v.claimDetail.Header.ServiceLocationName}" 
+					data-dentist="{!v.claimDetail.Header.ProviderName}"
+					data-claimtype="{!v.claimDetail.Header.ClaimTypeCategory}"
+					data-bizguid="{!v.claimDetail.Header.BusinessGuid}"
+					data-provguid="{!v.claimDetail.Header.TreatingProviderGuid}"
+					data-locguid="{!v.claimDetail.Header.ServiceOfficeGuid}"
+					data-membername="{!v.claimDetail.Header.MemberName}"
+					data-memFirstName="{!v.claimDetail.Header.PatientFirstName}"
+					data-memLastName="{!v.claimDetail.Header.PatientLastName}"
+					data-memberdob="{!v.claimDetail.Header.PatientBirthDate}"
+					data-membernumber="{!v.claimDetail.Header.SubmittedMemberId}"
+					onclick="{!c.appealClaim}" class="generalButton testscript_claimDetailAppeal">Request Reconsideration/Appeals </button></span>
+			</div>
+			</aura:if>
+		</div>
+
+
+
+		<div class="elementWrap slds-col slds-size_1-of-1 slds-grid slds-wrap">
+			
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Member Information</li>
+                </ul>
+			</div>
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Provider Information</li>
+                </ul>		
+			</div>	
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Name">Member Name:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Name" data-value="Member Name">{!v.claimDetail.Header.MemberName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">D.O.B.</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="DOB" data-value="DOB">
+
+						<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.claimDetail.Header.PatientBirthDate}"/>
+					<!-- 	<lightning:formattedDateTime value="{!v.claimDetail.Header.PatientBirthDate2}" year="numeric" day="numeric" month="numeric" timeZone="{! $Locale.timezone }"></lightning:formattedDateTime> -->
+					</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Number">Member Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Member Number" data-value="Member Number">{!v.claimDetail.Header.SubmittedMemberId}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Plan">Plan:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Plan" data-value="Plan">{!v.claimDetail.Header.PlanName}</dd>
+				</dl>			
+			</div>
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Dentist">Provider:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Dentist" data-value="Dentist">{!v.claimDetail.Header.ProviderName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Service Location">Service Location:</dt>
+					<dd class="slds-item_detail generalLabelForm" title="Service Location" data-value="Service Location">{!v.claimDetail.Header.ServiceLocationName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Business">Business:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Business" data-value="Business">{!v.claimDetail.Header.Business}</dd>
+								
+				</dl>			
+			</div>
+			
+
+
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">Claims Information</li>
+                   
+                </ul>
+			</div>
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">&zwnj;</li>
+                </ul>
+			</div>	
+
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="POS">P.O.S:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="POS" data-value="POS">{!v.claimDetail.Header.PlaceOfTreatment}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="OfficeRef">Office Reference #:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="OfficeRef" data-value="OfficeRef">{!v.claimDetail.Header.OfficeReferenceNumber}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ReferralNum">Referral #:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ReferralNum" data-value="ReferralNum">{!v.claimDetail.Header.ReferralNumber}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDPrimary">ICD Code (primary):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDPrimary" data-value="ICDPrimary">{!v.claimDetail.Header.IcdCode1}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDSecondary">ICD Code (secondary):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDSecondary" data-value="ICDSecondary">{!v.claimDetail.Header.IcdCode2}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDThird">ICD Code (third):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDThird" data-value="ICDThird">{!v.claimDetail.Header.IcdCode3}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ICDFourth">ICD Code (fourth):</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ICDFourth" data-value="ICDFourth">{!v.claimDetail.Header.IcdCode4}</dd>
+								
+				</dl>			
+			</div>
+
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Dentist">Total Billed Amount:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Dentist" data-value="Dentist"><ui:outputCurrency value="{!v.claimDetail.Header.TotalBilledAmount}"></ui:outputCurrency></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Payment">Payment:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="Payment" data-value="Payment"><ui:outputCurrency value="{!v.claimDetail.Header.NetFeeSum}"></ui:outputCurrency></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="PaymentDate">Payment Date:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="PaymentDate" data-value="PaymentDate"><lightning:formattedDateTime value="{!v.claimDetail.Header.PaymentDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="CheckNum">Check/ETF Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="CheckNum" data-value="CheckNum">{!v.claimDetail.Header.PaymentNumber}</dd>
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="ReceivedDate">Received Date:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="ReceivedDate" data-value="ReceivedDate"><lightning:formattedDateTime value="{!v.claimDetail.Header.ReceivedDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="OriginalDecisionDate">Final Decision Date:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="OriginalDecisionDate" data-value="OriginalDecisionDate"><lightning:formattedDateTime value="{!v.claimDetail.Header.OriginalDecisionDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd> 
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="Notes">Notes:</dt>
+					<dd class="slds-item_detail generalLabelForm" title="Notes" data-value="Notes">
+						
+						<ui:outputText value="{!v.claimDetail.Header.Notes}"/>
+					</dd>
+								
+				</dl>			
+			</div>
+
+			<div class="slds-size_1-of-2">
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">C.O.B Information</li>
+                </ul>
+			</div>
+			<div class="slds-size_1-of-2">	
+				<ul class="slds-border_bottom slds-p-bottom_x-small">
+                    <li class="header4 generalSpacing_top">&zwnj;</li>
+                </ul>
+			</div>	
+
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2">
+				<aura:iteration items="{!v.claimDetail.CobInfo}" var="payer">
+				<dl class="slds-list_horizontal slds-wrap edit-table-general">
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="COBOtherPayer">COB Other Payer:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="COBOtherPayer">{!payer.OtherCarrierName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="MemberName">Member Name:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName" data-value="MemberName">{!payer.OtherSubscriberFirstName}&nbsp;{!payer.OtherSubscriberLastName}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="PolicyNum">Policy Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="PolicyNum" data-value="PolicyNum">{!payer.OtherPolicyNumber}</dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">D.O.B.:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="DOB" data-value="DOB"><lightning:formattedDateTime value="{!payer.OtherSubscriberDob}" year="numeric" day="numeric" month="numeric" timeZone="{! $Locale.timezone }"></lightning:formattedDateTime></dd>
+
+					<dt class="slds-item_label bodyText boldText slds-truncate" title="GroupNum">Group Number:</dt>
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="GroupNum" data-value="GroupNum">{!payer.OtherSubscriberGroupName}</dd>
+											
+				</dl>
+				</aura:iteration>			
+			</div>
+
+
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Service Information</li>
+                </ul>	
+			</div>	
+
+			<table class="tableClass" aura:id="">
+				<thead>
+					<tr>
+						<th class="width10">
+						 	<span class="headerText inverse">Service Date</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Submitted Procedure Code</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Tooth/Quad/Arch/Surface</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Qty</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Status</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Processing Policies</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Billed</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Paid</span>
+						</th>
+					</tr>
+				</thead>	
+				<tbody>
+					<aura:iteration items="{!v.claimDetail.Lines}" var="servLine">
+					<tr>
+						<td data-label="Service Date" class="width10"> 
+							<span class="bodyText dataSpace"><lightning:formattedDateTime value="{!servLine.ServiceDate}" year="numeric" day="2-digit" month="2-digit" timeZone="GMT"></lightning:formattedDateTime></span>
+						</td>
+						<td data-label="Procedure Code" class="width10">
+							<span class="bodyText dataSpace">{!servLine.ProcedureCode}</span>
+						</td>
+						<td data-label="Tooth/Quad/Arch/Surface" class="width10">
+							<span class="bodyText dataSpace">{!servLine.ToothQuadArchSurface}</span>
+						</td>
+						<td data-label="Qty" class="width10">
+							<span class="bodyText dataSpace">{!servLine.Quantity}</span>
+						</td>
+						<td data-label="Status" class="width10">
+							<span class="bodyText dataSpace">{!servLine.LineStatus}</span>
+						</td>
+						<td data-label="ProcessingPoliciesCode" class="width10">
+							<span class="bodyText dataSpace">{!servLine.ProcessingPolicies}</span>
+						</td>
+						<td data-label="Billed" class="width10">
+							<span class="bodyText dataSpace"><ui:outputCurrency value="{!servLine.AllowedFee}"></ui:outputCurrency></span>
+						</td>
+						<td data-label="Paid" class="width10">
+							<span class="bodyText dataSpace"><ui:outputCurrency value="{!servLine.NetFee}"></ui:outputCurrency></span>
+						</td>
+					</tr>
+					
+					<tr>
+						<td colspan="3">
+							<div>
+								<span class="bodyText dataSpace spacing-right boldText">Paid Procedure Code: 
+									
+								</span>
+								<span class="bodyText spacing-right" >{!servLine.PaidProcedureCode}</span>
+								<span class="bodyText dataSpace spacing-right boldText">ICD Codes :
+								</span>
+								<span class="bodyText">{!servLine.ICDPositions}</span>
+							</div>
+						</td>
+					</tr>
+					
+					<tr>
+						<td colspan="8">
+							
+								<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-1" >
+									<aura:iteration items="{!servLine.COBDetail}" var="cobdetail">
+									<div class="slds-size_1-of-2">
+									<dl class="slds-list_horizontal slds-wrap edit-table-general">
+										
+										<dt class="slds-item_label bodyText boldText slds-truncate" title="COBOtherPayer">COB Other Payer:</dt>
+										<dd class="slds-item_detail slds-truncate generalLabelForm" title="COBOtherPayer" data-value="COBOtherPayer">{!cobdetail.OtherCarrierName}</dd>
+
+										<dt class="slds-item_label bodyText boldText slds-truncate" title="PaidAmt">Paid Amount:</dt>
+										<dd class="slds-item_detail slds-truncate generalLabelForm" title="PaidAmt" data-value="PaidAmt1"><ui:outputCurrency value="{!cobdetail.PrimePaid}"></ui:outputCurrency></dd>
+
+										<dt class="slds-item_label bodyText boldText slds-truncate" title="PaymentDate">Payment Date:</dt>
+										<dd class="slds-item_detail slds-truncate generalLabelForm" title="PaymentDate" data-value="PaymentDate"><lightning:formattedDateTime value="{!cobdetail.OtherInsurancePaidDate}" year="numeric" day="numeric" month="numeric" timeZone="GMT"></lightning:formattedDateTime></dd>
+										
+													
+									</dl>			
+									</div>
+									</aura:iteration>
+								</div>
+						</td>
+					</tr>
+					</aura:iteration>
+				</tbody>	
+			</table>
+
+			<aura:if isTrue="{!v.claimDetail.Header.ProcessingPolicies.length > 0}">
+				
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Processing Policies</li>
+                </ul>	
+			</div>	
+
+			<table class="tableClass" aura:id="">
+				<thead>
+					<tr>
+						<th class="width10">
+						 	<span class="headerText inverse">Code</span>
+						</th>
+						<th class="width10">
+						 	<span class="headerText inverse">Description</span>
+						</th>
+					</tr>
+				</thead>	
+				<tbody>
+					<aura:iteration items="{!v.claimDetail.Header.ProcessingPolicies}" var="policy">
+						
+					<tr>
+						<td class="width10"> 
+							<span class="bodyText dataSpace">{!policy.MessageCode}</span>
+						</td>
+						<td class="width10">
+							<span class="bodyText dataSpace">{!policy.Description}</span>
+						</td>
+					</tr>		
+
+					</aura:iteration>
+				</tbody>	
+			</table>
+			</aura:if>
+
+			<div class="slds-size_1-of-1">
+				<ul >
+                    <li class="header4 generalSpacing_top">Attachments</li>
+                </ul>
+			</div>	
+
+
+
+			<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-1" >
+				<dl>
+					<aura:if isTrue="{!v.attachDetails.length > 0 }">
+					<aura:iteration items="{!v.attachDetails}" var="attch">
+					<dd class="slds-item_detail generalLabelForm" ><a class="testscript_claimDetailAttach" data-value="{!attch.AttachmentLink}" data-name="{!attch.OriginalFileName}" data-filetype="{!attch.FileExtension}" onclick="{!c.handleDownloadAttach}">{!attch.OriginalFileName}</a></dd>
+
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName2" data-value="MemberName2">Uploaded on: <ui:outputDateTime value="{!attch.Created}"/></dd>
+					</aura:iteration>
+					</aura:if>
+
+					<aura:if isTrue="{!v.claimDetail.Header.Attachments.length > 0}">
+					<aura:iteration items="{!v.claimDetail.Header.Attachments}" var="attch">
+					<dd class="slds-item_detail generalLabelForm" ><a class="testscript_claimDetailAttach" data-value="{!attch.AttachmentId}" href="{!'../servlet/servlet.FileDownload?file='+attch.AttachmentId}">{!attch.OriginalFileName}</a></dd>
+
+					<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName2" data-value="MemberName2">Uploaded on: <ui:outputDateTime value="{!attch.CreatedDate}"/></dd>
+					</aura:iteration>
+					</aura:if>		
+				</dl>			
+			</div>
+
+		</div>
+		{!v.body}
+		<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_claimDetail'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+	</div>
+</aura:component>

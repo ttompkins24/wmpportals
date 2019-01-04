@@ -1,0 +1,188 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_PreAuth_Search
+Purpose                     : Allows users to search for pre-auths
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             5        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_PreAuth_Search">
+
+    <aura:attribute name="showResults" type="boolean" default="false"/>
+    <aura:attribute name="disableClear" type="boolean" default="true"/>
+
+    <aura:attribute name="authStatusOptions" type="String[]" default="[]"/>
+    <aura:attribute name="locationOptions" type="String[]" default="[]"/>
+    <aura:attribute name="providerOptions" type="String[]" default="[]"/>
+
+    <aura:attribute name="selectedAuthStatus" type="String" default=""/>
+    <aura:attribute name="selectedLocation" type="String" default=""/>
+    <aura:attribute name="selectedProvider" type="String" default=""/>
+
+    <aura:attribute name="locationDisplayedValue" type="String" default=""/> 
+    <aura:attribute name="providerDisplayedValue" type="String" default=""/> 
+    <aura:attribute name="authDisplayedValue" type="String" default=""/>
+
+    <aura:attribute name="authSearchHeader" type="prov_wrap_Claim.ClaimHeaderRequestWrapper" />
+
+    <aura:attribute name="memberNumber" type="String"/>
+    <aura:attribute name="memberLastName" type="String"/>
+    <aura:attribute name="memberFirstName" type="String"/>
+    <aura:attribute name="authNumber" type="String"/>
+    <aura:attribute name="memberDOB" type="Date"/>
+    <aura:attribute name="startSubmittedDate" type="Date"/>
+    <aura:attribute name="endSubmittedDate" type="Date"/>
+
+	<aura:attribute name="preAuthLabel" type="String" description="holds value of preAuth label, differs by portal"/>
+
+    <aura:attribute name="isHomepage" type="Boolean" default="false" description="When the member eligiblity is being run from task starter on homepage"/>
+	<aura:attribute name="defaultTab" type="Boolean" description="When this is true, this is set as a contact's default tab"/>
+	<aura:attribute name="taskStarter" type="String" description="variable stores on task starter to show. values are eligibility, claimSearch, preauthSearch" />
+    
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+    <aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message" default="false" />
+	<aura:attribute name="str_successMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" /> 
+    <!-- change handlers to enable/disable clear all button -->
+    <aura:handler name="change" value="{!v.selectedAuthStatus}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberNumber}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberLastName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberFirstName}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.authNumber}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.memberDOB}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.startSubmittedDate}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.endSubmittedDate}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.selectedLocation}" action="{!c.setDisableClear}"/>
+    <aura:handler name="change" value="{!v.selectedProvider}" action="{!c.setDisableClear}"/>
+
+    <aura:attribute name="showSpinner" type="boolean"/>
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+
+    <div class="{!'slds ' + (v.isHomepage ? '' : 'generalOuterDiv')}">
+        <aura:if isTrue="{!v.isError}">
+            <div  class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.str_errorMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.isSuccess}">
+            <div  class="headerMessageContainer ">
+                <ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+                    <lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+                    <span class="successMessage">{!v.str_successMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <aura:if isTrue="{!v.isHomepage}">
+            <aura:if isTrue="{!!if(v.currentContact.Default_Dashboard_Starter_Task__c == 'preauthSearch', true, false)}">
+                <div class="slds-col slds-size_1-of-1">
+                    <div class=" slds-float_right">
+                        <div class="slds-form-element">
+                            <label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+                                <span class="slds-form-element__label slds-m-bottom--none">Default Tab</span>
+                                <ui:inputCheckbox aura:id="default_tab" class="testScript_default_task"  change="{!c.setDefaultTab}" value="{!v.defaultTab}" />
+                                <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+        </aura:if>
+        <aura:if isTrue="{!v.showResults}">
+            <c:prov_comp_PreAuth_Results showResults="{!v.showResults}" authStatusOptionsDefault="{!v.authStatusOptions}" locationOptionsDefault="{!v.locationOptions}" providerOptionsDefault="{!v.providerOptions}" selectedAuthStatusFromSearch="{!v.selectedAuthStatus}" selectedLocationFromSearch="{!v.selectedLocation}" selectedProviderFromSearch="{!v.selectedProvider}" memberNumber="{!v.memberNumber}" memberLastName="{!v.memberLastName}" memberFirstName="{!v.memberFirstName}" authNumber="{!v.authNumber}" memberDOB="{!v.memberDOB}" startSubmittedDateFromSearch="{!v.startSubmittedDate}" endSubmittedDateFromSearch="{!v.endSubmittedDate}" authSearchHeader="{!v.authSearchHeader}" locationDisplayedValue="{!v.locationDisplayedValue}" providerDisplayedValue="{!v.providerDisplayedValue}" showSpinner="true"/>
+        <aura:set attribute="else">
+            <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1">
+                <div class="slds-col slds-size_1-of-1 ">
+                    <ul class="">
+                        <h1 class="slds-align_absolute-center">{!v.preAuthLabel} Search</h1>
+                        <aura:if isTrue="{!!v.isHomepage}">
+                            <h4 class="slds-align_absolute-center">
+                                <a onclick="{!c.authDraftRedirect}">Search for saved drafts</a>
+                            </h4>
+                        </aura:if>
+                    </ul>
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_large slds-border_bottom slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputSelect label="{!v.preAuthLabel + ' Status'}" class="generalInputForm testScript_authStatusInput" value="{!v.selectedAuthStatus}" labelClass="generalLabelForm">
+                                <aura:iteration items="{!v.authStatusOptions}" var="option">
+                                    <ui:inputSelectOption class="picklistOption" text="{!option}" label="{!option}"/>
+                                </aura:iteration>
+                            </ui:inputSelect>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 "/>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_medium slds-p-bottom_medium">
+                        <div class="slds-col slds-size_1-of-2">
+                            <h3 class="">Member Information</h3>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputDate aura:id="memberDOB" class="generalInputForm testScript_memberDOBInput" value="{!v.memberDOB}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" label="Member D.O.B." labelClass="generalLabelForm"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberNumber" class="generalInputForm testScript_memberNumberInput" value="{!v.memberNumber}" label="Member Number" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                    </div> 
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-border_bottom slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberFirstName" class="generalInputForm testScript_memberFirstNameInput" value="{!v.memberFirstName}" label="Member First Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="memberLastName" class="generalInputForm testScript_memberLastNameInput" value="{!v.memberLastName}" label="Member Last Name" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-top_medium slds-p-bottom_medium">
+                        <div class="slds-col slds-size_1-of-2">
+                            <h3 class="">{!v.preAuthLabel} Information</h3>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large">
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <c:wmp_util_MultiSelect optionList="{!v.locationOptions}" fieldLabel="Office Location" selectedValue="{!v.selectedLocation}" delimiter=";" displayValue="{!v.locationDisplayedValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <c:wmp_util_MultiSelect optionList="{!v.providerOptions}" fieldLabel="Provider" selectedValue="{!v.selectedProvider}" delimiter=";" displayValue="{!v.providerDisplayedValue}"/>
+                        </div>
+                    </div> 
+
+                    <div class="slds-col slds-grid slds-size_3-of-4 slds-align_absolute-center slds-p-bottom_large ">
+                        <div class="slds-col slds-size_1-of-2 slds-grid slds-wrap slds-grid_vertical-align-end">
+	                       	<div  class="generalLabelForm slds-size_1-of-1">Submitted Between</div>
+                            <div class="slds-grid slds-size_1-of-1">
+                                <ui:inputDate aura:id="startSubmittedDate" required="true" class="generalInputForm slds-col testScript_startSubmittedDateInput" value="{!v.startSubmittedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}" />
+                                <h5 class="slds-col slds-align_absolute-center">and</h5>
+                                <ui:inputDate aura:id="endSubmittedDate" class="generalInputForm slds-col testScript_endSubmittedDateInput" value="{!v.endSubmittedDate}" displayDatePicker="true" format="MM/DD/YYYY" blur="{!c.fixDate}"/>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2 ">
+                            <ui:inputText aura:id="authNumber" class="generalInputForm testScript_authNumberInput" value="{!v.authNumber}" label="{!v.preAuthLabel + ' Number'}" labelClass="generalLabelForm" blur="{!c.cleanUpInput}"/>
+                        </div>
+                    </div>
+
+                    <div class="slds-col slds-grid slds-size_1-of-1 slds-align_absolute-center ">
+                        <button class="generalButton inverse slds-m-right_large testScript_clearSearchButton" onclick="{!c.clearSearchFields}" disabled="{!v.disableClear}">Clear all</button>
+                        <button class="generalButton testScript_searchButton" onclick="{!c.search}">Search</button>
+                    </div> 
+
+                </div>
+            </div>
+        </aura:set>
+        </aura:if>
+    </div>
+
+</aura:component>

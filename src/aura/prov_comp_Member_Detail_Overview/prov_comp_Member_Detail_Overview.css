@@ -1,0 +1,14 @@
+.THIS.memberOverviewContainer.lighter{
+    margin-top: 44px;
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.memberOverviewContainer .slds-spinner:before, 
+.THIS.memberOverviewContainer .slds-spinner:after, 
+.THIS.memberOverviewContainer .slds-spinner__dot-a:before, 
+.THIS.memberOverviewContainer .slds-spinner__dot-b:before, 
+.THIS.memberOverviewContainer .slds-spinner__dot-a:after, 
+.THIS.memberOverviewContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}

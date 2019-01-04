@@ -1,0 +1,142 @@
+<aura:component controller="prov_ctrl_Member_Detail_History" 
+	extends="c:prov_comp_Provider_Common" 
+	access="global">
+	
+	<!-- PAGINATION VARIABLES -->
+	<aura:attribute name="pageNum"				type="Integer"	description="the page number of the user is on"							default="1"/>
+	<aura:attribute name="totalResults"			type="Integer"	description="total number records that were returned" 					default="0"/>
+	<aura:attribute name="totalPages"			type="Integer"	description="total number of pages"					 					default="1"/>
+	<aura:attribute name="fieldNameSorted"		type="String"	description="field api name of the field that is being sorted"			default="ProcedureDate__c"/>
+	<aura:attribute name="sortDirection"		type="String"	description="sort direction for the query. Possible values: ASC, DESC"	default="DESC"/>
+	
+
+
+	<aura:attribute access="private" name="services" type="List" />
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+	<aura:attribute access="public" name="plans" type="List" />
+
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+	<div class="memberHistoryContainer">
+		<div class="slds-size_1-of-1 slds-grid">
+			<div class="slds-col slds-size_1-of-2">
+				<h3>Service History</h3>
+			</div>
+			<aura:if isTrue="{!v.services.length > 0}">
+				<div class="slds-float_right">
+					<span class=" dataSpace spacing"><a class="bodyLink noDecoration printSpacing printIcon" onclick="{!c.printList}">Print</a></span>
+				</div>
+			</aura:if>
+		</div>
+
+		<aura:if isTrue="{!v.services &amp;&amp; v.services.length > 0}">
+			<div class="slds resultsTable slds-m-bottom_medium slds-m-bottom_medium">
+				<table class="tableClass" id="historyTable">
+					<thead>
+						<tr>
+							<th class="width15 sortable sortDescend headerText" onclick="{!c.sortTable}" data-col="0"  data-fieldname="ProcedureDate__c">
+						 		<span class="bodyText headerText">Service Date</span>
+						 	</th>
+						 	<th class="width15 sortable notSorted headerText" onclick="{!c.sortTable}" data-col="1" data-fieldname="ProcedureCode__c">
+						 		<span class="bodyText">Procedure Code</span>
+						 	</th>
+						 	<th class="width15 headerText sortable notSorted" onclick="{!c.sortTable}" data-col="2" data-fieldname="ProcedureCodeDescription__c">
+						 		<span class="bodyText">Procedure Code Description</span>
+						 	</th>
+						 	<th class="width15 headerText sortable notSorted" onclick="{!c.sortTable}" data-col="3" data-fieldname="ToothSurfaces__c">
+						 		<span class="bodyText">Tooth/Quad/Arch/Surface</span>
+						 	</th>
+						 	<th class="width15 headerText sortable notSorted" onclick="{!c.sortTable}" data-col="4" data-fieldname="TreatmentLocationDescription__c">
+						 		<span class="bodyText">Place of Service</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<aura:iteration items="{!v.services}" var="service">
+							<tr>
+								<td data-label="Procedure Date" class="slds-is-sortable width15" >
+			        				<span class="bodyText dataSpace"><ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!service.ProcedureDate__c}"/></span>
+			      				</td>
+			      				<td data-label="Procedure Code" class="slds-is-sortable width15"   >
+			      					<span class="bodyText dataSpace" >
+			      						{!service.ProcedureCode__c}
+			      					</span>
+			      				</td>
+			      				<td data-label="Procedure Code Description" class="slds-is-sortable width15" ><span class="bodyText dataSpace" >{!service.ProcedureCodeDescription__c}</span></td>
+			      				<td data-label="Tooth/Quad/Arch/Surface" class="slds-is-sortable width15 bodyText dataSpace" >
+									<aura:if isTrue="{!service.ToothCode__c}">
+										{!service.ToothCode__c}/
+			      						<aura:set attribute="else">-/</aura:set>
+									</aura:if>
+
+									<aura:if isTrue="{!service.OralCavityQuadCode__c}">
+										{!service.OralCavityQuadCode__c}/
+			      						<aura:set attribute="else">-/</aura:set>
+									</aura:if>
+
+									<aura:if isTrue="{!service.OralCavityArchCode__c}">
+										{!service.OralCavityArchCode__c}/
+			      						<aura:set attribute="else">-/</aura:set>
+									</aura:if>
+
+									<aura:if isTrue="{!service.ToothSurfaces__c}">
+										{!service.ToothSurfaces__c}
+			      						<aura:set attribute="else">-</aura:set>
+									</aura:if>
+
+			      				</td>
+							    <td data-label="Place of Service" class="width15 slds-is-sortable" ><span class="bodyText dataSpace" >{!service.TreatmentLocationDescription__c}</span></td>
+							</tr>
+						</aura:iteration>
+					</tbody>
+				</table>
+			</div>
+
+			<div class="slds-col slds-size_1-of-1 footer ">
+				<div class="col paginate">
+					<div class="desktop">
+						<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+						<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+						<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+						<a class="{!'spacing  bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+					</div>
+					<div class="mobile">
+						<table>
+							<tr>
+								<td>
+									<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+								</td>
+								<td>
+									<span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+								</td>
+								<td>
+									&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+				
+
+			<aura:set attribute="else">
+				<h5>{!$Label.c.Member_No_History}</h5>
+			</aura:set>
+		</aura:if>
+
+
+		<!-- SAVING BACKDROP -->
+	    <div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-show">
+	        <div class="slds-spinner_container">
+	            <div role="status" class="slds-spinner slds-spinner--medium">
+	                <span class="slds-assistive-text">Loading</span>
+	                <div class="slds-spinner__dot-a"></div>
+	                <div class="slds-spinner__dot-b"></div>
+	            </div>
+	        </div>    
+	    </div> 
+
+	</div>
+</aura:component>

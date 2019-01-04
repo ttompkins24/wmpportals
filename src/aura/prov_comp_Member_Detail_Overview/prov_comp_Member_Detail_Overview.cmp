@@ -1,0 +1,198 @@
+<aura:component controller="prov_ctrl_Member_Detail_Overview" 
+	extends="c:prov_comp_Provider_Common" 
+	access="global">
+
+	<aura:attribute access="public" name="memberProfileGUID" type="String" />
+	<aura:attribute access="public" name="plans" type="List" />
+	<aura:attribute access="public" name="coverages" type="List" />
+
+	<aura:attribute access="private" name="otherCoverage" type="List" />
+	<aura:attribute access="private" name="benefits" type="List" />
+	<aura:attribute access="private" name="primaryDentist" type="Object" />
+	<aura:attribute access="private" name="pcdProvider" type="Object" />
+	<aura:attribute access="private" name="pcdServiceLocation" type="Object" />
+	<aura:attribute access="private" name="selectedPlan" type="Object" />
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+	<div class="memberOverviewContainer">
+		<aura:if isTrue="{!v.isLoading == false}">
+		<aura:if isTrue="{!v.plans &amp;&amp; v.plans.length > 1}">
+			
+			<div class="slds-form-element slds-m-bottom_medium">
+		  		<div class="slds-form-element__control">
+
+	      			<ui:inputSelect aura:id="planselect" label="Select Plan" labelClass="generalLabelForm" class="generalInputForm" change="{!c.changePlan}">
+					    <aura:iteration items="{!v.plans}" var="plan">
+				            <ui:inputSelectOption class="picklistOption" value="{!plan.coverage.MemberCoverageGuid__c == v.selectedPlan.coverage.MemberCoverageGuid__c}" text="{!plan.coverage.MemberCoverageGuid__c}" label="{!plan.Name}"/>
+				        </aura:iteration>
+					</ui:inputSelect>
+		  		</div>
+			</div>
+		</aura:if>
+
+		<aura:if isTrue="{!v.primaryDentist}">
+			<h3 class="slds-m-bottom_medium">Primary Care Provider</h3>
+			<div class="slds-grid slds-m-bottom_medium">
+				<div class="slds-col slds-size_1-of-1">
+					<dl class="slds-list_horizontal slds-wrap">
+						<dt class="slds-item_label bodyText boldText slds-truncate" title="Provider Name">Provider:</dt>
+						<dd class="slds-item_detail slds-truncate" title="Provider Name">{!v.pcdProvider.Name}</dd>
+
+						<aura:if isTrue="{!v.pcdServiceLocation}">
+							<dt class="slds-item_label bodyText boldText slds-truncate" title="Provider Office">Service Location Name:</dt>
+							<dd class="slds-item_detail slds-truncate" title="Provider Office">{!v.pcdServiceLocation.Name}</dd>
+
+							<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Number">Service Location Address:</dt>
+							<dd class="slds-item_detail slds-truncate" title="Member Id Number">
+								{!v.pcdServiceLocation.BillingStreet}, {!v.pcdServiceLocation.BillingCity}, {!v.pcdServiceLocation.BillingState} <br/> {!v.pcdServiceLocation.BillingPostalCode}
+							</dd>
+						</aura:if>
+
+						<dt class="slds-item_label bodyText boldText slds-truncate" title="Member Network">Network:</dt>
+						<dd class="slds-item_detail slds-truncate" title="Member Network">{!v.selectedPlan.network.Network__r.Name}</dd>
+
+						<dt class="slds-item_label bodyText boldText slds-truncate" title="Effective Date">Provider Effective Date:</dt>
+						<dd class="slds-item_detail slds-truncate" title="Effective Date">
+							<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.primaryDentist.EffectiveDate__c}"/>
+						</dd>
+						<dt class="slds-item_label bodyText boldText slds-truncate" title="Effective Date">Provider Termination Date:</dt>
+						<dd class="slds-item_detail slds-truncate" title="Termination Date">
+							<aura:if isTrue="{!v.primaryDentist.TerminationDate__c}">
+								<ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!v.primaryDentist.TerminationDate__c}"/>
+								<aura:set attribute="else">-</aura:set>
+							</aura:if>
+						</dd>
+					</dl>
+				</div>
+			</div>
+		</aura:if>
+
+		<h3>Other Coverage</h3>
+
+		<aura:if isTrue="{!v.otherCoverage &amp;&amp; v.otherCoverage.length > 0}">
+			<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 slds-m-bottom_medium">
+				<table class="tableClass" id="other">
+					<thead>
+						 <tr >
+						 	<th class="width15 sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="other" id="1">
+						 		<span class="bodyText">Insurer Name</span>
+						 	</th>
+						 	<th class="width15 sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="other" id="2">
+						 		<span class="bodyText">Policy Number</span>
+						 	</th>
+						 	<th class="width15 notSorted headerText" data-col="2" onclick="{!c.sortTable}" data-tableid="other" id="3">
+						 		<span class="bodyText">Effective Date</span>
+						 	</th>
+						 	<th class="width15 notSorted headerText" data-col="3" onclick="{!c.sortTable}" data-tableid="other" id="4">
+						 		<span class="bodyText">End Date</span>
+						 	</th>
+						 	<th class="width15 notSorted headerText" data-col="4" onclick="{!c.sortTable}" data-tableid="other" id="5">
+						 		<span class="bodyText">Payment Order</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<aura:iteration items="{!v.otherCoverage}" var="coverage">
+							<tr>
+								<td data-label="Insurer Name" class="slds-is-sortable width15" data-value="{!coverage.InsurerName__c}" header="1">
+			        				<span class="bodyText dataSpace">{!coverage.InsurerName__c}</span>
+			      				</td>
+			      				<td data-label="Policy Number" class="slds-is-sortable width15" data-value="{!coverage.PolicyNumber__c}"><span class="bodyText dataSpace" header="2">{!coverage.PolicyNumber__c}</span></td>
+			      				<td data-label="Effective Date" class="slds-is-sortable width15" data-value="{!coverage.EffectiveDate__c}" header="3">
+			      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!coverage.EffectiveDate__c}"/>
+			      				</td>
+			      				<td data-label="End Date" class="slds-is-sortable width15" data-value="{!coverage.TerminationDate__c}" header="4">
+			      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!coverage.TerminationDate__c}"/>
+			      				</td>
+							    <td data-label="Payment Order" class="width15" data-value="{!coverage.InsurerPaymentOrder__c}"><span class="bodyText dataSpace" header="5">{!coverage.InsurerPaymentOrder__c}</span></td>
+							</tr>
+						</aura:iteration>
+					</tbody>
+				</table>
+			</div>
+
+			<aura:set attribute="else">
+				<h5>{!$Label.c.Member_No_Coverage}</h5>
+			</aura:set>
+		</aura:if>
+
+		<aura:if isTrue="{!v.benefits &amp;&amp; v.benefits.length > 0}">
+			<h3>Benefit Maximums and Deductibles</h3>
+
+		
+			<div class="slds resultsTable slds-m-bottom_medium">
+				<table class="tableClass" id="benefits">
+					<thead>
+						 <tr >
+						 	<th class="width15 sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="benefits">
+						 		<span class="bodyText" >Type</span>
+						 	</th>
+						 	<th class="width15 sortable notSorted headerText" onclick="{!c.sortTable}" data-col="1" data-tableid="benefits">
+						 		<span class="bodyText">Network</span>
+						 	</th>
+						 	<th class="width15 notSorted headerText" onclick="{!c.sortTable}" data-col="2" data-tableid="benefits">
+						 		<span class="bodyText">Benefit Period</span>
+						 	</th>
+						 	<th class="width15 notSorted headerText" onclick="{!c.sortTable}" data-col="3" data-tableid="benefits">
+						 		<span class="bodyText">Period</span>
+						 	</th>
+						 	<th class="width10 notSorted  headerText" onclick="{!c.sortTable}" data-col="4" data-tableid="benefits">
+						 		<span class="bodyText ">Limit</span>
+						 	</th>
+						 	<th class="width10 notSorted  headerText" onclick="{!c.sortTable}" data-col="5" data-tableid="benefits">
+						 		<span class="bodyText">Applied</span>
+						 	</th>
+						 	<th class="width15 notSorted  headerText" onclick="{!c.sortTable}" data-col="6" data-tableid="benefits">
+						 		<span class="bodyText">Remaining</span>
+						 	</th>
+						 </tr>
+					</thead>
+
+					<tbody>
+						<aura:iteration items="{!v.benefits}" var="benefit">
+							<tr>
+								<td data-label="Type" class="slds-is-sortable width15" data-value="{!benefit.EntityTypeName__c}">
+			        				<span class="bodyText dataSpace">{!benefit.EntityTypeName__c}</span>
+			      				</td>
+
+			      				<td data-label="Network" class="slds-is-sortable width15" data-value="{!benefit.NetworkGroup__c}"><span class="bodyText dataSpace" >{!benefit.NetworkGroup__c}</span></td>
+
+			      				<td data-label="Period" class="slds-is-sortable width15" data-value="{!benefit.BenefitPeriod__c}">
+			      					<span class="bodyText dataSpace" >{!benefit.BenefitPeriod__c}</span>
+			      				</td>
+			      				<td data-label="Period" class="slds-is-sortable width15 bodyText dataSpace" data-value="{!benefit.EffectiveDate__c}">
+			      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!benefit.EffectiveDate__c}"/> to
+			      					<ui:outputDate class="bodyText dataSpace" format="MM/DD/YYYY" value="{!benefit.TerminationDate__c}"/>
+			      				</td>
+
+			      				<td data-label="Limit" class="slds-is-sortable width10" data-value="{!benefit.Limit__c}"><span class="bodyText dataSpace" >{!benefit.Limit__c}</span></td>
+
+							    <td data-label="Applied" class="width10" data-value="{!benefit.Applied__c}"><span class="bodyText dataSpace" >{!benefit.Applied__c}</span></td>
+
+							    <td data-label="Remaining" class="width15" data-value="{!benefit.Remaining__c}"><span class="bodyText dataSpace" >{!benefit.Remaining__c}</span></td>
+							</tr>
+						</aura:iteration>
+					</tbody>
+				</table>
+			</div>
+			</aura:if>
+			<aura:set attribute="else">
+				<img src="/img/loading32.gif"/>
+			</aura:set>
+		</aura:if>
+
+		<!-- SAVING BACKDROP -->
+	    <div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-hide">
+	        <div class="slds-spinner_container">
+	            <div role="status" class="slds-spinner slds-spinner--medium">
+	                <span class="slds-assistive-text">Loading</span>
+	                <div class="slds-spinner__dot-a"></div>
+	                <div class="slds-spinner__dot-b"></div>
+	            </div>
+	        </div>    
+	    </div> 
+	</div>
+</aura:component>

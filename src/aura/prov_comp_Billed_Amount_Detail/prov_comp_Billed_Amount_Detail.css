@@ -1,0 +1,70 @@
+.THIS.billedAmountContainer .business-entity {
+    background: rgb(244, 246, 249) !important; 
+}
+
+.THIS.billedAmountContainer .has-error {
+    /*background-color: #f00 !important; */
+    border-color: #C22121 !important; 
+}
+
+/*.THIS.billedAmountContainer  {
+    margin-top: 72px !important;
+}*/
+
+.THIS.billedAmountContainer .billed-button {
+    margin-right: 12px !important;
+}
+
+.THIS.billedAmountContainer .verticalSpacing{
+	padding-top:20px;
+	}
+.THIS.billedAmountContainer .hoverChange:hover .addIcon svg{
+	fill: #3A445C;
+}
+.THIS.billedAmountContainer .addIcon svg{
+	fill : #0277BD;
+	padding-right:5px;
+}
+.THIS.billedAmountContainer .generalErrorMessage_field {
+	color: #C22121;
+	padding:3px;
+}
+.THIS.billedAmountContainer .generalSuccessIcon svg{
+	fill: #008355;
+	padding-right:5px;
+}
+
+.THIS.billedAmountContainer .generalErrorIcon svg{
+	fill: #C22121;
+	padding-right:5px;
+}
+.THIS.billedAmountContainer .errorText {
+    color: #C22121;
+}
+
+
+.THIS.billedAmountContainer .slds-icon-action-close {
+    background-color: transparent !important;
+}
+.THIS.billedAmountContainer .slds-icon {
+    /* fill: #ccc !important; */
+}
+
+.THIS.billedAmountContainer .lighter{
+    margin-top: 44px; 
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.billedAmountContainer .slds-spinner:before, 
+.THIS.billedAmountContainer .slds-spinner:after, 
+.THIS.billedAmountContainer .slds-spinner__dot-a:before, 
+.THIS.billedAmountContainer .slds-spinner__dot-b:before, 
+.THIS.billedAmountContainer .slds-spinner__dot-a:after, 
+.THIS.billedAmountContainer .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}
+
+.THIS.billedAmountContainer .hideLabel label{
+	display: none;
+}

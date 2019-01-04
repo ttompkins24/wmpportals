@@ -1,0 +1,136 @@
+<apex:page showHeader="false" sidebar="false" controller="prov_ctrl_Claim_Search">
+	
+	<script type="text/javascript">
+		var correctOrigin = "{!PortalURL}";
+
+		window.addEventListener("message", function(event) {
+			//console.log('event ' + JSON.stringify(event));
+			 //console.log('vf page event origin ' + event.origin);
+			 //console.log('vf page correct origin ' + correctOrigin);
+
+			if(event.origin != correctOrigin){
+				//reject message
+				console.log('rejected message for incorrect origin');
+				return;
+			}
+
+			//get header and business from event data
+			var header = event.data.header;
+			var businessId = event.data.businessId;
+
+			// console.log('header ' + header);
+			// console.log('businessId ' + businessId);
+			//call function to pass data to apex controller
+			getClaims(header, businessId);
+
+		}, false);
+
+		//function for REST call to get Claims List
+		function getClaims(header, business) {
+			//console.log('in getClaims');
+			
+			//initialize fake results to avoid callout
+			var resultTemp = {};
+			resultTemp['SearchResult'] = [];
+			resultTemp['QueryTotalTimeMs'] = '300';
+			resultTemp['TotalCount'] =0;
+			//call next method to avoid continuation callout
+			postProcessing(JSON.stringify(resultTemp), header, business);
+			return;
+			
+			//start the cotniuation callout
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Search.searchClaimsRemote}',
+				header, business,
+				function(result, event){
+					if(event.status){
+
+						if(result == null){
+							// console.log('time out error');
+	                        var errorList= {
+	                            error: {}
+	                            };
+	                        // console.log('error ' + JSON.stringify(errorList));
+	                        sendToComponent(errorList);
+						} else {					
+							//send back for post processing
+							postProcessing(result, header, business);		
+						}
+					} else if(event.type === 'exception'){
+						//handle errors
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var errorList= {
+                            error: {}
+                            };
+                        // console.log('error ' + JSON.stringify(errorList));
+                        sendToComponent(errorList);
+					} else {
+						console.log('message ' + event.message);
+					}
+				}, {buffer: false, escape: false, timeout:100000}
+			);
+		}
+
+		//function for business logic executing on claims list
+		function postProcessing(results, header, business) {
+			// console.log('in postProcessing');
+			Visualforce.remoting.Manager.invokeAction(
+				'{!$RemoteAction.prov_ctrl_Claim_Search.postProcess}', 
+				results, header, business,
+				function(result, event){
+					if(event.status){
+
+						if(result == null){
+							// console.log('time out error');
+	                        var errorList= {
+	                            error: {}
+	                            };
+	                        // console.log('error ' + JSON.stringify(errorList));
+	                        sendToComponent(errorList);
+						} else {			
+							// console.log('result ' + result);		
+							//send back for post processing
+							//holds the results object
+							var resultObj = JSON.parse(result);
+				
+					        var message = {type:"claims", result:resultObj};
+	                        sendToComponent(message);	
+						}
+					} else if(event.type === 'exception'){
+						//handle errors
+						console.log('exception message ' + event.message);
+						console.log('exception where ' + event.where);
+                        var errorList= {
+                            error: {}
+                            };
+                        // console.log('error ' + JSON.stringify(errorList));
+                        sendToComponent(errorList);
+					} else {
+						console.log('message ' + event.message);
+					}
+				}, {buffer: false, escape: false, timeout:100000}
+			);
+		}
+
+
+		function onLoadComplete(){
+			 console.log('claims vf page load complete');
+	        var message = {type:"load", result:"pageLoaded"};
+
+			sendToComponent(message);
+		}
+
+		function sendToComponent(resultStr) {
+			//https://dev1-greatdentalplans-community.cs13.force.com
+			parent.postMessage(resultStr, correctOrigin);
+
+		}
+
+	</script>
+
+	<body onload="onLoadComplete();">	</body>
+
+
+
+</apex:page>

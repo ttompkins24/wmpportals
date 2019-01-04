@@ -1,0 +1,53 @@
+<aura:component controller="wmp_ctrl_AddMemberPlan" access="global"> 
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+    <aura:attribute name="step" type="String" />
+    <aura:attribute name="members" type="mock_Member__c[]" description="all of the members that the user has verified" />
+    <aura:registerEvent name="redirect_event" type="c:wmp_event_Redirect" />
+    <aura:attribute name="nameAdded" 
+    				type="String"
+    				description="the person's name that was successfully added"
+   	/>
+   	<aura:attribute name="successfulStep"
+   					type="String"
+   					description="which successful add a plan happened, either self or dependent"
+   	/>
+    				
+    <div class="slds slds-size_1-of-1">
+		<div class="addSuccessPlanContainer">
+			<div class="addMemberWrapper slds-size_1-of-1 slds-medium-size_2-of-3 slds-large-size_1-of-2">
+				<h1 class="title">
+					{!v.nameAdded}{!$Label.c.Added}
+				</h1>
+				<div class="elementWrap slds-col slds-size_1-of-1 intro benefits">
+					{!$Label.c.Manage_benefits}
+				</div>
+				<div class="elementWrap slds-col slds-size_1-of-1 bodyText benefitsName">
+					<ul>
+					<aura:iteration items="{!v.members}" var="member">
+						<li>{!member.FirstName__c}&nbsp;{!member.LastName__c}</li>
+					</aura:iteration>
+					</ul>
+				</div>
+				<aura:if isTrue="{!v.successfulStep == 'dependent'}">
+					<h5 class="elementWrap subText slds-col slds-size_1-of-1 ">
+						{!$Label.c.Would_you_like_to_add_another_plan}
+					</h5>
+					<div class="elementWrap slds-col slds-size_1-of-1 addDependentButton">
+						<a class="generalButton" onclick="{!c.addDependent}">{!$Label.c.Add_another_dependent}</a>
+					</div>
+					<div class="elementWrap slds-col slds-size_1-of-1 overviewClass">
+						<a onclick="{!c.redirectHome}" class="headerLink">{!$Label.c.No_Thanks}</a>
+					</div>
+					
+					<aura:set attribute="else">
+						<div class="elementWrap slds-col slds-size_1-of-1 overviewClass">
+							<a onclick="{!c.redirectHome}" class="headerLink">{!$Label.c.OK}</a>
+						</div>
+					</aura:set>
+				</aura:if>
+			</div><!-- END OF addMemberWrapper -->
+		</div>
+	</div>
+</aura:component>

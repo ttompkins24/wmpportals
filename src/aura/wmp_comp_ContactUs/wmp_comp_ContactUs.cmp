@@ -1,0 +1,90 @@
+<aura:component controller="wmp_util_Cache" implements="forceCommunity:availableForAllPageTypes" access="global"> 
+
+<aura:attribute name="openRequests" type="Integer" description="number of open cases" default="0"/>
+<aura:attribute name="phoneTitle" type="String" /> 
+<aura:attribute name="dataCategory" type="String" /> 
+<aura:attribute name="chatId" type="String" description="the chat id for live agent chat" />
+
+<aura:attribute name="portalConfig" type="Portal_Configuration__mdt" description="the portalconfig determines what faqs are displayed on the page"/>
+<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+
+<div class="slds">
+	<div class="contactUsContainer slds-grid slds-wrap" >
+		<aura:if isTrue="{!v.openRequests > 0}">
+			<div class=" portalNotification outsideWrapper slds-grid slds-wrap slds-size_1-of-1 ">
+				<div class="slds-col slds-p-around--medium slds-size_1-of-1 bodyText">
+					{!v.openRequests} - {!$Label.c.Open_request_message}
+					<a class="boldText slds-p-left_small" data-loc="help-requests" onclick="{!c.redirectUrl}">{!$Label.c.View_support_request}</a>
+				</div>
+			</div>
+		</aura:if>
+		<h1 class="header slds-col slds-size_1-of-1">
+			{!$Label.c.Contact_Us}
+		</h1>
+		<aura:if isTrue="{!v.portalConfig.Live_Chat_Functionality__c}">
+			<div class="chatContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+				<div class="chatContainerInner slds-grid slds-wrap">
+					<h3 class="slds-col slds-size_1-of-1 chatHeader">
+						{!$Label.c.Chat_with_us}
+					</h3>
+					
+					<div class="slds-col slds-size_1-of-1 intro chatDescription">
+						{!$Label.c.Chat_with_us_description}
+					</div>
+					
+					
+					<a onclick="{!c.launchLiveAgent}" class="slds-m-top_medium generalButton ">
+						{!$Label.c.Open_live_chat}
+					</a>
+				</div>
+			</div>
+		</aura:if>		
+		<div class="callContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+			<div class="callContainerInner slds-grid slds-wrap">
+				<h3 class="slds-col slds-size_1-of-1 callHeader">
+					{!$Label.c.Call_Us}
+				</h3>
+				
+				<div class=" slds-col slds-size_1-of-1 intro callDescription">
+					{!$Label.c.Call_us_description}
+				</div>
+				
+				<a  class="generalButton callButton" onclick="{!c.redirectToPhone}">
+					{!$Label.c.Call_Us_button}
+				</a>
+			</div>
+		</div>
+		
+		<div class="caseContainerOuter slds-col slds-size_1-of-1 ">
+			<div class="caseContainerInner slds-grid slds-wrap">
+				<h1 class="slds-col slds-size_1-of-1 caseHeader">
+					{!$Label.c.Send_us_a_help_request}
+				</h1>
+				
+				<div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-5 slds-large-size_3-of-5 caseDescription">
+					<ul>
+						<li class="intro">{!$Label.c.Help_Request_Description_1}</li>
+						<li class="intro">{!$Label.c.Help_Request_Description_2}</li>
+						<li class="intro">{!$Label.c.Help_Request_Description_3}</li>
+					</ul>
+				</div>
+				
+				<div class="caseSection  slds-grid slds-wrap slds-col slds-size_1-of-1 slds-medium-size_2-of-5 slds-large-size_2-of-5">
+					<div class=" slds-col slds-size_1-of-1 caseDiv">
+					<a class="generalButton newCaseButton" data-loc="file-case" onclick="{!c.redirectUrl}">
+						{!$Label.c.Create_help_request}
+					</a>
+					</div>
+					<div class="slds-col slds-size_1-of-1 caseDiv">
+					<a class="generalButton inverse viewCaseButton " data-loc="help-requests" onclick="{!c.redirectUrl}" ><!-- onclick="{!c.redirectUrl}" -->
+						{!$Label.c.View_past_requests}
+					</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+		
+</div>	
+</aura:component>

@@ -1,0 +1,130 @@
+.THIS .fadResultDentist, .THIS .fadResultOffice{
+		padding: 20px;
+		display:flow-root;
+		display:grid;
+		margin-top:20px;
+		clear:both;
+		width:100%;
+	}
+	 .THIS .fadResultOffice{
+		 padding: 30px 15px 10px 15px;
+	 }
+	
+	.THIS .fadResultDentist .dentistInfo .dentistSubInfo ,
+	.THIS .fadResultOffice .officeInfo .officeSubInfo {
+		display:inline-grid;
+		display:grid;
+	}
+	
+	.THIS .fadResultDentist .dentistInfo .dentistSubInfo .specialty,
+	.THIS .fadResultDentist .dentistInfo .dentistSubInfo .languages{
+		display:inline-flex;
+	}
+	
+	.THIS .fadResultDentist .dentistHeader .dentistImage, .THIS .fadResultOffice .officeHeader .officeImage{
+		margin-top:6px;
+	}
+	
+	.THIS .fadResultDentist .dentistHeader, .THIS .fadResultOffice .officeHeader{
+		display:block;
+	}
+	
+	.THIS .fadResultDentist .dentistInfo, .THIS .fadResultOffice .officeInfo{
+		padding-left:10px;
+		max-width:46%;
+		padding-top:5px;
+	}
+	
+	
+	.THIS .fadResultDentist #distanceId, .THIS .fadResultOffice #distanceId{
+		padding-left:5px;
+	}
+	
+	
+	.THIS .fadResultDentist .infoButton, .THIS .fadResultOffice .infoButton{
+		float:right;
+		margin-right:20px;
+		margin-top:10px;
+	}
+	.THIS .fadResultDentist .infoButton a:hover, .THIS .fadResultOffice .infoButton a:hover{
+		text-decoration:none;
+	}
+	
+	.THIS .fadResultDentist .dentistBody, .THIS .fadResultOffice .officeBody{
+		padding-left:40px;
+	}
+	
+	.THIS .fadResultDentist .dentistBody #officeLocationId, .THIS .fadResultOffice .officeBody #dentistAtOfficeId{
+		margin-top:10px;
+	}
+	
+	.THIS .fadResultDentist .officeWrapper, .THIS .fadResultOffice .dentistWrapper{
+		background-color: #f6faff;
+  		border: solid 1px #f1f5fb;
+  		border-radius:6px;
+  		/*margin-top:3%;*/
+  		padding:10px;
+  		/*max-width:42%;*/
+	}
+	
+	.THIS .fadResultDentist .showHideSection, .THIS .fadResultOffice .showHideSection{
+		text-align:center;
+		margin-top:20px;
+	}
+	
+	.THIS .fadResultDentist .showHideSection a, .THIS .fadResultOffice .showHideSection a{
+		text-decoration:none;
+	}
+	
+	.THIS .fadResultDentist .dentistBody #moreOfficeSectionId, .THIS .fadResultDentist .dentistBody #hideOfficeDiv,
+	.THIS .fadResultDentist .dentistBody #showOfficeDiv,
+	.THIS .fadResultOffice .officeBody #moreDentistsSectionId, .THIS .fadResultOffice .officeBody #hideDentistsDiv,
+	.THIS .fadResultOffice .officeBody #showDentistsDiv{
+		display:none;
+	}
+	
+	.THIS .fadResultDentist .dentistBody .fadChildDetail, .THIS .fadResultOffice .officeBody .fadChildDetail{
+		padding-right:20px;
+	}
+	.THIS .fadResultDentist .dentistBody #moreOfficeSectionId.showDiv, .THIS .fadResultOffice .officeBody #moreDentistsSectionId.showDiv{
+		display:-webkit-inline-box ;
+		display:inline-flex ;
+	}
+	.THIS .fadResultDentist .dentistBody #hideOfficeDiv.showDiv, .THIS .fadResultDentist .dentistBody #showOfficeDiv.showDiv,
+	.THIS .fadResultOffice .officeBody #hideDentistsDiv.showDiv, .THIS .fadResultOffice .officeBody #showDentistsDiv.showDiv{
+		display:block;
+	}
+	
+	.THIS .fadResultDentist .dentistBody #hideOfficeDiv a, .THIS .fadResultDentist .dentistBody #showOfficeDiv a ,
+	.THIS .fadResultOffice .officeBody #hideDentistsDiv a, .THIS .fadResultOffice .officeBody #showDentistsDiv a {
+		text-decoration:none;
+	}
+	
+	.THIS .fadResultDentist .dentistBody .viewInfoOffice, .THIS .fadResultOffice .officeBody .viewInfoDentist{
+		text-decoration:none;
+		/* font-size:16px; */
+	}
+	
+	.THIS .fadResultOffice .setMainDentist{
+		padding:10px 0px;
+		margin:10px 0px;
+	}
+	.THIS .fadResultDentist .normalSpacing, .THIS .fadResultOffice .normalSpacing{
+		margin-top:5px;
+	}
+	
+	.THIS .fadResultDentist #showOfficeDiv.endIcon a:after, .THIS .fadResultOffice #showDentistsDiv.endIcon a:after {
+		font-family: 'Glyphicons Halflings';
+	    content: "\e114";
+	    font-size: initial;
+	    padding-left: 10px;
+	    margin-top: 3px;
+	} 
+	
+	.THIS .fadResultDentist #hideOfficeDiv.endIcon a:after, .THIS .fadResultOffice #hideDentistsDiv.endIcon a:after {
+		font-family: 'Glyphicons Halflings';
+	    content: "\e113";
+	    font-size: initial;
+	    padding-left: 10px;
+	    margin-top: 3px;
+	}

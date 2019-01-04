@@ -1,0 +1,147 @@
+<!--
+/*******************************************************************************************************
+Name 						: wmp_comp_Document
+Purpose						: Displays the documents for a member
+Created on					: November 2017
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			November 2017			West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************/
+-->
+<aura:component controller="wmp_ctrl_Document" implements="forceCommunity:availableForAllPageTypes" access="global">
+	
+	<aura:attribute name="currentMember" 
+    				type="mock_Member__c" />
+	
+	<aura:attribute name="currentMemberPlans" 
+    				type="object[]" 
+    				/>
+
+    <aura:attribute name="currentMemberPlan" type="mock_MemberCoverage__c" />
+    
+    <aura:attribute name="eobL" type="String" description="holds portal specific label for explanation of benefits"/>
+    <aura:attribute name="eobDetailL" type="String" description="holds portal specific label for explanation of benefits"/>
+
+    <aura:attribute name="eobList" type="wmp_EOBRequestDetail[]" description="contains the eob object "/>
+
+	<aura:attribute name="chosen_memCov" type="String" />
+	
+    <aura:attribute name="bln_isError" type="Boolean" />
+    <aura:attribute name="str_errorMsg" type="String" description="Contains the error message to display" />
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+
+	<!-- <aura:attribute name="pdfContainer" type="Aura.Component[]"/> -->
+
+
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+	<aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+	<div class="slds">
+		<aura:if isTrue="{!v.Spinner}">
+			<div class="spinnerContainer" >
+		        <lightning:spinner variant="brand" size="large" alternativeText="{!$Label.c.loading}"   class="spinnerClass" aura:id="spinner"/>
+		    </div>	 
+	 	</aura:if>
+
+				<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="generalErrorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="message" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if> 			
+
+		<div class="documentContainer" aura:id="documentContainer">
+			
+
+
+			<!-- {!v.pdfContainer} -->
+
+
+
+
+			<div class="slds-grid slds-wrap slds-size_1-of-1">
+				<!-- header container -->
+				<div class="documentHeader slds-size_1-of-1">
+                    <h2 class="slds-size_1-of-1">{!v.currentMember.FirstName__c}: {!$Label.c.Documents}</h2>
+                    {!$Label.c.DocDescription}
+				</div>
+
+				<!-- tabs -->
+				<div class="contentBodyElement slds-size_1-of-1 slds-grid slds-wrap">
+
+					<div class="navContainer slds-size_1-of-1">
+						<ul class="desktop navList ">
+							<aura:iteration var="memPlan" items="{!v.currentMemberPlans}" indexVar="indx">
+                              <aura:if isTrue="{! memPlan != null}">
+							  <li class="{!memPlan.Value == v.chosen_memCov?'nav-item tabMenu activeTab ':'nav-item tabMenu inactiveTab '}">
+							  	<a class="{!'tabMenuLink ' + (memPlan.Value == v.chosen_memCov?'bodyColor':'linkColor') }" onclick="{!c.changeInMemCov}" data-memCovId="{!memPlan.Value}">
+							  		<h4 class="slds-grid">
+							  			{!$Label.c.Plan}:<div class="planContainer bodyWeight slds-p-left_xx-small">{!memPlan.plan}</div>
+							  		</h4>
+								  	<div class="effectiveContainer ">
+								  		<aura:if isTrue="{!memPlan.isactive == 'true'}">
+								  			<h5>{!$Label.c.Active}</h5>
+								  			<aura:set attribute="else">
+									  			<h5>
+										  			{!$Label.c.Effective_Date}:<span class="slds-p-left_xx-small">{!memPlan.effDate}</span>
+									  			</h5>
+								  			</aura:set>
+								  		</aura:if>
+								  	</div>
+							  	</a>
+
+							  </li>
+                              </aura:if>
+							</aura:iteration>
+						</ul>
+						<div class="mobile navPicklist">
+							<ui:inputSelect label="{! $Label.c.Plan}" value="{!v.chosen_memCov}" labelClass="generalLabelForm" class="generalInputForm" >
+								<aura:iteration items="{!v.currentMemberPlans}" var="memPlan">
+									<ui:inputSelectOption text="{!memPlan.Value}" label="{!memPlan.Label}" class="picklistOption" />
+								</aura:iteration>
+							</ui:inputSelect>
+						</div>
+					</div>
+						<div class="eobContainer slds-size_1-of-1 slds-grid slds-wrap">
+				    		<aura:if isTrue="{!v.eobList.length > 0}" >
+							<br />
+				  			<div class="intro slds-size_1-of-1">{!v.eobL}</div>
+				  			<br />
+				  			<!-- <div class="intro slds-size_1-of-1">{!v.eobDetailL}</div> target="_blank"   href="#" -->
+							<aura:iteration items="{!v.eobList}" var="eob">
+								<a class="eobElement slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4" data-eobLink="{!eob.EobLink}" data-claim="{!eob.ClaimNumber}" onclick="{!c.openEOB}">
+									<div class="eobInnerElement slds-size_1-of-1">
+										<div class="pdfIcon "></div>
+										<h5 class="slds-p-left_small slds-p-top_x-small">Claim: {!eob.ClaimNumber}</h5>
+									</div>
+								</a>
+<!-- 								<a class="eobElement slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-4" target="_blank" href="{!eob.EobLink}">
+									<div class="eobInnerElement slds-size_1-of-1">
+										<div class="pdfIcon "></div>
+										<h5 class="slds-p-left_small slds-p-top_x-small">Claim: {!eob.ClaimNumber}</h5>
+									</div>
+								</a> -->
+							</aura:iteration>
+						    <aura:set attribute="else">
+						    	<div>
+						    	<h5>{!$Label.c.No_Documents}</h5>
+						    	</div>
+						    </aura:set>
+				  		</aura:if> 
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</aura:component>

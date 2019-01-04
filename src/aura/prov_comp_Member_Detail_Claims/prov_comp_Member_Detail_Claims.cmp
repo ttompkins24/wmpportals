@@ -1,0 +1,250 @@
+<aura:component controller="prov_ctrl_Member_Detail_Claims" 
+	extends="c:prov_comp_Provider_Common" 
+	access="global">
+
+	<aura:attribute name="vfHost" type="String" default="{!$Label.c.Member_Eligibility_VF_URL}"/>
+
+
+	<aura:attribute name="claims" type="prov_wrap_Claim.ClaimHeaderResponseWrapper[]" />
+	<aura:attribute name="auths" type="prov_wrap_Claim.ClaimHeaderResponseWrapper[]" />
+
+	<aura:attribute name="member" type="object" />
+
+	<!-- Attribute Declaration For Pagination -->
+	<!-- CLAIMS -->
+    <aura:attribute name="claimPaginationList" type="prov_wrap_Claim.ClaimHeaderResponseWrapper[]"/>
+    <aura:attribute name="claimStartPage" type="Integer" />
+    <aura:attribute name="claimEndPage" type="Integer"/>
+    <aura:attribute name="claimTotalRecords" type="Integer"/>
+    <aura:attribute name="claimTotalPages" type="Integer"/>
+    <aura:attribute name="claimCurrentPage" type="Integer"/>
+
+	<!-- AUTHS --> 
+	<aura:attribute name="authPaginationList" type="prov_wrap_Claim.ClaimHeaderResponseWrapper[]"/>
+    <aura:attribute name="authStartPage" type="Integer" />
+    <aura:attribute name="authEndPage" type="Integer"/>
+    <aura:attribute name="authTotalRecords" type="Integer"/>
+    <aura:attribute name="authTotalPages" type="Integer"/>
+    <aura:attribute name="authCurrentPage" type="Integer"/>
+
+    <aura:attribute name="pageSize" type="Integer" default="10"/>
+    <!-- Attribute Declaration For Pagination End-->
+
+	<aura:attribute name="preAuthLabel" type="String" description="holds value of preAuth label, differs by portal"/>	
+
+	<aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed" default="Please review the errors below" />
+
+	<aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+
+	<div class="memberClaimsWrapper">
+		<h3>{!v.preAuthLabel}</h3>
+
+		<aura:if isTrue="{!v.auths &amp;&amp; v.auths.length > 0}">
+			<div class="resultsTable slds-grid slds-wrap slds-size_1-of-1 slds-align_absolute-center">
+				<div class="slds-size_1-of-1">
+	                <div class="slds-col">
+						<table class="tableClass" id="authTable">
+							<thead>
+								<tr >
+								    <th class="width15">
+								 		<span class="headerText sortable sorted sortDescend inverse testScript_claimNumberSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="ClaimNumber" data-col="00">Number</span>
+								 	</th>
+								 	<th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_serviceDateSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="ServiceDate" data-col="11">Service Date</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_providerSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="TreatingDentistLastName" data-col="22">Provider</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_locationSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="ServiceOfficeAddress1" data-col="33">Location</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_statusSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="StatusCategory" data-col="44">Status</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_billedSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="BilledAmount" data-col="55">Billed</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_paidSortauth" onclick="{!c.updateColumnSortingAuths}" data-fieldname="PaidAmount" data-col="66">Paid</span>
+								 	</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<aura:iteration items="{!v.authPaginationList}" var="auth">
+									<tr>
+										<td data-label="Number" class="slds-is-sortable width15" data-value="{!auth.ClaimNumber}">
+											<span class="bodyText dataSpace"><a onclick="{!c.draftDetailAuths}" data-detailredirectid="{!auth.DetailRedirectId}">{!auth.ClaimNumber}</a></span>
+										</td>
+										<td data-label="Service Date" class="slds-is-sortable width15" data-value="{!auth.ServiceDate}">
+											<lightning:formattedDateTime class="bodyText dataSpace" value="{!auth.ServiceDate}" year="numeric" month="2-digit" day="2-digit"/>
+										</td>
+										<td data-label="Provider" class="slds-is-sortable width15" data-value="{!auth.TreatingDentistLastName}">
+											<span class="bodyText dataSpace">{!auth.TreatingDentistLastName}, {!auth.TreatingDentistFirstName}</span>
+										</td>
+										<td data-label="Location" class="slds-is-sortable width15" data-value="{!auth.ServiceOfficeAddress1}">
+											<span class="bodyText dataSpace">{!auth.ServiceOfficeAddress1}<br/>{!auth.ServiceOfficeCity}</span>
+										</td>
+										<td data-label="Status Category" class="slds-is-sortable width15" data-value="{!auth.StatusCategory}">
+											<span class="bodyText dataSpace">{!auth.StatusCategory}</span>
+										</td>
+										<td data-label="Billed Amount" class="slds-is-sortable width15" data-value="{!auth.BilledAmount}">
+											<lightning:formattedNumber value="{!auth.BilledAmount}" style="currency" currencyCode="USD" class="bodyText dataSpace"/>
+										</td>
+										<td data-label="Paid Amount" class="slds-is-sortable width15" data-value="{!auth.PaidAmount}">
+											<lightning:formattedNumber value="{!auth.PaidAmount}" style="currency" currencyCode="USD" class="bodyText dataSpace"/>
+										</td>
+									</tr>
+								</aura:iteration>
+							</tbody>
+						</table>
+					</div>
+				</div>
+                <!--pagination for table-->
+                <div>
+                    <div class="slds-col slds-size_1-of-1 footer slds-p-top_small">
+                        <div class="col paginate">
+                            <div class="desktop">
+                                <a class="{!'spacing  bodyLink ' + (v.authStartPage == 0 ? ' hidden' : '') }"  onclick="{!c.authFirstPage}" >First&nbsp;</a>
+                                <a class="{!'spacing  bodyLink ' + (v.authStartPage == 0 ? ' hidden' : '') }" onclick="{!c.authPreviousPage}" >Previous&nbsp;</a>
+                                <span class="spacing bodyText pageNum">Page&nbsp;{!v.authCurrentPage}&nbsp;of&nbsp;{!v.authTotalPages}</span>
+                                <a class="{!'spacing  bodyLink ' + (v.authCurrentPage == v.authTotalPages ? ' hidden ' : '') }" onclick="{!c.authNextPage}">&nbsp;Next</a>
+                            </div>
+                        </div>      
+                    </div> 
+                </div>
+                <!--<div class="slds-col slds-size_1-of-1 footer ">
+                    <div class="col paginate">
+                        <div class="desktop">
+                            <a class="{!'spacing  bodyLink ' + (v.authStartPage == 1 ? ' hidden' : '') }"  onclick="{!c.authFirstPage}" >{!$Label.c.First}</a>
+                            <a class="{!'spacing  bodyLink ' + (v.authStartPage == 1 ? ' hidden' : '') }" onclick="{!c.authPreviousPage}" >{!$Label.c.Previous}</a>
+                            <span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.authCurrentPage}&nbsp;{!$Label.c.of}&nbsp;{!v.authTotalPages}</span>
+                            <a class="{!'spacing  bodyLink ' + (v.authTotalPages > v.authCurrentPage ? '' : ' hidden') }" onclick="{!c.authNextPage}" >{!$Label.c.Next}</a>
+                        </div>
+                        <div class="mobile">
+                            <table>
+                                <tr>
+                                    <td>
+                                        <a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.authStartPage == 1 ? ' hidden' : '') }" onclick="{!c.authPreviousPage}" >{!$Label.c.Previous}</a>&nbsp;
+                                    </td>
+                                    <td>
+                                        <span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.authCurrentPage}&nbsp;{!$Label.c.of}&nbsp;{!v.authTotalPages}</span>
+                                    </td>
+                                    <td>
+                                        &nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.authTotalPages > v.authCurrentPage ? '' : ' hidden') }" onclick="{!c.authNextPage}" >{!$Label.c.Next}</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>-->
+			</div>
+
+			<aura:set attribute="else">
+				<h5 class="slds-m-bottom_medium">{!$Label.c.Member_No_PreAuth}</h5>
+			</aura:set>
+		</aura:if>
+
+		<h3>Claims</h3>
+		
+		<aura:if isTrue="{!v.claims &amp;&amp; v.claims.length > 0}">
+			<div class="resultsTable slds-grid slds-wrap slds-size_1-of-1 slds-align_absolute-center">
+				<div class="slds-size_1-of-1">
+	                <div class="slds-col">
+						<table class="tableClass" id="claimTable">
+							<thead>
+								<tr >
+								    <th class="width15">
+								 		<span class="headerText sortable sorted sortDescend inverse testScript_claimNumberSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="ClaimNumber" data-col="0">Number</span>
+								 	</th>
+								 	<th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_serviceDateSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="ServiceDate" data-col="1">Service Date</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_providerSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="TreatingDentistLastName" data-col="2">Provider</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_locationSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="ServiceOfficeAddress1" data-col="3">Location</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_statusSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="StatusCategory" data-col="4">Status</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_billedSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="BilledAmount" data-col="5">Billed</span>
+								 	</th>
+                                    <th class="width15">
+								 		<span class="headerText sortable notSorted inverse testScript_paidSort" onclick="{!c.updateColumnSortingClaims}" data-fieldname="PaidAmount" data-col="6">Paid</span>
+								 	</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<aura:iteration items="{!v.claimPaginationList}" var="claim">
+									<tr>
+										<td data-label="Number" class="slds-is-sortable width15" data-value="{!claim.ClaimNumber}">
+											<span class="bodyText dataSpace"><a onclick="{!c.draftDetailClaims}" data-detailredirectid="{!claim.DetailRedirectId}">{!claim.ClaimNumber}</a></span>
+										</td>
+										<td data-label="Service Date" class="slds-is-sortable width15" data-value="{!claim.ServiceDate}">
+											<lightning:formattedDateTime class="bodyText dataSpace" value="{!claim.ServiceDate}" year="numeric" month="2-digit" day="2-digit"/>
+										</td>
+										<td data-label="Provider" class="slds-is-sortable width15" data-value="{!claim.TreatingDentistLastName}">
+											<span class="bodyText dataSpace">{!claim.TreatingDentistLastName}, {!claim.TreatingDentistFirstName}</span>
+										</td>
+										<td data-label="Location" class="slds-is-sortable width15" data-value="{!claim.ServiceOfficeAddress1}">
+											<span class="bodyText dataSpace">{!claim.ServiceOfficeAddress1}<br/>{!claim.ServiceOfficeCity}</span>
+										</td>
+										<td data-label="Status Category" class="slds-is-sortable width15" data-value="{!claim.StatusCategory}">
+											<span class="bodyText dataSpace">{!claim.StatusCategory}</span>
+										</td>
+										<td data-label="Billed Amount" class="slds-is-sortable width15" data-value="{!claim.BilledAmount}">
+											<lightning:formattedNumber value="{!claim.BilledAmount}" style="currency" currencyCode="USD" class="bodyText dataSpace"/>
+										</td>
+										<td data-label="Paid Amount" class="slds-is-sortable width15" data-value="{!claim.PaidAmount}">
+											<lightning:formattedNumber value="{!claim.PaidAmount}" style="currency" currencyCode="USD" class="bodyText dataSpace"/>
+										</td>
+									</tr>
+								</aura:iteration>
+							</tbody>
+						</table>
+					</div>
+				</div>
+                <!--pagination for table-->
+                <div>
+                    <div class="slds-col slds-size_1-of-1 footer slds-p-top_small">
+                        <div class="col paginate">
+                            <div class="desktop">
+                                <a class="{!'spacing  bodyLink ' + (v.claimCurrentPage == 1 ? ' hidden' : '') }"  onclick="{!c.claimFirstPage}" >First&nbsp;</a>
+                                <a class="{!'spacing  bodyLink ' + (v.claimCurrentPage == 1 ? ' hidden' : '') }" onclick="{!c.claimPreviousPage}" >Previous&nbsp;</a>
+                                <span class="spacing bodyText pageNum">Page&nbsp;{!v.claimCurrentPage}&nbsp;of&nbsp;{!v.claimTotalPages}</span>
+                                <a class="{!'spacing  bodyLink ' + (v.claimCurrentPage == v.claimTotalPages ? ' hidden ' : '') }" onclick="{!c.claimNextPage}">&nbsp;Next</a>
+                            </div>
+                        </div>      
+                    </div> 
+                </div>
+			</div>
+			
+			<aura:set attribute="else">
+				<h5>{!$Label.c.Member_No_Claims}</h5>
+			</aura:set>
+		</aura:if>
+
+		<!-- SAVING BACKDROP -->
+	    <div aura:id="saving-backdrop" class="slds-backdrop lighter slds-backdrop--open slds-show">
+	        <div class="slds-spinner_container">
+	            <div role="status" class="slds-spinner slds-spinner--medium">
+	                <span class="slds-assistive-text">Loading</span>
+	                <div class="slds-spinner__dot-a"></div>
+	                <div class="slds-spinner__dot-b"></div>
+	            </div>
+	        </div>    
+	    </div> 
+	    
+	</div>
+
+	<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_MemberDetailClaim'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+
+</aura:component>

@@ -1,0 +1,99 @@
+.THIS .helpRequestsHistory{
+                  background:#ffffff;
+
+  }
+  
+  .THIS .helpRequestsHistory .uiInputDate{
+  	width:100%;
+  }
+  .THIS .helpRequestsHistory .spinnerClass{
+  	position: fixed;
+  }
+  
+  .THIS .helpRequestsHistory .helpRequestHeader{
+                  text-align:left;
+                  width:100%;
+                  padding-top:20px;
+  }
+  
+  .THIS .helpRequestsHistory .helpRequestSurroundingText{
+                  text-align:left;
+                  padding-bottom:20px;
+                  width:100%;
+                  padding-top:15px;
+  }
+
+  
+  .THIS .helpRequestsHistory .fullWidth{
+                  width:100%;
+  }
+
+
+  .THIS .helpRequestsHistory .paginationContainer{
+                  padding-top:20px;
+                  float:right;
+  }
+  
+  
+  .THIS .helpRequestsHistory .tableClass .viewLink{
+                  font-weight:600;
+                  cursor:pointer;
+  }
+  
+ 
+  
+  .THIS .helpRequestsHistory .descriptionText{
+                  text-align: left;
+  }
+  
+  .THIS .helpRequestsHistory .additionalHRForMobile{
+                  display:none;
+  }
+
+  
+  .THIS .helpRequestsHistory .createHelpRequestContainer{
+      margin-bottom:40px;
+      padding-top:20px;
+      text-align:left;
+  }
+  
+  .THIS .helpRequestsHistory .topContainer{
+                  display:inline-block;
+  }
+.THIS .uncheck:before{
+	font-family:'Glyphicons Halflings';
+	content:"\e157";
+	font-size:18px;
+	padding-right:10px;
+	color:#0070d2;
+}
+.THIS .checked:before{
+	font-family:'Glyphicons Halflings';
+	content:"\e067";
+	font-size:18px;
+	padding-right:10px;
+	color:#0070d2;
+}
+
+.THIS .dropdown-menu{
+	margin-top:12px;
+	padding:10px;
+	width: -webkit-fill-available;
+}
+
+.THIS .provDrop{
+	padding-top:5px ;	
+	padding-bottom:5px ;	
+	cursor: pointer;
+}
+
+.THIS .dropdown .inputDropdownA:after{
+	font-family:'Glyphicons Halflings';
+	content:"\e114";
+	padding-right:10px;
+	font-size:inherit;
+}
+
+.THIS .dropdown.open .inputDropdownA:after{
+	content:"\e113";
+}

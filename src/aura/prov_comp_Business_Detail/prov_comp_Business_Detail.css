@@ -1,0 +1,88 @@
+.THIS.businessDetailWrapperEdit {
+	background-color:white;
+	border:1px solid #ccc !important;
+	padding-left:20px;
+	padding-right:20px;
+	padding-bottom:20px;
+	border-radius:8px;
+	box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.1);
+}
+
+.THIS.businessDetailWrapper {
+	background-color:white;
+    border:1px solid #ccc !important;
+    padding:20px 20px;
+    border-radius:8px;
+    box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.1);
+}
+
+.THIS.businessDetailWrapperEdit .generalInputForm{
+	width: 90%;
+}
+
+.THIS.businessDetailWrapper .paginate{
+    text-align:right;
+}
+
+.THIS.businessDetailWrapperEdit .paginate{
+    text-align:right;
+}
+
+.THIS.businessDetailWrapper .spacing{
+    margin:0px 10px;
+}
+
+.THIS.businessDetailWrapperEdit .spacing{
+    margin:0px 10px;
+}
+
+.THIS.businessDetailWrapper .footer{
+    margin-top:25px;
+}
+
+.THIS.businessDetailWrapperEdit .footer{
+    margin-top:25px;
+}
+
+.THIS.businessDetailWrapper .verticalSpacer{
+	padding-top:20px;
+}
+
+.THIS.businessDetailWrapperEdit .edit-table-general dt{
+	height: 48px;
+}
+
+.THIS.businessDetailWrapperEdit .edit-table-general dd{
+	height: 48px;
+}
+
+.THIS.businessDetailWrapperEdit .edit-table-general .dtExtra{
+	height: 75px;
+}
+
+.THIS.businessDetailWrapperEdit .edit-table-general .ddExtra{
+	height: 75px;
+}
+
+.THIS.businessDetailWrapper .paddingRight {
+	padding-right: 20px;
+}
+
+.THIS.businessDetailWrapper .iconSpaceRight{
+	padding-right:5px;
+}
+
+.THIS.businessDetailWrapperEdit .headerBackground {
+	background-color: #616B84;
+	padding-top: 20px;
+	padding-bottom: 20px;
+	margin-right: -20px ;
+	margin-left: -20px ;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+	width: auto;
+}
+.THIS.businessDetailWrapperEdit .mainHeaderText {
+	padding-left: 20px;
+	padding-right: 20px;
+}

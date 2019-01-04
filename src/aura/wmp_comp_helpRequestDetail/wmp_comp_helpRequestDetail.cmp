@@ -1,0 +1,290 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_helpRequestDetail
+Purpose						: Will get information from the help request details page and show case info
+Created on					: 12th October 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				7.0			12th October 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_ctrl_helpRequestDetail"
+				>
+	
+	<!--  attributes required for the page  -->
+	<aura:attribute name="bln_isError" 
+    				type="boolean" 
+    				description="used to depict if there is an error condition" />
+     
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+	<aura:attribute name="case_inReference"
+					type="Case"
+					description="The help request thats being viewed"
+	/>
+	
+	<aura:attribute name="relatedAttachments"
+					type="Attachment[]"
+					description="The attachments of the help request thats being viewed"
+	/>
+	
+	<aura:attribute name="relatedComments"
+					type="CaseComment[]"
+					description="The comments of the help request thats being viewed"
+	/>
+	
+	<aura:attribute name="runningUser"
+					type="User"
+					description="The running user to determine the (you) in comments"
+	/>
+	
+	<aura:attribute name="loadUploadButton"
+					type="boolean"
+					description="rendering boolean for the upload button after file validation"
+					default="false"
+	/>
+	<aura:attribute name="descriptionError" 
+					type="Boolean" description="case description error" />
+	
+	<!--  
+		Init method to fetch the case details
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+    
+	<div>
+		<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="generalErrorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if>
+		<!--  the actual help request section -->
+		<div class="helpRequestDetailPage slds-grid slds-wrap">
+		
+			<!--  the back to your help requests link -->
+			<div class="helpRequestBackLink slds-col slds-size_1-of-1 slds-float_left"
+				 onclick="{!c.redirectHelpRequests}">
+				<div class="bodyLink">
+					{!$Label.c.Your_Help_Request}&nbsp;{!$Label.c.BackLinkSymbol}
+				</div>
+			</div>
+			
+			<!--  the help request text -->
+			<div class="helpRequestHeader slds-align_absolute-center slds-col slds-size_1-of-1 slds-float_left">
+				<h1>{!$Label.c.Help_Request}</h1>
+			</div>
+			<!--  the details container and related content -->
+			<div class="detailsContainer slds-col slds-size_1-of-1 slds-float_left">
+				<h3>{!$Label.c.Details}</h3>
+				
+				<!--  having the 2 column table to display help request information -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Topic}</div >
+					<!--  displaying case subject -->
+					<span class="infoText bodyText">{!v.case_inReference.Subject}</span> 
+				</div>
+				
+				<!--  having the 2 column table to display help request information -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Help_Request}&nbsp;{!$label.c.number}</div>
+					<!--  displaying case number -->
+					<span class="infoText  bodyText">{!v.case_inReference.CaseNumber}</span> 
+				</div>
+				
+				<!--  having the 2 column table to display help request information -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Affected_Member}</div>
+					<!--  displaying case primary contact name and the plan name -->
+					<span class="infoText  bodyText">{!v.case_inReference.Contact_Name__c}&nbsp;{!$Label.c.hyphen}&nbsp;{!v.case_inReference.Plan_Name__c}</span> 
+				</div>
+				
+				<!--  having the 2 column table to display help request information -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Submitted_On}</div>
+					<!--  displaying case submitted date -->
+					<span class="infoText  bodyText"><ui:outputDate value="{!v.case_inReference.CreatedDate}" format="MMMM dd, YYYY hh:mm a" /></span> 
+				</div>
+				
+				<!--  having the 2 column table to display help request information -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Status}</div>
+					<!--  displaying case submitted date -->
+					<span class="infoText  bodyText">{!v.case_inReference.Status}</span> 
+				</div>
+				
+				<!--  having the 2 column table to display help request information -->
+				<!--  this section will display only if case is closed -->
+				<aura:if isTrue="{!v.case_inReference.Status == $Label.c.Closed}">
+					<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 helpRequestDetailInformation slds-float_left">
+						<div class="generalLabelForm">{!$Label.c.Closed_On}</div>
+						<!--  displaying case submitted date -->
+						<span class="infoText  bodyText"><ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" /></span> 
+					</div>
+				</aura:if>
+				
+				<!-- displaying description as one column -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+					<div class="generalLabelForm">{!$Label.c.Description}</div>
+					<!--  displaying case submitted date -->
+					<span class="infoText  bodyText">{!v.case_inReference.Description}</span> 
+				</div>
+			</div>
+			<!--  horizontal line -->
+			<hr class="horizontalLineClass"/>
+			<!--  the details container and related content -->
+			<div class="helpRequestHeader slds-col slds-size_1-of-1 slds-float_left">
+				<h3>{!$Label.c.Attachments}</h3>
+				<!--  the attachment list -->
+				<aura:if isTrue="{!not(empty(v.relatedAttachments))}">
+					<!-- iterating through the attachments -->
+					<aura:iteration items="{!v.relatedAttachments}" var="iterating_attachment">
+						<!-- displaying attachments as 1 out of 4 column -->
+						<div class="slds-col slds-size_1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-4 helpRequestDetailInformation slds-float_left">
+							<!--  displaying case submitted date -->
+                            <a class="bodyLink" href="{!'../servlet/servlet.FileDownload?file='+iterating_attachment.Id}" target="_blank">{!iterating_attachment.Name}</a>		
+							<br/>
+							<span class="infoText bodyText"><ui:outputDate value="{!iterating_attachment.LastModifiedDate}" format="MMMM dd, YYYY hh:mm a" /></span> 
+						</div>
+					</aura:iteration>
+					<!--  else display no attachments found -->
+					<aura:set attribute="else">
+						<span class="infoText bodyText">{!$Label.c.No_Attachments_found}</span>
+					</aura:set>
+				</aura:if>
+				<!--  space for add attachment section -->
+				<!--  attachments can be added irrespective of the status -->
+				<div class="attachmentbuttonheader slds-col slds-size_1-of-1 slds-float_left">
+					<!--  button to create the help request -->
+					<div class="slds-col slds-size_1-of-1">
+						<input type="file" 
+							   class="file" 
+							   id="fileUpload" 
+							   aura:id="upFiles" 
+							   data-location="attachmentSection" 
+							   onchange="{!c.checkForFileInput}" />
+						<!--  appear post file validation -->
+						<aura:if isTrue="{!v.loadUploadButton}">	
+							<!--  button to create the help request -->
+							<a class="bodyLink slds-float_left" 
+								onclick="{!c.uploadAttachment}"
+								 data-location="attachmentSection" >
+								{!$Label.c.Upload}
+							</a>
+						</aura:if>
+					</div>
+				</div>
+			</div>
+			<!--  horizontal line -->
+			<hr class="horizontalLineClass"/>
+			<!--  next section is the case comments section -->
+			<div class="slds-col slds-size_1-of-1 slds-float_left">
+				<!--  comments header -->
+				<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 helpRequestDetailInformation slds-float_left">
+					<h3>{!$Label.c.Comments}</h3>
+				</div>
+				
+				<aura:if isTrue="{!or(not(empty(v.relatedComments)),(v.case_inReference.Status == $Label.c.Closed))}">
+					
+					<!--  if the case comments are present, each row is a table with border -->
+					<table class="tableClass">
+						<!--  this row will appear only when the case is closed -->
+						<aura:if isTrue="{!v.case_inReference.Status == $Label.c.Closed}">
+							<!--  marking as closed row -->
+							<tr>
+								<td> 
+									<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 slds-float_left">
+										<span class="detailsContainer">
+											<br/>
+											<span class="metaText"><ui:outputDate value="{!v.case_inReference.ClosedDate}" format="MMMM dd, YYYY hh:mm a" /></span>
+											<br/>
+											<span class="infoText bodyText commentAlignAndPadding"><aura:unescapedHtml value="{!$Label.c.Marked_as_close}"/></span>
+										</span>
+									</div>
+								</td>
+							</tr>								
+						</aura:if>
+						<aura:iteration items="{!v.relatedComments}" var="iterating_comment">
+							<tr>
+								<td> 
+									<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-1 slds-large-size--1-of-1 slds-float_left">
+										<span class="detailsContainer">
+											<br/>
+											<span class="metaText"><ui:outputDate value="{!iterating_comment.CreatedDate}" format="MMMM dd, YYYY hh:mm a" /></span>
+											<br/>
+											<!--  checking if the comment is yours -->
+											<!--  that logic is not yet completed -->
+											<h5>
+												{!iterating_comment.CreatedBy.Alias}
+												<aura:if isTrue="{!iterating_comment.CreatedById == v.runningUser.Id}">
+													&nbsp;{!$Label.c.you}
+													<aura:set attribute="else">
+														<!--&nbsp;{!$Label.c.hyphen}-->&nbsp;{!$Label.c.said}
+													</aura:set>
+												</aura:if>
+											</h5>
+											<br/>
+											<span class="infoText bodyText commentAlignAndPadding"><aura:unescapedHtml value="{!iterating_comment.CommentBody}"/></span>
+										</span>
+									</div>
+								</td>
+							</tr>
+						</aura:iteration>
+						
+					</table>
+					<aura:set attribute="else">
+						<span class="infoText bodyText" >{!$Label.c.No_Comments_found}</span>
+					</aura:set>
+				</aura:if>
+			</div>
+			<!--  adding the new comment box -->
+			<br/>
+			<div class="helpRequestDetailInformation slds-col slds-size_1-of-1 ">
+				<aura:if isTrue="{!v.case_inReference.Status != $Label.c.Closed}">
+				<ui:inputTextArea aura:Id="casecommentdescription" 
+								  placeholder="{!$Label.c.Write_a_new_comment}" 
+								  blur="{!c.checkSpecialCharacters}" 
+								  maxlength="10000"
+								  class="slds-col slds-size_1-of-1 generalInputForm generalInputFormArea decreaseWidth"/>
+				<aura:if isTrue="{!v.descriptionError}">
+					<div class="validationErrorMessage">
+						{!$Label.c.Required_Error}
+					</div>
+				</aura:if>
+				</aura:if>
+			</div>
+			<div class=" slds-col slds-size_1-of-4 slds-float_right finalPadding">
+				<aura:if isTrue="{!v.case_inReference.Status != $Label.c.Closed}">
+					<input type="file" 
+						   class="file slds-float_left buttonStyling additionalWidth"  
+						   id="fileUploadAttachment" 
+						   aura:id="upFilesAttachment"
+						   data-location="commentSection" 
+						   onchange="{!c.checkForFileInput}" />
+						   <br/>
+					<!--  appear post file validation -->
+					<!--  button to create the help request -->
+					<a class="generalButton slds-col slds-float_left buttonStyling helpRequestDetailInformation" 
+						onclick="{!c.uploadAttachmentAndComment}"
+						 data-location="commentSection" >
+						{!$Label.c.Send_comment} 
+					</a>
+				</aura:if>
+			</div>
+		</div> 
+	</div>	 
+</aura:component>

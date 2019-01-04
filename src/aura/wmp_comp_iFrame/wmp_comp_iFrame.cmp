@@ -1,0 +1,23 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global">
+	
+	<aura:attribute name="iframeURL" 
+					type="String"
+					description="the url for the iframe" 
+					default="''"/>
+	<aura:attribute name="width"
+					type="String"
+					description="width of the iframe"
+					default="100%" />
+	<aura:attribute name="height"
+					type="String"
+					description="height of the iframe"
+					default="100%" />
+			
+	<div class="slds">
+		<aura:if isTrue="{!v.iframeURL != ''}">
+			<div class="iframeOuter">
+				<iframe width="{!v.width}" height="{!v.height}" src="{!v.iframeURL}" frameborder="0" allowfullscreen="true"/>
+			</div>
+		</aura:if>
+	</div>		
+</aura:component>

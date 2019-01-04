@@ -1,0 +1,13 @@
+.THIS.eventCalContainer .date-col {
+    background-color: #5876a3 !important;
+    color: #fff !important;
+    text-align: center !important;
+}
+
+.THIS.eventCalContainer .date-col-day {
+    font-size: 40px;
+    font-weight: 100 !important;
+}
+
+.THIS.eventCalContainer .name-col {
+}

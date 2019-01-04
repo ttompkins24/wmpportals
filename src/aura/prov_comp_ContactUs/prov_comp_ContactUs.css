@@ -1,0 +1,63 @@
+.THIS .contactUsContainer {
+		padding-bottom:30px;
+	}
+	.THIS .contactUsContainer .header{
+		
+	    text-align: center;
+	    margin-bottom: 4rem;
+	}
+	
+	
+	.THIS .contactUsContainer .chatContainerOuter,
+	.THIS .contactUsContainer .caseContainerOuter{
+		padding-right:20px;
+	}
+	
+	.THIS .contactUsContainer .chatContainerInner,
+	.THIS .contactUsContainer .callContainerInner,
+	.THIS .contactUsContainer .caseContainerInner{
+		
+	    /*background-color: white;
+	    border: solid 1px #e7e7e7;
+		box-shadow: 0 0 2px 0 rgba(0, 0, 0, 0.1);
+		border-radius:8px;*/
+	}
+	
+	
+	.THIS .contactUsContainer .callContainerInner .callDescription,
+	.THIS .contactUsContainer .chatContainerInner .chatDescription{
+		margin-top:20px;
+	}
+	
+	.THIS .contactUsContainer .caseContainerInner .caseDescription ul{
+		list-style-type: disc;
+		margin-left:30px;
+		margin-top:20px;
+	}
+	.THIS .contactUsContainer .chatContainerInner .chatButton,
+	.THIS .contactUsContainer .callContainerInner .callButton{
+		margin-top:20px;
+	}
+	
+	.THIS .contactUsContainer .chatContainerInner .chatButton:hover,
+	.THIS .contactUsContainer .callContainerInner .callButton:hover,
+	.THIS .contactUsContainer .caseContainerInner .newCaseButton:hover,
+	.THIS .contactUsContainer .caseContainerInner .viewCaseButton:hover{
+		text-decoration:none;
+	}
+	 .THIS .contactUsContainer .caseContainerInner .viewCaseButton{
+	 	float:left;
+	} 
+	 .THIS .contactUsContainer .caseContainerInner .newCaseButton{
+	 	float:left;
+	 
+	 }
+	.THIS .contactUsContainer .caseContainerOuter,
+	.THIS .contactUsContainer .addContainerOuter,
+	.THIS .contactUsContainer .additionalContainerOuter{
+		margin-top:20px;
+	}
+
+	.THIS .contactUsContainer .generalShadowBox{
+		border-color: #ccc;
+	}

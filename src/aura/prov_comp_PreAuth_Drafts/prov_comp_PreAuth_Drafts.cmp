@@ -1,0 +1,202 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_PreAuth_Drafts
+Purpose                     : Allows users to view and modify pre-auth drafts
+Created on                  : April 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             5        April 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_PreAuth_Drafts">
+
+    <aura:attribute name="manageOptions" type="String[]" default="[]"/>
+    <aura:attribute name="manageMultiValue" type="String"/>  
+    <aura:attribute name="isSelectAll" type="boolean" default="false" description="select all checkbox value"/>
+    <aura:attribute name="atLeastOneSelected" type="boolean" default="false" description="any single row has been selected"/>
+    <aura:attribute name="authDrafts" type="Claim__c[]" default="[]"/>
+
+	<aura:attribute name="isDeleteSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="deleteSuccessMsg" type="string"/>
+    <aura:attribute name="isSubmitSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="submitSuccessMsg" type="string"/>
+    <aura:attribute name="isSubmitError" type="Boolean" default="false"/>
+	<aura:attribute name="submitErrorMsg" type="string"/>
+    <aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message" default="false"/>
+    <aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+
+    <aura:attribute name="showSpinner" type="boolean"/>
+    <aura:attribute name="noResults" type="boolean" default="false"/>
+
+    <aura:attribute name="vfHost" type="String" description="this hold the domain for the visualforce page"/>
+
+	<aura:attribute name="preAuthLabel" type="String" description="holds value of preAuth label, differs by portal"/>    
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:handler name="modalSuccessEvent" event="c:prov_event_Claim_Draft_Modal" action="{!c.handleModalSuccess}"/>    
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? '' : 'slds-hide'}" alternativeText="Loading..."/>
+
+    <div class="slds generalOuterDiv">
+        <aura:if isTrue="{!v.isError}">
+            <div class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.str_errorMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.isDeleteSuccess}">
+            <div  class="headerMessageContainer ">
+                <ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+                    <lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+                    <span class="successMessage">{!v.deleteSuccessMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+        <!-- <aura:if isTrue="true"> -->
+        <aura:if isTrue="{!v.isSubmitSuccess}">
+            <div class="headerMessageContainer">
+                <ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+                    <lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+                    <span class="successMessage">{!v.submitSuccessMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.isSubmitError}">
+            <div  class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.submitErrorMsg}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <h1 class="slds-p-bottom_medium">{!v.preAuthLabel}: Saved Drafts</h1>
+        <div class="generalShadowBox yellowBackground slds-m-bottom_large slds-m-left_small slds-m-right_small slds-clearfix slds-grid">
+            <div class="slds-col">
+                <ul class="slds-list_horizontal">
+                    <li>
+                        <lightning:icon class="ddIcon" iconName="action:refresh" />
+                    </li>
+                    <li>
+                        <ul class="slds-p-left_small">
+                            <li class="header3">Refresh Member Eligibility</li>
+                            <li class="header5">{!$Label.c.Refresh_to_update}</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="slds-col slds-clearfix slds-align-middle slds-p-right_small slds-p-left_small">
+                <button class="generalButton slds-float_right testScript_searchButton" disabled="{!!v.atLeastOneSelected}" onclick="{!c.runCheck}">Refresh</button>
+            </div>
+        </div>
+
+        <!-- DRAFT TABLE -->
+        <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_small">
+            <div class="slds-size_1-of-1">
+                <div class="slds-col">
+                    <table class="tableClass" id="authDraftResultsTable">
+                        <thead>
+                            <tr >
+                                <th class="">
+                                    <ui:inputCheckbox class="testScript_selectRowInput" value="{!v.isSelectAll}" change="{!c.handleSelectAllDrafts}" aura:id="selectAll"/>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable sorted sortAscend inverse testScript_lastSavedSort" onclick="{!c.updateColumnSorting}" data-fieldname="LastModifiedDate" data-col="1" data-tableid="authDraftResultsTable">Last Saved</span>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable notSorted inverse testScript_eligibilitySort" onclick="{!c.updateColumnSorting}" data-fieldname="Last_Eligibility_Check__c" data-col="3" data-tableid="authDraftResultsTable">Eligibility</span>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable notSorted inverse testScript_memberNameSort" onclick="{!c.updateColumnSorting}" data-fieldname="Patient_Last_Name__c" data-col="4" data-tableid="authDraftResultsTable">Member Name</span>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable notSorted inverse testScript_providerSort" onclick="{!c.updateColumnSorting}" data-fieldname="Treating_Provider_Last_Name__c" data-col="5" data-tableid="authDraftResultsTable">Provider</span>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable notSorted inverse testScript_locationSort" onclick="{!c.updateColumnSorting}" data-fieldname="Treating_Provider_Address1__c" data-col="6" data-tableid="authDraftResultsTable">Office Location</span>
+                                </th>
+                                <th class="">
+                                    <span class="headerText sortable notSorted inverse testScript_planSort" onclick="{!c.updateColumnSorting}" data-fieldname="Plan_Text__c" data-col="7" data-tableid="authDraftResultsTable">Plan</span>
+                                </th>
+                                <th class="">
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.noResults}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="8">{!$Label.c.Authorization_and_estimates_drafts}
+                                    </td>	
+                                </tr>
+                            </aura:if>
+
+                            <aura:if isTrue="{!v.authDrafts.length > 0}">
+                                <aura:iteration items="{!v.authDrafts}" var="auth" indexVar="index">
+                                    <tr id="{!index}">
+                                        <td>
+                                            <ui:inputCheckbox aura:id="checkDraft" value="" text="{!index}" change="{!c.handleSelectSingleRow}"/>
+                                        </td>
+                                        <td data-label="Last Modified Date" class="slds-is-sortable" data-value="{!auth.LastModifiedDate}">
+                                            <a onclick="{!c.draftDetail}" data-authId="{!auth.Id}">
+                                                <lightning:formattedDateTime class="bodyText dataSpace" value="{!auth.LastModifiedDate}" year="numeric" month="2-digit" day="2-digit" hour="2-digit" minute="2-digit"/>
+                                            </a>
+                                        </td>
+                                        <td data-label="Eligibility" class="slds-is-sortable" data-value="{!auth.Last_Eligibility_Check__c}">
+                                             <aura:if isTrue="{!auth.isSearching}">
+                                                <img src="/img/loading32.gif"/>
+                                                <aura:set attribute="else">
+                                                    <aura:if isTrue="{!auth.eligible}" >
+                                                        <div class="bodyText dataSpace">{!auth.eligible} </div>
+                                                          <aura:set attribute="else">
+                                                            <aura:if isTrue="{!auth.Last_Eligibility_Status__c}">
+                                                                <div class="bodyText dataSpace">{!auth.Last_Eligibility_Status__c} </div>
+                                                            </aura:if>
+                                                          </aura:set>
+
+                                                    </aura:if>
+    
+                                                    <span class="bodyText dataSpace"> Checked on </span>
+                                                    <lightning:formattedDateTime class="bodyText dataSpace" value="{!auth.Last_Eligibility_Check__c}" year="numeric" month="2-digit" day="2-digit"/>
+                                                </aura:set>
+                                            </aura:if>
+                                        </td>
+                                        <td data-label="Member Name" class="slds-is-sortable" data-value="{!auth.Patient_Last_Name__c}">
+                                            <span class="bodyText dataSpace">{!auth.Subscriber_Last_Name__c}, {!auth.Subscriber_First_Name__c}</span>
+                                        </td>
+                                        <td data-label="Provider" class="slds-is-sortable" data-value="{!auth.Treating_Provider_Last_Name__c}">
+                                            <span class="bodyText dataSpace">{!auth.Treating_Provider_Last_Name__c}, {!auth.Treating_Provider_First_Name__c}</span>
+                                        </td>
+                                        <td data-label="Location" class="slds-is-sortable" data-value="{!auth.Treating_Provider_Address1__c}">
+                                            <span class="bodyText dataSpace">{!auth.Treating_Provider_Address1__c}<br/>{!auth.Treating_Provider_City__c}, {!auth.Treating_Provider_State__c}&nbsp;{!auth.Treating_Provider_Zip__c}</span>
+                                        </td>
+                                        <td data-label="Plan" class="slds-is-sortable" data-value="{!auth.Plan_Text__c}">
+                                            <span class="bodyText dataSpace">{!auth.Plan_Text__c}</span>
+                                        </td>
+                                        <td>
+                                            <a onclick="{!c.handleSingleRowUpdate}" data-value="{!index}" class="testScript_deleteSingleDraftButton ">
+                                                <lightning:icon class="ddIcon slds-m-right_small" iconName="utility:delete" alternativeText="Delete Row"/>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- END DRAFT TABLE -->
+        <div class="slds-align_absolute-center slds-p-top_large"> 
+            <button class="generalButton slds-m-right_medium inverse testScript_deleteButton" disabled="{!!v.atLeastOneSelected}" onclick="{!c.handleMultipleRowUpdate}">Delete Selected</button>
+            <button class="generalButton testScript_submitButton" disabled="{!!v.atLeastOneSelected}" onclick="{!c.submitSelectedDrafts}">Submit Selected</button>
+        </div>
+    </div>{!v.body}
+
+    <iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_memberEligibility'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+
+</aura:component>

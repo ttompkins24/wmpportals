@@ -1,0 +1,200 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_AppealClaim_Modal
+Purpose                     : Allows users to Appeal a Claim in a modal popup
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             4        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  access="global" extends="c:prov_comp_Provider_Common"
+	controller="prov_ctrl_Claim_Detail">
+	<aura:attribute name="closeText" type="String" default="Cancel"/>
+	<aura:attribute name="isAppealSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="appealSuccessMsg" type="string"/>
+	<aura:attribute name="claimNumber" type="String"/>
+	<aura:attribute name="claimType" type="String"/>
+	<aura:attribute name="business" type="String"/>
+	<aura:attribute name="serviceOffice" type="String"/>
+	<aura:attribute name="provider" type="String"/>
+	<aura:attribute name="businessGuid" type="String"/>
+	<aura:attribute name="serviceOfficeGuid" type="String"/>
+	<aura:attribute name="providerGuid" type="String"/>
+	<aura:attribute name="memberName" type="String"/>
+	<aura:attribute name="memberBirth" type="Date"/>
+	<aura:attribute name="memberNumber" type="String"/>
+	<aura:attribute name="appealReason" type="String"/>
+	<aura:attribute name="outcomeDesired" type="String"/>
+	<aura:attribute name="memFirstName" type="String"/>
+	<aura:attribute name="memLastName" type="String"/>
+
+	<aura:attribute name="newCaseSaved" type="Boolean" default="false"  />
+	<aura:attribute name="newCaseWrapper" type="Case"/>
+
+	<aura:attribute name="isReqFieldError" type="Boolean" default="false"/>
+	<aura:attribute name="requiredFieldMsg" type="String" />
+	<aura:attribute name="fileName" type="String" default="No File Selected." />
+	<aura:attribute name="fileNames" type="List"/>
+	<aura:attribute name="caseId" type="String"  />
+	<aura:attribute name="hasAttachmentError" type="Boolean" default="false" />
+  	<aura:attribute name="attachmentErrorMessage" type="Boolean" default="false" />
+  	<aura:attribute name="preAuthLabel" type="String"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:registerEvent name="modalSuccessEvent" type="c:prov_event_Claim_Modal"/>
+
+<div class="slds">
+	<div class="appealClaimModalWrapper slds-grid slds-wrap slds-size_1-of_1">
+		<div class="popupModal">
+			<section role="dialog" style=" height:100%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+		    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open popModalInner" >
+			    <div class="slds-modal__container">
+			    	<header class="slds-modal__header">
+	            		<a alt="{!v.closeText}" tabindex="1" class=" floatRight testscript_closeAppealClaimHeader"
+	                			 title="{!v.closeText}" onclick="{!c.defaultCloseAppeal}" style="">
+	                        <div class="closeIconA">{!v.closeText}</div>
+	                    </a>
+	                    <aura:if isTrue="{!v.claimType == 'Claim'}">
+	                    <h2  class="popupModalHeader inverse">Appeal This Claim</h2>
+	                    </aura:if>
+	                    <aura:if isTrue="{!v.claimType == 'Authorization'}">
+	                    <h2  class="popupModalHeader inverse">Appeal This {!v.preAuthLabel}</h2>
+	                    </aura:if>
+
+	                </header>
+	                
+	                <div class="slds-modal__content" id="modal-content-id-1">
+	                	<div class="slds-grid slds-size_1-of-1">
+
+							<div class="slds-p-top_medium slds-col slds-size_1-of-2" >
+								<aura:if isTrue="{!v.isReqFieldError}">
+									<div  class="headerMessageContainer">
+										<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+											<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+											<span class="errorMessage">{!v.requiredFieldMsg}</span>
+										</ui:message>
+									</div>
+								</aura:if>
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<aura:if isTrue="{!v.claimType == 'Authorization'}">
+									<dt class="slds-item_label bodyText boldText" title="ClaimNumber">Authorization:</dt>
+	                    				
+	                    			</aura:if>
+	                    			<aura:if isTrue="{!v.claimType == 'Claim'}">
+									<dt class="slds-item_label bodyText boldText" title="ClaimNumber">Claim:</dt>
+	                    				
+	                    			</aura:if>
+
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="ClaimNumber">{!v.claimNumber}</dd>
+
+								</dl>			
+							</div>
+							<div class="slds-p-top_medium slds-col slds-size_1-of-2">
+							</div>
+						</div>
+
+						<div class="slds-grid slds-size_1-of-1">
+
+							<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="Provider">Provider:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="Provider" data-value="Dentist">{!v.provider}</dd>
+									<dt class="slds-item_label bodyText boldText slds-wrap" title="Office">Office:</dt>
+									<dd class="slds-item_detail slds-wrap generalLabelForm" title="Office" data-value="Office">{!v.serviceOffice}</dd>
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="Business">Business:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="Business" data-value="Business">{!v.business}</dd>
+
+								</dl>			
+							</div>
+
+							<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-2" >
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="MemberName">Member Name:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberName" data-value="memberName">{!v.memberName}</dd>
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="DOB">D.O.B.:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="DOB" data-value="memberBirth"> 
+
+
+								<lightning:formattedDateTime value="{!v.memberBirth}" year="numeric" day="numeric" month="numeric" timeZone="{! $Locale.timezone }"></lightning:formattedDateTime></dd>
+									<dt class="slds-item_label bodyText boldText slds-truncate" title="MemberNumber">Member Number:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="MemberNumber" data-value="memberNumber">{!v.memberNumber}</dd>
+
+								</dl>			
+							</div>
+						</div>
+
+					
+
+						<div class=" slds-col slds-size_1-of-1">
+							<div class="slds-float_left">
+								<h3 class="slds-p-left_small slds-p-top_small">Details
+								</h3>
+							</div>
+						</div>
+
+						<div class="slds-p-around--medium detailDiv">
+							<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-1" >
+						  		<div class="slds-size_1-of-2">
+						  			<div class="slds-form-element">
+						  				<ui:inputTextArea labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testscript_AppealReason" label="Reason For Appeal"   placeholder="Example: 'Reason for Appeal'" required="true" value="{!v.appealReason}"/>
+						  			</div>
+						  		</div>
+						  		<div class="slds-size_1-of-2">
+						  			<div class="slds-form-element">
+						  				<ui:inputTextArea labelClass="generalLabelForm" class="slds-col slds-size_1-of-1 generalInputForm testscript_DesiredOutcome" label="Desired Outcome" placeholder="" value="{!v.outcomeDesired}"/>
+						  			</div>
+						  		</div>
+							  	
+							</div>
+						</div>
+
+						<div class="slds-p-around--medium slds-col slds-size_1-of-1">
+							<div class="slds-float_left">
+								<h3>Attachments
+								</h3>
+							</div>
+						</div>
+						<!-- Attachment Div -->
+						<div class="slds-p-around--medium slds-col slds-size_1-of-1" >
+							
+
+								<aura:if isTrue="{!v.newCaseWrapper.Id}">
+									<div class="slds-page-header slds-m-bottom_medium">
+									  	<div class="slds-media">
+										    <div class="slds-media__body">
+												<c:prov_comp_File_Upload parentId="{!v.newCaseWrapper.Id}" type="Case" />
+											</div>
+										</div>
+									</div>
+
+									<aura:set attribute="else">
+										<div class="demo-only slds-size_1-of-2">
+										  	<div class="slds-form-element">
+											    <label class="slds-checkbox_toggle slds-grid">
+											      	<span class="slds-form-element__label slds-m-bottom_none">Upload Attachments</span>
+											      	<input type="checkbox" name="checkbox" aria-describedby="toggle-desc" value="on" onclick="{!c.submitWrapperCase}" />
+												    <span id="toggle-desc" class="slds-checkbox_faux_container" aria-live="assertive">
+												        <span class="slds-checkbox_faux"></span>
+												    </span>
+											    </label>
+										  	</div>
+										</div>
+									</aura:set>
+								</aura:if>	
+						</div>
+					</div>
+					<footer class="slds-modal__footer">
+						<div class="slds-align_absolute-center" >
+							<span class="bodyText dataSpace spacing "><button onclick="{!c.defaultCloseAppeal}" class="generalButton testscript_closeAppealClaimFooter">Cancel</button></span>
+							<span class="bodyText dataSpace spacing "><button onclick="{!c.submitAppealClaim}" class="generalButton testscript_submitAppealClaimFooter">Submit</button></span>
+						</div>
+					</footer>
+			    </div>
+			</section>
+		</div>
+	</div>
+</div>
+		
+</aura:component>

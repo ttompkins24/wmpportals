@@ -1,0 +1,70 @@
+<!--
+/**********************************************************************************************************************
+Name 						: prov_comp_FAQRenderer
+Purpose						: FAQ rendered component will do the following 
+							 get title from the url
+							 and display the knowledge article in it
+Created on					: June 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				9.0			June 2018		West Monroe Partners			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global" controller="prov_ctrl_KnowledgeArticle">
+	<!-- Creating the design attributes first --> 
+    <aura:attribute name="knwldge_queryFields" 
+    				type="string" />
+
+    <aura:attribute name="knwldge_articleType" 
+    				type="string" />
+    				
+    <aura:attribute name="bln_displayPDF" 
+    				type="boolean" />
+    
+    <aura:attribute name="knwldge_articleTitle" 
+    				type="string" />
+
+	
+	<aura:attribute name="portal_configurationText" 
+    				type="string" />
+    
+    <aura:attribute name="src_vfPage" 
+    				type="string" />
+   <aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />	
+   
+	
+	<aura:attribute name="displayInfo" type="Boolean" default="false" />
+	<!--  
+		Init method to fetch data to display on the page
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+    <aura:if isTrue="{!v.displayInfo == true}">
+    
+    
+                <!--  using an iframe to display the vf page -->
+                <iframe src="{!v.src_vfPage}" 
+                        width="100%"
+                        height="650px"
+                        frameBorder="0"
+                        id="knwldgeArticleFrame"    
+                />
+        <!-- <c:WMP_comp_knowledgeArticleReader knwldge_queryFields="{!v.knwldge_queryFields}"
+                                        knwldge_articleType="{!v.knwldge_articleType}"
+                                        knwldge_articleTitle="{!v.knwldge_articleTitle}"
+                                        portal_configurationText="{!v.portal_configurationText}"
+    /> -->
+    </aura:if>
+</aura:component>

@@ -1,0 +1,165 @@
+<aura:component controller="prov_util_Cache" 
+				extends="c:prov_comp_Provider_Common" 
+				implements="forceCommunity:availableForAllPageTypes" 
+				access="global"> 
+
+	<aura:attribute name="openRequests" type="Integer" description="number of open cases" default="0"/>
+	<aura:attribute name="phoneTitle" type="String" /> 
+	<aura:attribute name="dataCategory" type="String" /> 
+	<aura:attribute name="chatId" type="String" description="the chat id for live agent chat" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+
+	<div class="slds">
+		<div class="contactUsContainer generalOuterDiv slds-grid slds-wrap" >
+			<aura:if isTrue="{!v.openRequests > 0}">
+				<div  class="headerMessageContainer slds-size_1-of-1">
+					<ui:message class="warningMessageWrap slds-size_1-of-1" severity="warning" closable="true">
+						<lightning:icon iconName="utility:info" class="generalInfoIcon" size="medium" alternativeText="Info"/>
+						
+						<!-- <span class="warningMessage">{!v.openRequests} - {!$Label.c.Open_request_message}</span> -->
+						<a class="slds-p-left_small" data-loc="help-request" onclick="{!c.redirectUrl}">View your Open Request(s)</a>
+					</ui:message>
+				</div>
+			</aura:if>
+			<h1 class="header slds-col slds-size_1-of-1 slds-m-top_medium">
+				{!$Label.c.Contact_Us}
+			</h1>
+
+			<aura:if isTrue="{!v.portalConfig.Live_Chat_Functionality__c}">
+				<aura:if isTrue="{!v.portalConfig.Live_Agent_Chat_Id__c != ''}">
+					<div class="chatContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+						<div class="chatContainerInner slds-grid slds-wrap generalShadowBox inverse">
+							<h3 class="slds-col slds-size_1-of-1 chatHeader">
+								{!$Label.c.Chat_with_us}
+							</h3>
+							
+							<div class="slds-col slds-size_1-of-1 intro chatDescription">
+								{!$Label.c.Chat_with_us_description}
+							</div>
+							
+							<a onclick="{!c.launchLiveAgent}" class="slds-m-top_medium generalButton ">
+								{!$Label.c.Open_live_chat}
+							</a>
+						</div>
+					</div>
+				</aura:if>
+			</aura:if>
+			
+			<div class="callContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+				<div class="callContainerInner slds-grid slds-wrap generalShadowBox inverse">
+					<h3 class="slds-col slds-size_1-of-1 callHeader">
+						{!$Label.c.Call_Us}
+					</h3>
+					
+					<div class=" slds-col slds-size_1-of-1 intro callDescription">
+						{!$Label.c.Call_us_description}
+					</div>
+					
+					<a  class="generalButton callButton" onclick="{!c.redirectToPhone}" data-articleName="{!v.portalConfig.Phone_Number_Title__c}"
+		    				data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+						{!$Label.c.Call_Us_button}
+					</a>
+				</div>
+			</div>
+			<div class="slds-size_1-of-1"></div>
+			<div class="caseContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 ">
+				<div class="caseContainerInner slds-grid slds-wrap generalShadowBox inverse	">
+					<h1 class="slds-col slds-size_1-of-1 caseHeader">
+						{!$Label.c.Send_us_a_help_request}
+					</h1>
+					
+					<!-- <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-5 slds-large-size_3-of-5 caseDescription intro slds-m-top_medium">
+						{!$Label.c.Prov_Help_Request_Description}
+					</div>-->
+					
+					<div class="caseSection  slds-grid slds-wrap slds-col slds-size_1-of-1 ">
+						<div class="  slds-size_1-of-2 caseDiv slds-m-top_medium">
+							<a class="generalButton newCaseButton" data-loc="file-case" onclick="{!c.redirectUrl}">
+								{!$Label.c.Create_help_request}
+							</a>
+						</div>
+						<div class=" slds-size_1-of-2 caseDiv slds-m-top_medium">
+							<a class="generalButton inverse viewCaseButton " data-loc="help-request" onclick="{!c.redirectUrl}" ><!-- onclick="{!c.redirectUrl}" -->
+								{!$Label.c.View_past_requests}
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="addContainerOuter slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 ">
+				<div class="caseContainerInner slds-grid slds-wrap generalShadowBox inverse	">
+					<h1 class="slds-col slds-size_1-of-1 caseHeader">
+						Additional Resources
+					</h1>
+				
+				
+					<div class="caseSection  slds-grid slds-wrap slds-col slds-size_1-of-1 ">
+						<div class="  slds-size_1-of-2 caseDiv slds-m-top_medium">
+							<a class="generalButton newCaseButton" data-loc="{!v.portalConfig.General_Help_By_State_URL__c}" onclick="{!c.redirectUrlFAQ}">
+								General Help
+							</a>
+						</div>
+						<div class=" slds-size_1-of-2 caseDiv slds-m-top_medium">
+							<a class="generalButton newCaseButton  " data-loc="{!v.portalConfig.Tip_Sheets_URL__c}" onclick="{!c.redirectUrlFAQ}" ><!-- onclick="{!c.redirectUrl}" -->
+								Tip Sheets
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- <div class="additionalContainerOuter slds-col slds-size_1-of-1 ">
+				<div class="additionalContainerInner slds-grid slds-wrap generalShadowBox inverse	">
+					<h1 class="slds-col slds-size_1-of-1 caseHeader">
+						Additional Resources
+					</h1>
+					
+					<div class="slds-col slds-size_1-of-1 caseDescription intro slds-m-top_x-small">
+						For additional support information, please review the information below: 
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-m-top_medium">
+						<h3 style="text-decoration:underline">General Information</h3>
+						
+						<div class="generalDescription slds-size_1-of-1">
+							<div>
+								<span>FAQS: </span>
+							</div>
+							<div class="bodyText">
+								Portal Support Number: <br />
+								Tip Sheets for Getting Started with the Portal
+							</div>
+						</div>
+					</div>
+					
+					<div class="slds-col slds-size_1-of-1 slds-grid slds-wrap slds-m-top_medium">
+						<h3 style="text-decoration:underline" class="slds-p-top_medium slds-size_1-of-1 ">State-Specific Information</h3>
+						
+						<div class="stateDescription slds-size_1-of-2  slds-m-top_x-small">
+							<h4 class="linkColor slds-size_1-of-1"><a href="javascript:void(0);">Texas Providers</a></h4>
+							<div class="bodyText">
+								CHiP Complaint &amp; Appeals Process<br />
+								Using your Medicaid Benefits in Texas<br />
+								Tip Sheets for Texas Providers
+
+							</div>
+						</div>
+						
+						<div class="stateDescription slds-size_1-of-2">
+							<h4 class="linkColor slds-size_1-of-1"><a href="javascript:void(0);">Colorado Providers</a></h4>
+							<div  class="bodyText">
+								Contact Colorado HealthFirst<br />
+								Tip Sheets for Colorado Providers
+							</div>
+						</div>
+					</div>
+					
+						
+				</div>
+			</div> -->
+		</div>
+			
+	</div>	
+</aura:component>

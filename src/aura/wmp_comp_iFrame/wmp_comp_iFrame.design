@@ -1,0 +1,5 @@
+<design:component >
+	<design:attribute name="iframeURL" label="iframe url" description="the url that the iframe should show" />
+    <design:attribute name="width" label="Width of Iframe" />
+    <design:attribute name="height" label="Height of Iframe" /> 
+</design:component>

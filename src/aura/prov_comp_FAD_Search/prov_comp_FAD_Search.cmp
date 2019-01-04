@@ -1,0 +1,279 @@
+<!--
+/**********************************************************************************************************************
+Name 						: prov_comp_FAD_Search
+Purpose						: The landing page which gets input from the member and the values entered are
+							  sent as parameters to the find a dentist result page.
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			4/2/2018		WMP(Tompkins)			See header - purpose
+**********************************************************************************************************************/
+-->
+<aura:component extends="c:prov_comp_Provider_Common" 
+				controller="prov_ctrl_FAD"
+				access="global">
+
+	<aura:attribute name="isSearch" type="Boolean" />
+	<!-- Attribute lists -->	
+	<!-- 
+     	# attribute to get the account IDs/Names from the related memberPlans
+     -->
+     <!--  <aura:attribute name="verifiedPlanAccounts"
+     				 type="Account[]"/>
+    -->
+    <aura:attribute name="verifiedPlanAccounts" type="Object[]"/>
+     				 
+     <aura:attribute name="specialitiesFromAccount"  type="String[]"/>
+    
+    <!--  attribute to display error  -->
+    <aura:attribute name="bln_isError" 	type="Boolean" 	description="used to depict if there is an error condition" />
+    
+    <aura:attribute name="str_errorMsg" type="string" description="Error message that will be displayed on the screen"/>
+    <aura:attribute name="ageRange" type="String[]" description="picklist options for the min and max age" />
+    <aura:attribute name="zipCodeError" type="Boolean" 	description="zip code field is not populated" default="false"/>
+    <aura:attribute name="minAgeValidate" type="Boolean"  description="zip code field is not populated"/>
+    <aura:attribute name="planError" type="Boolean" description="zip code field is not populated"/>
+    <aura:attribute name="allPlanIds" type="String" description="for the select all option on the fad landing page"/>
+    <aura:attribute name="companyName" type="String" description="Company name show in the header" default="Texas"/>
+    <aura:attribute name="chosenPlan" type="String" description="Company name show in the header" default="Texas"/>
+    
+    <aura:attribute name="languages" type="Object[]"  description="Languages that are selectable" />
+    <aura:attribute name="dentistL" type="string" description="dentist label to ensure it toggles between dentist and provider"/>	
+    <aura:attribute name="findADentistL" type="string" description="dentist label to ensure it toggles between dentist and provider" default="{!$Label.c.Find_a_Provider}"/>   
+    <aura:attribute name="supportingTextL" type="string" description="label for supporting text on Find a Dentist" default="{!$Label.c.Prov_FAD_Intro}"/>
+    <aura:attribute name="isModal" type="Boolean" description="is this component inside a modal?" default="false"/>
+    
+    <aura:attribute name="picklistShowProviderL" type="string" description="dentist label to ensure it toggles between dentist and provider"/>
+    
+     <aura:attribute name="acceptingNewPatientsL" type="string" description="dentist label to ensure it toggles between dentis and provider" default="{!$Label.c.Accept_new_patients}" />
+    <aura:attribute name="nameOfDentistOrOfficeL" type="string" description="dentist label to ensure it toggles between dentist and provider"/>
+     <aura:attribute name="specialties" type="Object[]" description="specialties that are selectable" />
+    <aura:attribute name="paramMap" type="object" description="map of the params the user is searching" />
+    <aura:attribute name="distance_value" type="String" description="the distance value that is selected" />
+
+    <aura:attribute name="showBy" type="String" description="the distance value that is selected" default="dentist"/>
+    <aura:attribute name="sortBy" type="String" description="the distance value that is selected" default="distance"/>
+ 
+	<!--  
+		# Init method to set the first tab and do initial query
+	-->
+	<aura:handler name="init" 
+                  value="{!this}" 
+                  action="{!c.doInit}" 
+                  
+    />
+    <!-- style="{!'background : url('+v.imageUrl+');'}" -->
+	<div class="slds" >
+		<div class="{!'fadLandingContainer '+ if(v.isModal , '' , ' generalOuterDiv')}" >
+			
+				
+			<!--  error container -->
+			<aura:if isTrue="{!v.bln_isError}">
+				<div class="headerMessageContainer ">
+					<ui:message class="errorMessageWrap slds-size_1-of-1"  severity="error" closable="true">
+						<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+						<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</aura:if>
+
+			<div class="formContainer slds-wrap slds-grid" style="z-index: 10; position: relative;">
+				<!--  top right to have required text -->
+				<div class="requiredTextContainer slds-col slds-size_1-of-1">
+					<div class="metaText ">
+						{!$Label.c.Required}
+					</div>
+				</div>
+				<aura:if isTrue="{!v.isModal != true}">
+
+					<!--  Find a dentist title -->
+					<div class="FADTitleContainer slds-col slds-size_1-of-1 ">
+						<h1 class="">
+							<!-- {!$Label.c.Find_a_Dentist}-->
+							Find a Provider
+						</h1>
+					</div>
+					<!--  Find a dentist title surrounding text -->
+					<div class=" slds-col slds-size_1-of-1 FADTitleSurroundingContainer">
+						<div class="intro">
+							{!v.supportingTextL}
+						</div>
+					</div>
+					<!-- <a class="generalButton" onclick="{!c.launchModal}" >Launch Modal</a> -->
+				</aura:if>
+				<!-- input form is in this div -->
+				<div class="{!' slds-wrap slds-grid ' + if(v.isModal == true, '' , ' FADInputForm ')}">
+					<!-- picklist value to get the plans for the user(s) -->
+					<!--  plan option select list -->
+			 		<div class="slds-col slds-size_1-of-1 ">
+			 			<ui:inputselect label="Select a Plan" class="generalInputForm testScript_selectPlan" aura:Id="chosenplan" value="{!v.chosenPlan}" required="true" labelClass="generalLabelForm required">
+			 				<ui:inputSelectOption text="Select" label="{!$Label.c.Select}" class="picklistOption"/>
+					        <!--<option value="{!v.allPlanIds}" class="picklistOption"> {!$Label.c.All_Plans}</option>-->
+					        <aura:iteration items="{!v.verifiedPlanAccounts}" var="iterating_account">
+				 				<ui:inputSelectOption text="{!iterating_account.Value}" label="{!iterating_account.Label}" class="picklistOption"  />
+					        	<!-- <option value="{!iterating_account.Value}" class="picklistOption" selected="{!v.paramMap.planid == iterating_account.Value}"> {!iterating_account.Label}</option> -->
+					        </aura:iteration>
+					    </ui:inputselect>
+					    
+					    <aura:if isTrue="{!v.planError}">
+					  	  <div class="slds-col slds-size_1-of-1 validationErrorMessage">{!$Label.c.Required_Error}</div>
+					    </aura:if>
+			 		</div> 
+			 		<hr class="slds-col slds-size_1-of-1 horizontalRuler" />
+			 		<!--  city, zip code and distance inputs -->
+			 		<div class="generalSpacing slds-col slds-size_1-of-1 slds-medium-size_2-of-3 slds-large-size_2-of-3 twoColumn" title="Ex. Austin,TX">
+						  <ui:inputText aura:id="cityZipCode" blur="{!c.checkSpecialCharacters}" maxlength="255" class="generalInputForm testScript_cityState" placeholder="City, State or 5 digit zip code" label="City, State or ZIP Code" labelClass="generalLabelForm required" required="true"/> 
+						  <aura:if isTrue="{!v.zipCodeError}">
+						  	<span class="validationErrorMessage">{!$Label.c.Required_Error}</span>
+						  </aura:if>
+					</div>
+					<!--  distance picklist -->
+					<div class="generalSpacing slds-col slds-size_1-of-1 slds-medium-size_1-of-3 slds-large-size_1-of-3 ">
+							<ui:inputSelect label="Distance" required="true" labelClass="generalLabelForm required" value="{!v.distance_value}" class="generalInputForm testScript_distance" aura:id="distance" >
+								<ui:inputSelectOption text="1" label="{!'1 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="5" label="{!'5 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="10" label="{!'10 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="15" label="{!'15 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="20" label="{!'20 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="25" label="{!'25 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="30" label="{!'30 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="35" label="{!'35 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="40" label="{!'40 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="45" label="{!'45 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="50" label="{!'50 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="75" label="{!'75 '+ $Label.c.miles}" class="picklistOption"/>
+								<ui:inputSelectOption text="100" label="{!'100 '+ $Label.c.miles}" class="picklistOption"/>
+								
+							</ui:inputSelect>
+					</div>
+			 		<hr class="slds-col slds-size_1-of-1 horizontalRuler" />
+			 		<!--  search factors for dentist name and other inputs -->
+			 		<div class="generalSpacing slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 twoColumn">
+			 			<!--  name of the dentist -->
+						  <ui:inputText labelClass="generalLabelForm" label="Name of provider or office" aura:id="nameOfDentist" class="generalInputForm testScript_nameProv" blur="{!c.checkSpecialCharacters}" maxlength="255" />
+					</div>
+					<!--  language spoken -->
+					<div class="generalSpacing slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2">
+						<ui:inputSelect label="{!$Label.c.Language_spoken}" labelClass="generalLabelForm "  class="generalInputForm testScript_languageSel" aura:id="lang_spoken">
+							<ui:inputSelectOption text="" label="{!$Label.c.Select}" class="picklistOption"/>
+							<aura:iteration items="{!v.languages}" var="language">
+								<ui:inputSelectOption text="{!language.Value}" label="{!language.Label}" class="picklistOption"/>
+							</aura:iteration>
+						</ui:inputSelect>
+			 		</div>
+		 			<!--  specialty -->
+					<div class="slds-col generalSpacing slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 twoColumn">
+						<div class="inlineBlock">
+	                       	<label class="generalLabelForm" for="input-unique-id">{!$Label.c.Speciality}</label>
+	                    	<div class="helpSection" >
+	                            <a class="helpIconA" onclick="{!c.openHelpBox}" aria-label="help icon"></a>
+								<div class="helpSpecialtyBox"  aura:id="helpSpecialtyBoxId">
+		                           	<div class="header">
+		                                <h5 class="floatLeft helpHeader " >{!$Label.c.Specialities}</h5>
+		                                <a class="closeIcon floatRight closeHelpBox" onclick="{!c.openHelpBox}"/>
+		                               </div>
+		                               <aura:iteration items="{!v.specialties}" var="specialty">
+		                                   <div class="specialtyGroup" style="width:100%">
+		                                       <span class="bodyText  boldText slds-text-align_left" >{!specialty.Label}: </span>
+		                                       <span class="bodyText  slds-text-align_left" >{!specialty.Description}</span>
+		                                   </div>
+		                               </aura:iteration>
+		                           </div>
+		                        </div>
+	                        </div>
+							<ui:inputselect label="" class="generalInputForm testScript_specialSel" aura:id="specialities">
+								<ui:inputSelectOption text="0" label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault"/>
+								
+								<aura:iteration items="{!v.specialties}" var="iterating_speciality">
+									<ui:inputSelectOption text="{!iterating_speciality.Value}" label="{!iterating_speciality.Label}" class="picklistOption"/>
+						        </aura:iteration>
+							</ui:inputselect>
+						</div>
+					
+						<!--  min/max age-->
+						<div class="slds-col generalSpacing slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 slds-grid slds-wrap">
+							<label class="generalLabelForm slds-col slds-size_1-of-1" style="width:100%" >{!$Label.c.Patient_age}</label>
+							<div class="slds-col slds-size_1-of-2 ">
+								<ui:inputSelect class="generalInputForm testScript_patientMin" aura:id="minAge" >
+									<ui:inputSelectOption text="min" label="{!$Label.c.Min}" class="picklistOption picklistOptionDefault"/>
+									
+									<aura:iteration items="{!v.ageRange}" var="age">
+										<ui:inputSelectOption text="{!age}" label="{!age}" class="picklistOption"/>
+									</aura:iteration>
+									   
+								</ui:inputSelect>
+							</div>
+							<div class="slds-col slds-size_1-of-2 slds-p-left_medium" >
+								<ui:inputSelect label="" class="generalInputForm testScript_patientMax" aura:id="maxAge">
+									<ui:inputSelectOption text="max" label="{!$Label.c.Max}" class="picklistOption picklistOptionDefault"/>
+									<aura:iteration items="{!v.ageRange}" var="age">
+										<ui:inputSelectOption text="{!age}" label="{!age}" class="picklistOption "/>
+									</aura:iteration>
+								</ui:inputSelect>
+							</div>
+							<aura:if isTrue="{!v.minAgeValidate}">
+								<div class="slds-col slds-size_1-of-1 validationErrorMessage">{!$Label.c.Min_Age_Greater_than_Max_Age}</div>
+							</aura:if>
+						</div>
+						
+						<div class="slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 generalSpacing twoColumn">
+							<!--  gender picklist -->
+							<ui:inputSelect label="{!$Label.c.Gender}" labelClass="generalLabelForm" class="generalInputForm testScript_genderSel" aura:id="gender" >
+								<ui:inputSelectOption text="0" label="{!$Label.c.Select}" class="picklistOption picklistOptionDefault"/>
+								<ui:inputSelectOption text="female" label="{!$Label.c.Female}" class="picklistOption "/>
+								<ui:inputSelectOption text="male" label="{!$Label.c.Male}" class="picklistOption "/>
+							</ui:inputSelect>
+						</div>
+						
+							<!--  checkboxes section -->
+						
+						<div class="checkboxLastSection slds-col slds-size_1-of-1 slds-grid slds-wrap generalSpacing">
+							<div class="slds-col slds-size_1-of-1 generalSpacing">
+								<ui:inputCheckbox aura:id="specialNeeds" name="specialNeeds" class="checkboxes floatLeft testScript_special" />
+								<label class="checkBoxText intro floatLeft" for="specialNeeds">{!$Label.c.Accepts_Speciality}</label>
+							</div>
+							<div class="slds-col slds-size_1-of-1 generalSpacing">
+								<ui:inputCheckbox aura:id="handicapAccessible1" class="checkboxes floatLeft testScript_handicap"/>
+								<label class="checkBoxText intro floatLeft" for="handicapAccessible1">{!$Label.c.Handicap_accessible}</label>
+							</div>
+							<div class="slds-col slds-size_1-of-1 generalSpacing">
+								<ui:inputCheckbox aura:id="sedation" class="checkboxes floatLeft testScript_sedation" />
+								<label class="checkBoxText intro floatLeft" for="input-unique-id">{!$Label.c.Offers_Sedation}</label>
+							</div>
+							<div class="slds-col slds-size_1-of-1 generalSpacing">
+								<ui:inputCheckbox aura:id="newPatients" class="checkboxes floatLeft testScript_acceptNew" />
+								<label class="checkBoxText intro floatLeft" for="input-unique-id"><!-- {!$Label.c.Accept_new_patients}-->{!v.acceptingNewPatientsL}</label>
+							</div>
+							<div class="slds-col slds-size_1-of-1 generalSpacing">
+								<ui:inputCheckbox aura:id="outOfNetwork" class="checkboxes floatLeft testScript_outOfNetwork"  />
+								<label class="checkBoxText intro floatLeft" for="outOfNetwork"><!-- {!$Label.c.Accept_new_patients}-->Allow out of network</label>
+							</div>
+						</div>
+						<hr class="horizontalRuler slds-col slds-size_1-of-1" />
+						<!--  button divs -->
+						<div class="slds-col slds-size_1-of-1 generalSpacing buttonContainer ">
+							<!--  search button -->
+							<a class="generalButton testScript_search"  onclick="{!c.searchMethod}">
+								{!$Label.c.Search}
+							</a>
+						</div>
+						<div class="slds-col slds-size_1-of-1 generalSpacing buttonContainer">
+							<!--  Reset all filters button -->
+							<a class="headerLink boldText testScript_reset" onclick="{!c.clearFilters}">
+									{!$Label.c.Reset_all_filters}
+							</a>
+						</div>
+					</div>
+					<aura:if isTrue="{!v.isModal == false}">
+						<!-- <div class="footerBanner"> -->
+						<div class=" footerBanner slds-grid slds-wrap bodyText">
+							<!--  this is a footer text -->
+							<div class="slds-col slds-size_1-of-1" >
+								<!-- <aura:unescapedHtml value="{!$Label.c.footertext_FAD}" /> -->If you need help or have any questions, please  <a onclick="{!c.redirectContactUs}" class="bodyLink boldText testScript_contactUs"> {!$Label.c.Contact_Us}  </a>
+							</div>
+						</div>
+					</aura:if>
+				</div>
+			</div>
+		{!v.body}
+	</div>
+</aura:component>

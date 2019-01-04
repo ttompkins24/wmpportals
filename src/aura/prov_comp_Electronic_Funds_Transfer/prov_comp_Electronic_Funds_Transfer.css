@@ -1,0 +1,31 @@
+.THIS.electronicFundsTransferDiv .formDiv{
+  border: solid 1px #ccc;
+  border-radius: 5px;
+  border-spacing: 5px;
+  padding: 20px;
+  margin-top :10px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+}
+
+.THIS.electronicFundsTransferDiv .formDiv .slds-form-element{
+
+  padding-bottom: 20px;
+
+}
+
+.THIS.electronicFundsTransferDiv .eftTabsDiv{
+
+	padding-top: 20px;
+	padding-bottom: 20px;
+
+}
+
+.THIS.electronicFundsTransferDiv .eftTabsLink{
+	color: #000000;
+
+}
+
+.THIS.electronicFundsTransferDiv ul p {
+	text-align: center;
+}

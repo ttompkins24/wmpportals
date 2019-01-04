@@ -1,0 +1,16 @@
+.THIS .multiSelectInput{
+	background-color:white;
+	padding-left:10px;
+}
+
+.THIS .uiMenuList--default .uiMenuItem>a:hover, 
+.THIS .uiMenuList--default .uiMenuItem>a:focus, 
+.THIS .uiMenuList--default .uiMenuItem>span:hover, 
+.THIS .uiMenuList--default .uiMenuItem>span:focus{
+	background-color:#f4f6f9;
+}
+
+.THIS .uiMenuList--default.uiMenuList{
+	width:100%;
+	max-width:100%;
+}

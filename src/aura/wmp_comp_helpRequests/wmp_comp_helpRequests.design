@@ -1,0 +1,10 @@
+<design:component >
+	<!--
+		There will be 1 design attributes that the admin can enter
+		1. Number of values that will be displayed on the screen
+		
+	-->
+	<design:attribute name="visibleNumberOfCases" 
+						label="Number of cases per page"  
+						description="Enter the number of cases that needs to be seen on page" />
+</design:component>

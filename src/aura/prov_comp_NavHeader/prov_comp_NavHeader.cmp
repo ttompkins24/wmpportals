@@ -1,0 +1,499 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" extends="c:prov_comp_Provider_Common" access="global" controller="prov_util_Cache">
+  <aura:attribute name="accountList" type="Account[]" description="The Accounts that a Contact can see"/>
+  <aura:attribute name="businessList" type="Object[]" description="list of businesses the user can see" />
+  <aura:attribute name="currPage" type="String" description="the current page the user is on" />
+  <aura:attribute name="currTab" type="String" description="the current page the user is on" />
+  <aura:attribute name="accountSettingsUrl" type="String" description="the current page the user is on" default="{!$Label.c.Provider_Account_Settings_URL}"/>
+  <aura:attribute name="selectedBusiness" type="String" description="the current page the user is on" />
+  <aura:attribute name="hasOpenNotification" type="Boolean" description="false" default="false" />
+  <aura:attribute name="authLabel" type="String" description="the authorization label"  />
+  <aura:attribute name="logoutURL" type="String" description="the authorization label" default="{!$Label.c.Provider_Portal_Logout}" />
+  
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+      <div class="slds navClass">
+        <div class="global-header "></div>
+        <header class="desktop">
+          <div class="slds-global-header slds-grid slds-grid--align-spread topNavDiv" >
+            <!-- Logo -->
+            <!-- SPINNER -->
+			<!-- <lightning:spinner variant="brand" size="large" aura:id="navSpinnerId" class="slds-hide" alternativeText="Page loading"/> -->
+            <div class="slds-global-header__item noPadding">
+                <a onclick="{!c.redirectUrl}" data-pagename="" alt="Home" href="javascript:void(0);">
+	              <div class="slds-global-header__logo  ">
+	                 <span class="" aria-label="Home"/>
+	              </div>
+                </a>
+            </div>
+            <ul class="slds-global-header__item slds-grid slds-grid--vertical-align-center">
+              <li>
+                <!-- NAME DROPDOWN -->
+                <div class="dropdown topNav_spacing" title="Member">
+                  <a href="javascript:void(0);" class="noDecoration slds-context-bar__label-action dropdown-toggle testScript_userProfileDropdownTag" title="Member" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownMememberNav">
+                    <span class="slds-truncate header4 linkColor downArrowIcon" title="Name">{!v.currentContact.Name}</span>
+                  </a>
+                  <div class="slds-dropdown dropdown-menu dropdownWidth" aria-labelledby="dropdownMememberNav">
+                    <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                      <li class="navDropdown-item "><a href="{!v.accountSettingsUrl}" class="noDecoration testScript_accountSettingLink">Account Settings</a></li>
+                      <li class="navDropdown-item "  ><a href="javascript:void(0);" class="noDecoration testScript_logoutUrlLink" onclick="{!c.removeCache}">Logout</a></li><!--  -->
+                    </ul>
+                  </div>
+                </div>
+              </li>
+              <!-- MESSAGE ICON -->
+              <li class="slds-dropdown-trigger slds-dropdown-trigger--click topNav_spacing notifIcon">
+              	<a href="javascript:void(0);" data-pagename="message-center" onclick="{!c.redirectUrl}" alt="Notifications" aria-label="Notifications">
+              		<aura:if isTrue="{!v.hasOpenNotification}">
+              		
+              			<lightning:icon size="small" class="openNotification" variant="inverse" iconName="utility:notification" alternativeText="New Notification"/>
+              		
+	              		<aura:set attribute="else">
+	              			<lightning:icon size="small" class="noNotification" variant="inverse" iconName="utility:notification" alternativeText="No New Notification"/>
+	              		</aura:set>
+              		</aura:if>
+              	</a>
+               <!--  <a href="javascript:void(0);" class="{!'h4 message testScript_notifIcon ' + if(v.hasOpenNotification, 'notificationItemsIcon' , 'notificationNoItemsIcon') }" 
+                   data-pagename="message-center" onclick="{!c.redirectUrl}" alt="Notifications" aria-label="Notifications">
+                </a> -->
+              </li>
+              <!-- BUSINESS DROPDOWN -->
+              <li >
+                <!-- <ui:inputSelect aura:id="businessAccts"  labelClass="generalLabelForm" change="{!c.changeBusinessContext}" class="businessPicklist navBusinessSelect downArrowIcon">
+                </ui:inputSelect> -->
+                <div class="topNav_spacing dropdown  " title="Business">
+                  <div class="businessPicklist noDecoration navBusinessSelect  slds-context-bar__label-action dropdown-toggle" title="Business" 
+                  		data-toggle="{!if(v.businessList.length > 1 , 'dropdown','')}"  aria-haspopup="true" aria-expanded="false" id="dropdownBusinessName">
+
+                    <span class="{!'slds-truncate slds-size_1-of-1  businessDropdownSelected ' + if(v.businessList.length > 1, ' downArrowIcon ', '') }" 
+                    		title="Business" tabindex="4">
+                    	<lightning:icon iconName="standard:account" size="medium" alternativeText="{!v.selectedBusiness}" class="inheritBackground noDecoration"/>&nbsp;
+                    	{!v.selectedBusiness}
+                    </span>
+                  </div>
+                  <div class="slds-dropdown dropdown-menu  businessDropdownDiv" aria-labelledby="dropdownBusinessName">
+                    <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                    	<aura:iteration items="{!v.businessList}" var="acc">
+	                    	<li class="businessPicklist_item" >
+	                    		<span class="{!'noDecoration testScript_businessNav_' + acc.value}" tabindex="5" onclick="{!c.changeBusinessContext}" 
+	                    				data-value="{!acc.value}" data-label="{!acc.label}">{!acc.label}</span>
+	                    	</li>
+                    	</aura:iteration>
+                    </ul>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <!-- Body -->
+          
+          <!-- NAV BAR -->
+          <div class="navMenu" >
+            <div class="slds-context-bar bottomNavDiv">
+              <nav class="slds-context-bar__secondary navBar" role="navigation">
+                <ul class="slds-grid slds-size_5-of-6 slds-col">
+                  <!-- MEMBER DROPDOWN -->
+                  <aura:if isTrue="{! v.permissions.memberEligibility == 'full' || v.permissions.memberEligibility == 'read' || 
+                  	 v.permissions.memberIntervention == 'full' ||  v.permissions.memberIntervention == 'read' ||  
+                  	 v.permissions.brokenAppointment == 'full' ||  v.permissions.brokenAppointment == 'read' || 
+                  	 v.permissions.panelRoster == 'full' ||  v.permissions.panelRoster == 'read'}">
+                    <li class="{!'slds-context-bar__item slds-context-bar__dropdown-trigger ' + (if(v.currTab == 'member', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown " title="Member">
+                        <a href="javascript:void(0);" style="height:45px;" class="noDecoration slds-context-bar__label-action dropdown-toggle navBar_item" title="Member" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownMemember">
+                          <span class="slds-truncate header5" title="Member">Member</span>
+                        </a>
+                        <div class="slds-dropdown dropdown-menu slds-dropdown_left " aria-labelledby="dropdownMemember">
+                          <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                            <aura:if isTrue="{!or( v.permissions.memberEligibility == 'full', v.permissions.memberEligibility == 'read') }">
+                              <li class="  navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" data-pagename="member-eligibility" href="javascript:void(0);"  onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Check Eligibility">Check Eligibility</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.memberEligibility == 'full', v.permissions.memberEligibility == 'read')}">
+                              <li class="  navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" data-pagename="member-eligibility?showPage=sc" href="javascript:void(0);"  onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Saved Eligibility Searches">Saved Eligibility Searches</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.panelRoster == 'full', v.permissions.panelRoster == 'read')}">
+                              <li class=" navDropdown-item " role="presentation">
+                                <a tabindex="0" class="noDecoration"  data-pagename="panel-roster" href="panel-roster" role="menuitem"  onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Panel Roster">Panel Roster</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.brokenAppointment == 'full', v.permissions.brokenAppointment == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a class="noDecoration" role="menuitem"  data-pagename="broken-appointment-list" href="broken-appointment-list" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Broken Appointments">Broken Appointments</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.memberIntervention == 'full', v.permissions.memberIntervention == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a class="noDecoration" role="menuitem" data-pagename="member-intervention" href="member-intervention" onclick="{!c.redirectUrl}" >
+                                  <span class="slds-truncate" title="Member Intervention">Member Intervention</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </aura:if>
+                  <!-- END MEMBER DROPDOWN -->
+                  <!-- CLAIMS DROPDOWN -->
+                  <aura:if isTrue="{!or( v.permissions.claims == 'full', v.permissions.claims == 'read')}">
+                    <li class="{!'slds-context-bar__item slds-context-bar__dropdown-trigger ' + (if(v.currTab == 'claim', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown" title="Claims">
+                        <a href="javascript:void(0);" style="height:35px;"  class="noDecoration slds-context-bar__label-action dropdown-toggle navBar_item " 
+                           title="Claims" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownClaims">
+                          <span class="slds-truncate  header5" title="Claims">Claims</span>
+                        </a>
+                        <div class="slds-dropdown dropdown-menu slds-dropdown_left " aria-labelledby="dropdownClaims">
+                          <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                            <aura:if isTrue="{!v.permissions.claims == 'full'}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" href="javascript:void(0);" data-pagename="claim-confirmation-report" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Daily Confirmation Report">Daily Confirmation Report</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.claims == 'full', v.permissions.claims == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a  role="menuitem" class="noDecoration"   href="javascript:void(0);" data-pagename="claim-search" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Claims Search">Claim Search</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.claims == 'full')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" class="noDecoration" role="menuitem"  data-pagename="claim-entry" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Claim Entry">Claim Entry</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.claims == 'full')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration"  data-pagename="claim-drafts" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Claim Drafts">Claim Drafts</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </aura:if>
+                  <!-- END CLAIMS DROPDOWN -->
+                  <!-- AUTHORIZATION DROPDOWN -->
+                  <aura:if isTrue="{!or( v.permissions.preAuth == 'full', v.permissions.preAuth == 'read')}">
+                    <li class="{!'slds-context-bar__item slds-context-bar__dropdown-trigger ' + (if(v.currTab == 'preauth', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown" title="PreAuthorizations">
+                        <a href="javascript:void(0);" style="height:35px;" class="noDecoration slds-context-bar__label-action dropdown-toggle navBar_item" 
+                           title="{!v.authLabel}" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownPreAuth">
+                          <span class="slds-truncate  header5" title="{!v.authLabel}">{!v.authLabel}</span>
+                        </a>
+                        <div class="slds-dropdown dropdown-menu slds-dropdown_left " aria-labelledby="dropdownPreAuth">
+                          <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                            <aura:if isTrue="{! v.permissions.preAuth == 'full'}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" data-pagename="pre-auth-confirmation-report" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Daily Confirmation Report">Daily Confirmation Report</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.preAuth == 'full', v.permissions.preAuth == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" data-pagename="pre-auth-search" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="{!v.authLabel +' Search'}">{!v.authLabel} Search</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.preAuth == 'full')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration" data-pagename="pre-auth-entry" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="{!v.authLabel+' Entry'}">{!v.authLabel} Entry</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.preAuth == 'full')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration" data-pagename="pre-auth-drafts" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="{!v.authLabel+' Drafts'}">{!v.authLabel} Drafts</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </aura:if>
+                  <!-- END AUTHORIZATION DROPDOWN -->
+                  <!-- REFERRALS DROPDOWN -->
+                  <aura:if isTrue="{!or( v.permissions.referral == 'full', v.permissions.referral == 'read')}">
+                    <li class="{!'slds-context-bar__item slds-context-bar__dropdown-trigger ' + (if(v.currTab == 'referral', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown" title="Referrals">
+                        <a href="javascript:void(0);" style="height:35px;" class="noDecoration slds-context-bar__label-action dropdown-toggle navBar_item" 
+                           title="Referrals" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownReferral">
+                          <span class="slds-truncate  header5" title="Referrals">Referrals</span>
+                        </a>
+                        <div class="slds-dropdown dropdown-menu slds-dropdown_left " aria-labelledby="dropdownReferral">
+                          <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                            <aura:if isTrue="{! v.permissions.referral == 'full'}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration" data-pagename="referral-confirmation-report" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Daily Confirmation Report">Daily Confirmation Report</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.referral == 'full', v.permissions.referral == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration" data-pagename="referral-search" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Referral Search">Referral Search</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.referral == 'full')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="javascript:void(0);" role="menuitem" class="noDecoration" data-pagename="referral-entry" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Referral Entry">Referral Entry</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </aura:if>
+                  <!-- END REFERRALS DROPDOWN -->
+                  <!-- PAYMENTS DROPDOWN -->
+                  <!-- <aura:if isTrue="{! or(v.permissions.eob == 'full' , v.permissions.eob == 'read') }">
+                    <li class="{!'slds-context-bar__item ' + (if(v.currTab == 'payment', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown" title="Payments">
+                        <a href="javascript:void(0);" style="height:35px;" class="noDecoration slds-context-bar__label-action  navBar_item" 
+                           title="Payments" id="dropdownPayments" data-pagename="eob-search" onclick="{!c.redirectUrl}">
+                          <span class="slds-truncate  header5" title="Payments">Payments</span>
+                        </a>
+                       
+                      </div>
+                    </li>
+                  </aura:if> -->
+                  <!-- END PAYMENTS DROPDOWN -->
+                  <!-- MANAGE PRACTICE DROPDOWN -->
+                  <aura:if isTrue="{! 
+				                  		 v.permissions.reports 			== 'full' || 		v.permissions.reports 			== 'read' ||  
+				                  		 v.permissions.feeSchedule 		== 'full' ||  		v.permissions.feeSchedule 		== 'read' ||  
+				                  		 v.permissions.billedAmount 	== 'full' ||  		v.permissions.billedAmount 		== 'read' || 
+                  						 v.permissions.dentistList 		== 'full' ||  		v.permissions.dentistList 		== 'read' || 
+                  						 v.permissions.userManagement 	== 'full' ||  		v.permissions.userManagement 	== 'read' ||  
+				                  		 v.permissions.eft 				== 'full' 
+				                  	}">
+                    <li class="{!'slds-context-bar__item slds-context-bar__dropdown-trigger ' + (if(v.currTab == 'practice', 'currPage', '') )}" >
+                      <div class="slds-context-bar__label-action dropdown" title="Manage Practice">
+                        <a href="javascript:void(0);" class="noDecoration slds-context-bar__label-action dropdown-toggle navBar_item" 
+                           title="Manage Practice" data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownPractice">
+                          <span class="slds-truncate  header5" title="Manage Practice">Manage Practice</span>
+                        </a>
+                        <div class="slds-dropdown dropdown-menu slds-dropdown_left " aria-labelledby="dropdownPractice">
+                          <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+                            <!-- <aura:if isTrue="{!or( v.permissions.userManagement == 'full', v.permissions.userManagement == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a tabindex="0" role="menuitem" class="noDecoration" href="{!$Label.c.Provider_User_Management_URL}">
+                                  <span class="slds-truncate" title="User List">User List</span>
+                                </a>
+                              </li>
+                            </aura:if> -->
+                            <aura:if isTrue="{!or( v.permissions.dentistList == 'full', v.permissions.dentistList == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="dentist-list" role="menuitem" class="noDecoration" data-pagename="practice-management" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Practice Management">Practice Management</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{! v.permissions.eft == 'full'}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="/electronic-funds-transfer" role="menuitem" class="noDecoration" data-pagename="electronic-funds-transfer" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="EFT">EFT</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.billedAmount == 'full', v.permissions.billedAmount == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="billed-amount" class="noDecoration" role="menuitem" data-pagename="billed-amount" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Billed Amounts List">Billed Amount List</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.feeSchedule == 'full', v.permissions.feeSchedule == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="fee-schedule" class="noDecoration" role="menuitem" data-pagename="fee-schedule" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Fee Schedule">Fee Schedule</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                            <aura:if isTrue="{!or( v.permissions.reports == 'full', v.permissions.reports == 'read')}">
+                              <li class="navDropdown-item " role="presentation">
+                                <a href="reports" class="noDecoration" role="menuitem" data-pagename="reports" onclick="{!c.redirectUrl}">
+                                  <span class="slds-truncate" title="Reports">Reports</span>
+                                </a>
+                              </li>
+                            </aura:if>
+                          </ul>
+                        </div>
+                      </div>
+                    </li>
+                  </aura:if>
+                  <!-- END MANAGE PRACTICE DROPDOWN -->
+                  <!-- Right floated section -->
+                </ul>
+               <!--  <ul class="slds-grid slds-size_1-of-6 floatRight">
+                  <li class=" slds-col">
+                  	<div class="slds-context-bar__item">
+                    <a href="javascript:void(0);" class="slds-context-bar__label-action noDecoration " data-pagename="contact-us" onclick="{!c.redirectUrl}">
+                      <span class="slds-truncate  header5" title="Help">Help&nbsp;&nbsp;</span>
+                      <lightning:icon iconName="action:question_post_action" class="helpIconClass" size="xx-small" alternativeText="Help"/>
+                    </a>
+                  	</div>
+                  </li>
+                  <aura:if isTrue="{!or( v.permissions.findDentist == 'full', v.permissions.findDentist == 'read')}">
+	                  <li class=" slds-col">
+	                  	<div class="slds-context-bar__item">
+	                    <a href="javascript:void(0);" class="slds-context-bar__label-action  noDecoration "  data-pagename="find-a-provider" onclick="{!c.redirectUrl}">
+	                      <span class="slds-truncate  header5" title="Find a Provider">Find a Provider&nbsp;&nbsp;</span>
+	                      <lightning:icon iconName="utility:search" size="small" class="fadIconClass" alternativeText="Find a Provider"/>
+	                    </a>
+	                    </div>
+	                  </li>
+                  </aura:if>
+                </ul>  -->
+                <div class="slds-grid slds-col floatRight">
+                	<div class="{!'slds-context-bar__item helpClass ' + (if(v.currTab == 'help', 'currPage', '') )}">
+                    <a href="javascript:void(0);" class="slds-context-bar__label-action noDecoration " data-pagename="contact-us" onclick="{!c.redirectUrl}">
+                      <span class="slds-truncate  header5" title="Help">Help&nbsp;&nbsp;</span>
+                      <lightning:icon iconName="action:question_post_action" class="helpIconClass" size="xx-small" alternativeText="Help"/>
+                    </a>
+                  </div>
+                  <div class="{!'slds-context-bar__item slds-size_1-of-2 fadClass ' + (if(v.currTab == 'fad', 'currPage', '') )}">
+	                    <a href="javascript:void(0);" class="slds-context-bar__label-action  noDecoration "  data-pagename="find-a-provider" onclick="{!c.redirectUrl}">
+	                      <span class="slds-truncate  header5" title="Find a Provider">Find a Provider&nbsp;&nbsp;</span>
+	                      <lightning:icon iconName="utility:search" size="small" class="fadIconClass" alternativeText="Find a Provider"/>
+	                    </a>
+	                  </div>
+                </div>
+                  <!-- END OF RIGHT FLOATED SECTION -->
+              </nav>
+            </div>
+          </div>
+          <!-- END OF NAV BAR -->
+        </header>
+        <div class="mobile">
+        	<div class=" topNavContainer slds-grid">
+        		<div onclick="{!c.redirectUrl}" data-pagename=""  class=" slds-col slds-grid">	
+        			<div class="slds-p-left_xx-small Logo">&nbsp;</div>
+        			<div class="header3 businessMobileContainer">
+        				{!v.selectedBusiness}
+        			</div>
+        		</div>
+				<div class="navIcon slds-col">
+					<div onclick="{!c.openModal}" class="slds-text-align_right">
+						<lightning:icon iconName="utility:justify_text" size="small" class="menuIconMobile"  /> 
+						
+						
+					</div>
+				</div>
+				
+				<div>
+					<div role="dialog" tabindex="-1" aria-labelledby="modal-header-01" aura:id="navContentModal"
+    					aria-describedby="modal-content-id-head" class="slds-modal  navModalPopup" >
+		        		<div class="slds-modal__container navBarModalContainer " id="navModalConId">
+			            	<header class="slds-modal__header navHeader"  >
+			            		<div class=" Logo" onclick="{!c.redirectUrl}" data-pagename=""  >
+			                         
+				                </div>
+			            		<div class="navClose" >
+				                	<button tabindex="1" class="slds-button slds-button_icon slds-button_icon-inverse iconCloseModal closeIcon"
+				                			  onclick="{!c.closeModal}">
+				                        <!-- {!v.closeL} -->
+				                    </button>
+				                </div>
+			                </header>
+			                <div class="slds-modal__content " id="modal-content-head">
+			                	<div aura:id="navComponentMId" class="navBodyMobileContainer" >
+									<ul >
+										<li class="topNavCell">
+											<h4><a data-pagename="" onclick="{!c.redirectUrl}">Home</a></h4>
+										</li>
+										<li class="collapsible topNavCell ">
+											<a class="endIcon" onclick="{!c.runCollapse}" ><h4>Member</h4></a>
+											<ul  class="dropdown-collapse " >
+												<li class="topNavCell"><a data-pagename="member-eligibility"  onclick="{!c.redirectUrl}">Check Eligibility</a></li>
+												<li class="topNavCell"><a data-pagename="member-eligibility?showPage=sc"  onclick="{!c.redirectUrl}">Saved Eligibility Searches</a></li>
+												<li class="topNavCell"><a data-pagename="panel-roster"  onclick="{!c.redirectUrl}">Panel Roster</a></li>
+												<li class="topNavCell"><a data-pagename="broken-appointment-list"  onclick="{!c.redirectUrl}">Broken Appointments</a></li>
+												<li class="topNavCell"><a data-pagename="member-intervention"  onclick="{!c.redirectUrl}">Member Intervention</a></li>
+											</ul>
+										</li> 
+										<li class="collapsible topNavCell ">
+											<a class="endIcon" onclick="{!c.runCollapse}" ><h4>Claims</h4></a>
+											<ul  class="dropdown-collapse " >
+												<li class="topNavCell"><a data-pagename="claim-confirmation-report"  onclick="{!c.redirectUrl}">Claim Confirmation Report</a></li>
+												<li class="topNavCell"><a data-pagename="claim-search"  onclick="{!c.redirectUrl}">Claim Search</a></li>																								
+												<li class="topNavCell"><a data-pagename="claim-entry"  onclick="{!c.redirectUrl}">Claim Entry</a></li>
+												<li class="topNavCell"><a data-pagename="claim-drafts"  onclick="{!c.redirectUrl}">Claim Drafts</a></li>
+											</ul>
+										</li> <li class="collapsible topNavCell ">
+											<a class="endIcon" onclick="{!c.runCollapse}" ><h4>{!v.authLabel}</h4></a>
+											<ul  class="dropdown-collapse " >
+												<li class="topNavCell"><a data-pagename="pre-auth-confirmation-report"  onclick="{!c.redirectUrl}">{!v.authLabel} Confirmation Report</a></li>												
+												<li class="topNavCell"><a data-pagename="pre-auth-search"  onclick="{!c.redirectUrl}">{!v.authLabel} Search</a></li>
+												<li class="topNavCell"><a data-pagename="pre-auth-entry"  onclick="{!c.redirectUrl}">{!v.authLabel} Entry</a></li>
+												<li class="topNavCell"><a data-pagename="pre-auth-drafts"  onclick="{!c.redirectUrl}">{!v.authLabel} Drafts</a></li>
+											</ul>
+										</li> <li class="collapsible topNavCell ">
+											<a class="endIcon" onclick="{!c.runCollapse}" ><h4>Referrals</h4></a>
+											<ul  class="dropdown-collapse " >
+												<li class="topNavCell"><a data-pagename="referral-confirmation-report"  onclick="{!c.redirectUrl}">Referral Confirmation Report</a></li>
+												<li class="topNavCell"><a data-pagename="referral-search"  onclick="{!c.redirectUrl}">Referral Search</a></li>																								
+												<li class="topNavCell"><a data-pagename="referral-entry"  onclick="{!c.redirectUrl}">Referral Entry</a></li>
+											</ul>
+										</li> 
+										<li class="collapsible topNavCell ">
+											<a class="endIcon" onclick="{!c.runCollapse}" ><h4>Manage Practice</h4></a>
+											<ul  class="dropdown-collapse " >
+												<li class="topNavCell"><a data-pagename="practice-management"  onclick="{!c.redirectUrl}">Practice Management</a></li>
+												<li class="topNavCell"><a data-pagename="electronic-finds-transfer"  onclick="{!c.redirectUrl}">EFT</a></li>
+												<li class="topNavCell"><a data-pagename="billed-amount-list"  onclick="{!c.redirectUrl}">Billed Amount List</a></li>
+												<li class="topNavCell"><a data-pagename="fee-schedule"  onclick="{!c.redirectUrl}">Fee Schedule</a></li>
+												<li class="topNavCell"><a data-pagename="reports"  onclick="{!c.redirectUrl}">Reports</a></li>
+											</ul>
+										</li> 
+										
+										<li class="topNavCell ">
+											<h4><a data-pagename="contact-us" onclick="{!c.redirectUrl}">Help</a></h4>
+										</li>
+										<li class="topNavCell">
+											<h4><a data-pagename="find-a-provider" onclick="{!c.redirectUrl}">Find a Provider</a></h4>
+										</li>
+										<li class="topNavCell">
+											<h4><a  onclick="{!c.removeCache}">Logout</a></h4>
+										</li>
+									</ul>
+									
+								</div>
+			                    
+			                </div>
+			                
+			                
+			                <!-- <footer class="slds-modal__footer  navFooter">
+			                	
+			                </footer> --> 
+			            </div>
+		        	</div>
+			        <div aura:id="navBackdrop" class="slds-backdrop " onclick="{!c.closeModal}"></div>
+				</div>
+			</div>
+		</div>
+      </div>
+</aura:component>

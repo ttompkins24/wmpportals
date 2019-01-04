@@ -1,0 +1,117 @@
+/* new from alex */
+.THIS.dentistDetailContainerEdit {
+	background-color:white;
+	border:1px solid #ccc !important;
+	padding-left:20px;
+	padding-right:20px;
+	padding-bottom:20px;
+	border-radius:8px;
+	box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.1);
+}
+
+.THIS.dentistDetailContainerEdit .headerBackground {
+    background-color: #616B84;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-right: -20px !important;
+    margin-left: -20px !important;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    width: auto;
+}
+
+.THIS.dentistDetailContainerEdit .mainHeaderText {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.THIS.dentistDetailContainer {
+	background-color:white;
+    border:1px solid #ccc !important;
+    padding:20px 20px;
+    border-radius:8px;
+    box-shadow: 0 0 15px 3px rgba(0, 0, 0, 0.1);
+}
+
+.THIS.dentistDetailContainerEdit .paginate{
+    text-align:right;
+}
+
+.THIS.dentistDetailContainer .paginate{
+    text-align:right;
+}
+
+.THIS.dentistDetailContainerEdit .spacing{
+    margin:0px 10px;
+}
+
+.THIS.dentistDetailContainer .spacing{
+    margin:0px 10px;
+}
+
+.THIS.dentistDetailContainerEdit .footer{
+    margin-top:25px;
+}
+
+.THIS.dentistDetailContainer .footer{
+    margin-top:25px;
+}
+
+.THIS.dentistDetailContainerEdit .edit-table-general dt{
+    height: 50px;
+}
+
+.THIS.dentistDetailContainerEdit .edit-table-general dd{
+    height: 50px;
+}
+
+.THIS.dentistDetailContainerEdit .edit-table-general .dtExtra{
+    height: 75px;
+}
+
+.THIS.dentistDetailContainerEdit .edit-table-general .ddExtra{
+    height: 75px;
+}
+
+.THIS.dentistDetailContainer .paddingRight {
+    padding-right:20px;
+}
+
+.THIS.dentistDetailContainer .iconSpaceRight{
+	padding-right:5px;
+}
+
+.THIS.dentistDetailContainer .suffix-input {
+    width: 64px;
+}
+
+.THIS.dentistDetailContainerEdit .tableClass .deletedRow{
+    background-color:#FBEFEF;
+}
+
+.THIS.dentistDetailContainerEdit .dropdownMultiIcon svg{
+	fill: #606060;
+	display: block;
+    position: absolute;
+    right: 20px;
+    top: 12px; 
+    width:12px;
+}
+
+.THIS.dentistDetailContainerEdit .newIcon svg, .THIS.dentistDetailContainerEdit .ddIcon svg{
+    fill : #0277BD;
+}
+
+.THIS.dentistDetailContainerEdit .multiPicklist{
+	padding-left:10px;
+	background-color:white;
+	border-color:#ccc;
+}
+
+.THIS.dentistDetailContainerEdit .fullWidth{
+	width:100%;
+}
+
+.THIS.dentistDetailContainer .verticalSpacer{
+	padding-top:20px;
+}

@@ -1,0 +1,191 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_FADResultList
+Purpose						: Find a Dentist Result component will do the following 
+								# will query for the dentist/service locations that meet the criteria
+								# can sort by name and distance
+								# grouped by office or dentist
+								# pagination of the results
+Created on					: 30th August 2017
+Developed by				: Todd Tompkins
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			30th August 2017		Todd Tompkins			See header - purpose
+ 
+**********************************************************************************************************************/-->
+<aura:component controller="wmp_ctrl_FADResultList" implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,forceCommunity:availableForAllPageTypes" access="global">
+
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	
+	<!-- VAIRABLES FOR THE PAGE -->
+	<aura:attribute name="locSearched" type="String" description="what the user used for the location" default="Chicago" />
+	<aura:attribute name="showSelected" type="String" description="what the fad results are showed as"  default="dentist"/>
+	<aura:attribute name="sortedBySelected" type="String" description="what the fad results are sorted by" default="distance"/>
+	<aura:attribute name="paramMap" type="Map" description=""/>
+	<aura:attribute name="memCovIds" type="String[]" />
+	<aura:attribute name="resultList" type="wmp_wrap_FAD[]" />
+	<aura:attribute name="fullResultList" type="wmp_wrap_FAD[]" />
+	<aura:attribute name="numResults" type="Integer" />
+	<aura:attribute name="pageNum" type="Integer" />
+	<aura:attribute name="totalPages" type="Integer" />
+	<aura:attribute name="resultsPerPage" type="Integer" />
+	
+	<aura:attribute name="mainDentistCanBeSet" type="Boolean" />
+
+	<!-- LABELS -->
+	<aura:attribute name="sortByL" type="String" description="sort by text" default="{!$Label.c.Sort_By}" />
+	<aura:attribute name="sortedByL" type="String" description="sorted by text" default="{!$Label.c.Sorted_by}" />
+	<aura:attribute name="showL" type="String" description="show text" default="{!$Label.c.Show}" />
+	<aura:attribute name="dentistsL" type="String" description="dentist text"  />
+	<aura:attribute name="officesL" type="String" description="office text" default="{!$Label.c.Offices}" />
+	<aura:attribute name="nameL" type="String" description="name text" default="{!$Label.c.Name}" />
+	<aura:attribute name="distanceL" type="String" description="distance text" default="{!$Label.c.Distance}" />
+	<aura:attribute name="fromL" type="String" description="from text" default="{!$Label.c.from}" />
+	<aura:attribute name="viewInfoL" type="String" description="view info for button" default="{!$Label.c.View_Info}"/>
+	<aura:attribute name="noResults" type="String" description="if no results are found" default="{!$Label.c.No_Results}"/>
+	<aura:attribute name="notAcceptingNewPatientsL" type="String" description="if no results are found" />
+
+	<div class="slds">
+		<div class=" clear fadResult slds-grid slds-wrap" >
+			<div class=" slds-size_1-of-1 " >
+				<div class="slds-grid slds-wrap">
+					<div class=" slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-large-size_2-of-12 slds-grid slds-wrap">
+						
+						<div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-1 slds-large-size_1-of-1 showByContainer ">
+							<div class="desktop">
+								<div class="intro">
+									{!v.showL}
+								</div>
+								<ul>
+									<li class="{!v.showSelected == 'dentist' ? 'selected' : ''}"><a onclick="{!c.changeShow}" data-name='dentist' class="{!v.showSelected == 'dentist' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.dentistsL}</h4></a></li>
+									<li class="{!v.showSelected == 'office' ? 'selected' : ''}"><a onclick="{!c.changeShow}" data-name='office' class="{!v.showSelected == 'office' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.officesL}</h4></a></li>
+								</ul>
+							</div>
+							<div class="mobile">
+								<div class="filterContainer">
+									<span class="title slds-size_1-of-1">{!v.showL}:</span>
+									<div class="slds-size_1-of-1">
+										<ui:inputSelect aura:id="showDropM" class="changeFADInfo" value="{!v.showSelected}" change="{!c.changeShowM}">
+											<ui:inputSelectOption text="dentist" label="{!v.dentistsL}" class="changeFADInfo"/>
+											<ui:inputSelectOption text="office" label="{!v.officesL}" class="changeFADInfo"/>
+										</ui:inputSelect>
+									</div>
+								</div>
+							</div>
+						</div>
+					
+						<div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-1 slds-large-size_1-of-1 sortByContainer">
+							<div class="desktop">
+								<div class="intro">
+									{!v.sortByL}
+								</div>
+								<ul>
+									<li class="{!v.sortedBySelected == 'name' ? 'selected' : ''}"><a onclick="{!c.changeSortedBy}" data-name='name'  class="{!v.sortedBySelected == 'name' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.nameL}</h4></a></li>
+									<li class="{!v.sortedBySelected == 'distance' ? 'selected' : ''}"><a onclick="{!c.changeSortedBy}" data-name='distance'  class="{!v.sortedBySelected == 'distance' ? 'bodyColor' : ''}"><h4 class="slds-m-top_small">{!v.distanceL}</h4></a></li>
+								</ul>
+							</div>
+							<div class="mobile">
+								<div class="filterContainer">
+									<span class="slds-size_1-of-1 title">{!v.sortByL}</span>
+									<div class="slds-size_1-of-1">
+										<ui:inputSelect aura:id="sortByDropM" class="changeFADInfo" value="{!v.sortedBySelected}" change="{!c.changeSortedByM}">
+											<ui:inputSelectOption text="name" label="{!v.nameL}" />
+											<ui:inputSelectOption text="distance" label="{!v.distanceL}" />
+										</ui:inputSelect>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+					<div class="clearBoth mainContainer slds-col slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_10-of-12 slds-grid slds-wrap" >
+						<div class="header slds-col slds-size_1-of-1 inlineBlock">
+							<div class=" title slds-size_1-of-1 slds-medium-size_3-of-4 slds-large-size_3-of-4 inlineBlock">
+								 
+								 <aura:if isTrue="{!v.showSelected == 'office'}">
+								 		<h4>{!v.numResults}&nbsp;{!v.officesL}</h4>
+								 	<aura:set attribute="else">
+								 		<h4>{!v.numResults}&nbsp;{!v.dentistsL}</h4>
+								 	</aura:set>
+								 </aura:if>
+								 <span class="subTitle">
+									 <aura:if isTrue="{!v.sortedBySelected == 'name'}">
+									 		<div class="metaText">({!v.sortedByL}&nbsp;{!v.nameL}&nbsp;{!v.fromL}&nbsp;{!v.locSearched})</div>
+									 	<aura:set attribute="else">
+									 		<div class="metaText">({!v.sortedByL}&nbsp;{!v.distanceL}&nbsp;{!v.fromL}&nbsp;{!v.locSearched})</div>
+									 	</aura:set>
+									 </aura:if>
+								 </span>
+							</div>
+							<div class="desktop slds-col slds-medium-size_1-of-4 slds-large-size_1-of-4  ">
+								<aura:if isTrue="{!v.numResults > 0}">
+									<div class="paginate ">
+										<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+										<a class="{!'spacing bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+										<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+										<a class="{!'spacing bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</div>
+								</aura:if>
+							</div>
+						</div>
+						
+						<div class="clear fadBody slds-col slds-size_1-of-1">
+							<aura:if isTrue="{!v.numResults > 0}">
+								<aura:if isTrue="{!v.showSelected == 'office'}">
+									<aura:iteration items="{!v.resultList}" var="office" >
+										<c:wmp_comp_FADResult_Office office="{!office}" memCovIds="{!v.memCovIds}" mainDentistCanBeSet="{!v.mainDentistCanBeSet}"
+											notAcceptingNewPatientsL="{!v.notAcceptingNewPatientsL}"/>
+									</aura:iteration>
+									<aura:set attribute="else">
+										<aura:iteration items="{!v.resultList}" var="dentist" >
+											<c:wmp_comp_FadResult_Dentist dentist="{!dentist}" memCovIds="{!v.memCovIds}" mainDentistCanBeSet="{!v.mainDentistCanBeSet}"
+												notAcceptingNewPatientsL="{!v.notAcceptingNewPatientsL}"/>
+										</aura:iteration>
+									</aura:set>
+								</aura:if>
+								
+								<aura:set attribute="else">
+									{!v.noResults}
+								</aura:set>
+							</aura:if>
+							
+						</div> 
+						<aura:if isTrue="{!v.numResults > 0}">
+							<div class="slds-col slds-size_1-of-1 footer ">
+								<div class="col paginate">
+									<div class="desktop">
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }"  onclick="{!c.firstPageClick}" >{!$Label.c.First}</a>
+										<a class="{!'spacing  bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>
+										<span class="spacing bodyText pageNum">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+										<a class="{!'spacing  bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+									</div>
+									<div class="mobile">
+										<table>
+											<tr>
+												<td>
+													<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.pageNum == 1 ? ' hidden' : '') }" onclick="{!c.previousPageClick}" >{!$Label.c.Previous}</a>&nbsp;
+												</td>
+												<td>
+													<span class="spacing slds-col slds-size_1-of-3 pageNum bodyText">{!$Label.c.Page}&nbsp;{!v.pageNum}&nbsp;{!$Label.c.of}&nbsp;{!v.totalPages}</span>
+												</td>
+												<td>
+													&nbsp;<a class="{!'spacing slds-col slds-size_1-of-3 bodyLink ' + (v.totalPages > v.pageNum ? '' : ' hidden') }" onclick="{!c.nextPageClick}" >{!$Label.c.Next}</a>
+												</td>
+											</tr>
+										</table>
+									</div>
+								</div>
+							</div>
+						</aura:if>
+					</div>
+				</div>
+			</div>
+			<div class="slds-spinner_container slds-hide" aura:id="uploadSpinner">
+		      <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="alert">
+		        <div class="slds-spinner__dot-a"></div>
+		        <div class="slds-spinner__dot-b"></div>
+		      </div>
+		    </div>
+		</div>
+	</div>
+</aura:component>

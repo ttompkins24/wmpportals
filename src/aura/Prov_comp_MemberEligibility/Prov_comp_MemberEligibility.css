@@ -1,0 +1,136 @@
+.THIS .memberEligibility h3 {
+    font-size:28px;
+    line-height:32px;
+    font-weight:600;
+    
+}
+
+.THIS .memberEligibility .marginTen{
+    margin-top: 20px;
+}
+
+.THIS .memberEligibility .floatRight{
+    float:right;
+}    
+
+.THIS .memberEligibility .floatLeft{
+    float:left;
+}
+
+.THIS .printIcon:before:hover{
+	text-decoration:none;
+}
+
+ .THIS .memberEligibility .helpRequestHeader{
+    text-align:center;
+    width:100%;
+    margin-top:45px;
+}
+
+ .THIS .memberEligibility .helpRequestSurroundingText{
+    text-align:center;
+    width:100%;
+    padding-top:13px;
+}
+
+ .THIS .memberEligibility .tableClass{
+    border-radius: 8px;
+    border: solid 2px #e8e8e8;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width:100%;
+    margin-top:10px;
+}
+
+ .THIS .memberEligibility .fullWidth{
+    width:100%;
+}
+ .THIS .memberEligibility .tableClass th{
+    background-color: #4c4c4c;
+    height: 48px;
+    padding-left:29px;
+}
+
+ .THIS .memberEligibility .tableClass .headerText{
+    color:white;
+}
+
+ .THIS .memberEligibility .paginationContainer{
+    padding-top:40px;
+    float:right;
+    padding-right:10%;
+}
+
+ .THIS .memberEligibility .tableClass td{
+    height:96px;
+    padding-left:29px;
+    vertical-align: middle;
+}
+
+.THIS .memberEligibility .tableClass .ddIcon{
+    padding-right: 15px;
+}
+
+
+ .THIS .memberEligibility .tableClass tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+ .THIS .memberEligibility .tableClass tr:nth-child(even) {
+    background: #f2fbff;
+}
+
+ .THIS .memberEligibility .tableClass .viewLink{
+    font-weight:600;
+    cursor:pointer;
+}
+
+ .THIS .memberEligibility .width40{
+    width:40%;
+}
+
+ .THIS .memberEligibility .width28{
+    width:28%;
+}
+ .THIS .memberEligibility .width20{
+    width:20%;
+}
+
+ .THIS .memberEligibility .width12{
+    width:12%;
+}
+
+ .THIS .memberEligibility .width10{
+    width:10%;
+}
+
+ .THIS .memberEligibility .descriptionText{
+    text-align: left;
+}
+
+ .THIS .memberEligibility .additionalHRForMobile{
+    display:none;
+}
+
+ .THIS .memberEligibility .createHelpRequestContainer{
+    margin-bottom:40px;
+    padding-top:20px;
+    text-align:center;
+}
+
+ .THIS .memberEligibility .topContainer{
+    display:inline-block;
+}
+
+.THIS .memberEligibility .slds-dropdown.slds-dropdown--left.hide {
+    display: none;
+}
+
+.THIS .memberEligibility  .dropdown-menu.in{
+    display:block;
+}
+
+.THIS .memberEligibility .dropdown-menu {
+   margin-top: -30px;
+}

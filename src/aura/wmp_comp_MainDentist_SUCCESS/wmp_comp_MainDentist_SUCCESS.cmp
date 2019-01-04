@@ -1,0 +1,23 @@
+<aura:component >
+	
+	<aura:attribute name="closeWindow" type="Boolean" default="false"/>
+	<aura:attribute name="success_title" type="String" description=""/>
+    <aura:attribute name="success_info" type="String" description=""/>
+    
+    <!-- <aura:attribute name="success_okay" type="String" description="" default="{!$Label.c.Okay}"/> -->
+	
+	<div class="slds">
+		<div class="mainDentist_success">
+    		<div class="mainDentist_body ">
+    			<div class="timeClockIcon"></div>
+    			
+    			<h4 class="slds-text-align_center">
+    				{!v.success_title}
+    			</h4>    			
+    			<div class="bodyText slds-text-align_center slds-m-top_medium">
+    				{!v.success_info}
+    			</div>    			
+    		</div>
+    	</div>
+	</div>
+</aura:component>

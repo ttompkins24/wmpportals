@@ -1,0 +1,1350 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+    extends="c:prov_comp_Provider_Common" 
+    access="global"
+    controller="prov_ctrl_Dentist_Detail">
+    
+    <aura:attribute access="private" name="psl" type="Object" />
+    <aura:attribute access="private" name="caseUpdate" type="Object" />
+    <aura:attribute access="private" name="notes" type="String" />
+    <aura:attribute access="private" name="hospitals" type="List" />
+    <aura:attribute access="private" name="specialties" type="List" />
+    <aura:attribute access="private" name="other_locations" type="List" />
+    <aura:attribute access="private" name="psl_networks" type="List" />
+    <aura:attribute access="private" name="provider_licenses" type="List" />
+    <aura:attribute access="private" name="languagePicklists" type="List" />
+    <aura:attribute access="private" name="ageRanges" type="List" />
+
+    <aura:attribute access="private" name="caseId" type="String"  />
+    <aura:attribute access="private" name="newCaseSaved" type="Boolean" default="false"  />
+    <aura:attribute access="private" name="newCaseWrapper" type="Case"  />
+
+    <!-- Update Information -->
+    <aura:attribute access="private" name="psl_updates" type="Object" />
+    <aura:attribute access="private" name="hospitals_updates" type="List" />
+    <aura:attribute access="private" name="specialties_updates" type="List" />
+    <aura:attribute access="private" name="psl_networks_updates" type="List" />
+    <aura:attribute access="private" name="provider_licenses_updates" type="List" />
+
+    <!-- Other maintenance -->
+    <aura:attribute access="private" name="isLoading" type="Boolean" default="true" />
+    <aura:attribute access="private" name="isEdit" type="Boolean" default="true"  />
+    <aura:attribute access="private" name="changeSubmitted" type="Boolean" default="false"  />
+    <aura:attribute access="private" name="invalidCase" type="Boolean" default="false"  />
+    <aura:attribute access="private" name="invalidMessage" type="String"  />
+    
+    <aura:attribute access="private" name="pageSize" type="Integer" default="10" />
+    <aura:attribute access="private" name="total_psl_networks" type="Integer" default="0" />
+    <aura:attribute access="private" name="total_psl_networks_edit" type="Integer" default="0" />
+    <aura:attribute access="private" name="total_psl_networks_page" type="Integer" default="0" />
+
+
+    <aura:attribute access="private" name="total_other_locations" type="Integer" default="0" />
+    <aura:attribute access="private" name="total_other_locations_page" type="Integer" default="0" />
+
+    <aura:attribute access="private" name="pageNumNetwork" type="Integer" default="1" />
+    <aura:attribute access="private" name="pageNumOther" type="Integer" default="1"  />
+    <aura:attribute access="private" name="pageNumNetworkEdit" type="Integer" default="1"  />
+    
+    <aura:attribute name="hasExistingCase" type="boolean"/>
+    <aura:attribute name="showSpinner" type="Boolean"/>
+    <aura:attribute access="private" name="map_psl_updates" type="Map" />
+
+    <lightning:spinner variant="brand" size="large" aura:id="spinnerId" class="{!v.showSpinner ? 'slds-is-fixed' : 'slds-hide'}" alternativeText="Loading..."/>
+
+    <!-- Define Event Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+  
+    <div class="{!'slds' + (v.isEdit ? ' dentistDetailContainerEdit' : ' dentistDetailContainer')}">
+        <!-- Has existing case -->
+        <aura:if isTrue="{!and(v.hasExistingCase, !v.isEdit)}">
+            <div class="headerMessageContainer ">
+                <ui:message class="warningMessageWrap slds-size_1-of-1" severity="warning" closable="false">
+                    <lightning:icon size="medium" class="generalInfoIcon" variant="inverse" iconName="utility:info" alternativeText="Info"/>
+                    <span class="warningMessage">{!$Label.c.Provider_Existing_Case}
+                    <a onclick="{!c.helpRequestRedirect}"> Help Request Section</a>.</span>
+                </ui:message>
+            </div>                                                
+        </aura:if>
+        
+        <!-- No Provider Found -->
+        <aura:if isTrue="{!!v.isLoading &amp;&amp; !v.psl}">
+            <div class="headerMessageContainer ">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!$Label.c.Provider_Not_Found}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <!-- Case Saved -->
+        <aura:if isTrue="{!and(v.newCaseSaved, !v.isEdit)}">
+            <div class="headerMessageContainer">
+                <ui:message class="successMessageWrap slds-size_1-of-1" severity="success" closable="true">
+                    <lightning:icon size="medium" class="generalSuccessIcon" variant="inverse" iconName="utility:success" alternativeText="Success"/>
+                    <span class="successMessage">{!$Label.c.Provider_Case_Saved}
+                        <a onclick="{!c.helpRequestRedirect}"> Help Request Section</a>.</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <!-- Invalid Case -->
+        <aura:if isTrue="{!and(v.invalidCase, v.isEdit)}">
+            <div class="headerMessageContainer">
+                <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                    <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error"/>
+                    <span class="errorMessage">{!v.invalidMessage}</span>
+                </ui:message>
+            </div>
+        </aura:if>
+
+        <!-- PROVIDER DETAIL SECTION -->
+        <aura:if isTrue="{!!v.isLoading &amp;&amp; v.psl &amp;&amp; !v.isEdit}">
+            <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-clearfix">
+                <div class="slds-col">
+                    <h1>Provider Detail</h1>
+                    <h3>{!v.psl.Provider__r.Name} </h3>
+                </div>
+                <div class="slds-col slds-clearfix">
+                    <aura:if isTrue="{!v.permissions.dentistList == 'full'}">
+                        <button class="generalButton slds-float_right inverse slds-m-right_medium testScript_dent_comp_update_info" onclick="{!c.updateInformation}">
+                            <span class="editIcon iconSpaceRight" title="Update"></span>Update Information
+                        </button>
+                    </aura:if>
+                    <a class=" bodyLink verticalSpacer slds-float_right testScript_printButton printIcon paddingRight" onclick="{!c.printPage}">Print</a>
+                </div>
+
+                <!-- START CARD DETAILS -->
+                <div class="slds-size_1-of-1 slds-grid slds-wrap slds-p-top_large slds-gutters">
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="slds-border_bottom slds-p-bottom_x-small">
+                            <h4>General Information</h4>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                
+                                <dt class="slds-item_label generalLabelForm" title="Gender">Gender:</dt>
+                                <dd class="slds-item_detail bodyText" title="Gender">
+                                    <aura:if isTrue="{!v.psl.Provider__r.gender__c}">
+                                        {!v.psl.Provider__r.gender__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+                                
+                                <dt class="slds-item_label generalLabelForm" title="Degree">Degree:</dt>
+                                <dd class="slds-item_detail bodyText" title="Degree">
+                                    <aura:if isTrue="{!v.psl.Provider__r.degree__c}">
+                                        {!v.psl.Provider__r.degree__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Education">Education:</dt>
+                                <dd class="slds-item_detail bodyText" title="Education">
+                                    <aura:if isTrue="{!v.psl.Provider__r.Education__c}">
+                                        {!v.psl.Provider__r.Education__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+                                <dd class="slds-item_detail bodyText" title="NPI">
+                                    <aura:if isTrue="{!v.psl.Provider__r.npi__c}">
+                                        {!v.psl.Provider__r.npi__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Language">Language:</dt>
+                                <dd class="slds-item_detail bodyText" title="Language">
+                                    <aura:if isTrue="{!v.psl.Languages_Spoken__c}">
+                                        {!v.psl.Languages_Spoken__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Cultural Competency Training">
+                                    Cultural Competency Training:
+                                </dt>
+                                <dd class="slds-item_detail bodyText" title="Cultural Competency Training">
+                                    {!v.psl.is_treating_special_needs_patients__c}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <div class="slds-border_bottom slds-p-bottom_x-small">
+                            <h4>Service Location</h4>
+                        </div>
+                        
+                        <div class="slds-m-top_small slds-m-bottom_small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label generalLabelForm" title="Location">Location:</dt>
+                                <dd class="slds-item_detail bodyText" title="Location">
+                                    <aura:if isTrue="{!v.psl.Service_Location__r.Address__c}">
+                                        <ui:outputRichText class="slds-text-longform" value="{!v.psl.Service_Location__r.Address__c}"/>
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Age Range">Age Range:</dt>
+                                <dd class="slds-item_detail bodyText" title="Age Range">
+                                    <aura:if isTrue="{!v.psl.treats_ages_from__c}">
+                                        {!v.psl.treats_ages_from__c} - {!v.psl.treats_ages_to__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Accepting New Patients">Accepting New Patients:</dt>
+                                <dd class="slds-item_detail bodyText" title="Accepting New Patients">
+                                    {!v.psl.is_accepting_new_patients__c}
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <div class="slds-border_bottom slds-p-bottom_x-small">
+                            <h4>Contact</h4>
+                        </div>
+
+                        <div class="slds-m-top_small slds-m-bottom_small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+                                <dd class="slds-item_detail bodyText" title="Email">
+                                    <aura:if isTrue="{!v.psl.Provider__r.Email__c}">
+                                        {!v.psl.Provider__r.Email__c}
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Website">Website:</dt>
+                                <dd class="slds-item_detail slds-truncate bodyText" title="Website">
+                                    <aura:if isTrue="{!v.psl.Service_Location__r.Website}">
+                                        <a href="{!'http://'+v.psl.Service_Location__r.Website}" target="_blank">
+                                            {!v.psl.Service_Location__r.Website}
+                                        </a>
+                                        <aura:set attribute="else">
+                                            None
+                                        </aura:set>
+                                    </aura:if>
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <div class="slds-border_bottom slds-p-bottom_x-small">
+                            <dl class="slds-list_horizontal slds-wrap">
+                                <dt class="slds-item_label generalLabelForm" title="Comments">Comments</dt>
+                            </dl>
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <p class="slds-m-top_small">
+                                <aura:if isTrue="{!v.psl.Provider_Service_Location_Comments__c}">
+                                    {!v.psl.Provider_Service_Location_Comments__c}
+                                    <aura:set attribute="else">
+                                        None
+                                    </aura:set>
+                                </aura:if>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <!-- END CARD DETAILS -->
+            </div>
+
+
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+                <div class="slds-size_1-of-1">
+                    <div class="slds-col">
+                        <h3>Hospital and Group Affiliations</h3>
+                    </div>
+                    <div class="slds-col">
+                        <aura:if isTrue="{!v.hospitals.length > 0}">
+                            <table class="tableClass" id="hospitals">
+                                <thead>
+                                    <tr >
+                                        <th class="headerText sorted sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="hospitals">
+                                            <span class="">Name</span>
+                                        </th>
+                                        <th class="headerText sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="hospitals">
+                                            <span class="">Affiliated Location</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <aura:iteration items="{!v.hospitals}" var="hospital">
+                                        <tr>
+                                            <td data-label="Name" class="slds-is-sortable " data-value="{!hospital.Name}">
+                                                <span class="bodyText dataSpace">{!hospital.Name}</span>
+                                            </td>
+                                            <td data-label="Affiliated Location" class="slds-is-sortable " data-value="{!hospital.Location}">
+                                                <span class="bodyText dataSpace" >{!hospital.Location}</span>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+
+                            <aura:set attribute="else">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="5">No Hospitals and Group Affiliations</td>
+                                </tr>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+                <div class="slds-size_1-of-1">
+                    <div class="slds-col">
+                        <h3>Provider Licenses</h3>
+                    </div>
+                    <div class="slds-col">
+                        <table class="tableClass" id="provider_licenses">
+                            <thead>
+                                <tr >
+                                    <th class="sorted sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="provider_licenses">
+                                        <span class="">License Type</span>
+                                    </th>
+                                    <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="provider_licenses">
+                                        <span class="">License Number</span>
+                                    </th>
+                                    <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTable}" data-tableid="provider_licenses">
+                                        <span class="">State</span>
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <aura:if isTrue="{!v.provider_licenses.length == 0}">
+                                    <tr>
+                                        <td class="bodyText dataSpace noResults" colspan="5">No Provider Licenses</td>
+                                    </tr>
+                                </aura:if>
+
+                                <aura:if isTrue="{!v.provider_licenses &amp;&amp; v.provider_licenses.length > 0}">
+                                    <aura:iteration items="{!v.provider_licenses}" var="license">
+                                        <tr>
+                                            <td data-label="License Type" class="slds-is-sortable " data-value="{!license.license_type__c}">
+                                                <span class="bodyText dataSpace">{!license.license_type__c}</span>
+                                            </td>
+                                            <td data-label="License Number" class="slds-is-sortable " data-value="{!license.license_id__c}">
+                                                <span class="bodyText dataSpace" >{!license.license_id__c} </span>
+                                            </td>
+                                            <td data-label="State" class="slds-is-sortable " data-value="{!license.license_state__c}">
+                                                <span class="bodyText dataSpace" >{!license.license_state__c}</span>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </aura:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+                <div class="slds-size_1-of-1">
+                    <div class="slds-col">
+                        <h3>Provider Specialties and Certifications</h3>
+                        <ui:outputRichText class="slds-text-longform" value="{!$Label.c.Specialties_Website}"/>
+                    </div>
+                    <div class="slds-col">
+                        <aura:if isTrue="{!v.specialties &amp;&amp; v.specialties.length > 0}">
+                            <table class="tableClass" id="specialties">
+                                <thead>
+                                    <tr >
+                                        <th class="sorted sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="specialties">
+                                            <span class="">Specialty</span>
+                                        </th>
+                                        <th class="sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="specialties">
+                                            <span class="">Certification Status</span>
+                                        </th>
+                                        <th class="sortable notSorted headerText" data-col="2" onclick="{!c.sortTable}" data-tableid="specialties">
+                                            <span class="">Certification Date</span>
+                                        </th>
+                                        <th class="sortable notSorted headerText" data-col="3" onclick="{!c.sortTable}" data-tableid="specialties">
+                                            <span class="">Board Certified</span>
+                                        </th>
+                                        <th class="sortable notSorted headerText" data-col="4" onclick="{!c.sortTable}" data-tableid="specialties">
+                                            <span class="">Board Name</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <aura:iteration items="{!v.specialties}" var="specialty">
+                                        <tr>
+                                            <td data-label="Specialty" class="slds-is-sortable " data-value="{!specialty.specialty}">
+                                                <span class="bodyText dataSpace">{!specialty.specialty}</span>
+                                            </td>
+                                            <td data-label="Certification Status" class="slds-is-sortable " data-value="{!specialty.certification_status}">
+                                                <span class="bodyText dataSpace" >{!specialty.certification_status}</span>
+                                            </td>
+
+                                            <td data-label="Certification Date" class="slds-is-sortable " data-value="{!specialty.certification_date}">
+                                                <span class="bodyText dataSpace" >
+                                                    <ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!specialty.certification_date}"/>
+                                                </span>
+                                            </td>
+
+                                            <td data-label="Board Certified" class="slds-is-sortable " data-value="{!specialty.board_certified}">
+                                                <span class="bodyText dataSpace" >{!specialty.board_certified}</span>
+                                            </td>
+
+                                            <td data-label="Board Name" class="slds-is-sortable " data-value="{!specialty.board_name}">
+                                                <span class="bodyText dataSpace" >{!specialty.board_name}</span>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+
+                            <aura:set attribute="else">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="5">No Provider Specialties and Certifications</td>
+                                </tr>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_large">
+                <div class="slds-size_1-of-1">
+                    <div class="slds-col">
+                        <h3>Network Affiliations</h3>
+                    </div>
+                    <div class="slds-col">
+                        <aura:if isTrue="{!v.psl_networks.length > 0}">
+                            <table class="tableClass" id="network_affiliations">
+                                <thead>
+                                    <tr >
+                                        <th class=" sortable sortAscend headerText" onclick="{!c.sortTableNetwork}" data-col="0" data-tableid="network_affiliations" data-fieldname="net_name" >
+                                            <span class="">Network</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTableNetwork}" data-tableid="network_affiliations" data-fieldname="participation_status__c" >
+                                            <span class="">Par Code</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTableNetwork}" data-tableid="network_affiliations" data-fieldname="effective_date__c" >
+                                            <span class="">Effective Date</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="3" onclick="{!c.sortTableNetwork}" data-tableid="network_affiliations" data-fieldname="term_date" >
+                                            <span class="">Expiration Date</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+        
+                                <tbody>
+                                    <aura:iteration items="{!v.psl_networks}" var="network_affiliation" start="{!(v.pageNumNetwork - 1) * v.pageSize}" end="{!v.pageNumNetwork * v.pageSize}">
+                                        <tr>
+                                            <td data-label="Network" class="slds-is-sortable " data-value="{!network_affiliation.network__r.Name}">
+                                                <span class="bodyText dataSpace">{!network_affiliation.network__r.Name}</span>
+                                            </td>
+                                            <td data-label="Par Code" class="slds-is-sortable " data-value="{!network_affiliation.participation_status__c}">
+                                                <span class="bodyText dataSpace" >{!network_affiliation.participation_status__c}</span>
+                                            </td>
+
+                                            <td data-label="Effective Date" 
+                                                class="slds-is-sortable " 
+                                                data-value="{!network_affiliation.effective_date__c}">
+                                                <span class="bodyText dataSpace" >
+                                                    <ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!network_affiliation.effective_date__c}"/>
+                                                </span>
+                                            </td>
+                                            <td data-label="Expiration Date" class="slds-is-sortable " data-value="{!network_affiliation.termination_date__c?network_affiliation.termination_date__c : '9999-12-04'}">
+                                                <span class="bodyText dataSpace" >
+                                                    <ui:outputDate class="slds-item_detail slds-truncate" format="MM/DD/YYYY" value="{!network_affiliation.termination_date__c}"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+
+                            <div>
+                                <div class="slds-col slds-size_1-of-1 footer">
+                                    <div class="paginate">
+                                        <div class="desktop">
+                                            <a class="{!'spacing bodyLink testscript_prev' + (v.pageNumNetwork == 1 ? ' hidden' : '') }" onclick="{!c.previousNetworkPageClick}">Previous</a>
+                                            <span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumNetwork}&nbsp;of&nbsp;{!v.total_psl_networks_page}</span>
+                                            <a class="{!'spacing bodyLink testscript_next' + (v.total_psl_networks > (v.pageNumNetwork * v.pageSize) ? '' : ' hidden') }" onclick="{!c.nextNetworkPageClick}" >Next</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <aura:set attribute="else">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="5">No Network Affiliations</td>
+                                </tr>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-p-top_medium">
+                <div class="slds-size_1-of-1">
+                    <div class="slds-col">
+                        <h3>Other Locations</h3>
+                    </div>
+                    <div class="slds-col">
+                        <aura:if isTrue="{!v.other_locations.length > 0}">
+                            <table class="tableClass" id="other_locations">
+                                <thead>
+                                    <tr >
+                                        <th class="sorted sortable sortAscend headerText" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.Name" data-col="0" data-tableid="other_locations">
+                                            <span class="">Office Name</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingStreet" data-tableid="other_locations">
+                                            <span class="">Address</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingCity" data-tableid="other_locations">
+                                            <span class="">City</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="3" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingState" data-tableid="other_locations">
+                                            <span class="">State</span>
+                                        </th>
+                                        <th class=" sortable notSorted headerText" data-col="4" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingPostalCode" data-tableid="other_locations">
+                                            <span class="">Zip</span>
+                                        </th>
+                                        <th class=" headerText" data-tableid="other_locations">
+                                            <span class="">Contact Phone</span>
+                                        </th>
+                                        <th class=" headerText " data-tableid="other_locations">
+                                            <span class="">Specialty</span>
+                                        </th>
+                                        <th class=" headerText" data-tableid="other_locations">
+                                            <span class="">Age Range</span>
+                                        </th>
+                                        <th class=" headerText" data-tableid="other_locations">
+                                            <span class="">Accepting New Patients</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    
+
+                                    <aura:iteration items="{!v.other_locations}" var="other_location"  start="{!(v.pageNumOther - 1) * v.pageSize}" end="{!v.pageNumOther * v.pageSize}">
+                                        <tr>
+                                            <td data-label="Office Name" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.Name}">
+                                                <span class="bodyText dataSpace"><a href="" onclick="{!c.goToLocation}" data-targetid="{!other_location.Service_Location__r.Id}">{!other_location.Service_Location__r.Name}</a></span>
+                                            </td>
+
+                                            <td data-label="Address" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingStreet}">
+                                                <span class="bodyText dataSpace">{!other_location.Service_Location__r.BillingStreet}</span>
+                                            </td>
+
+                                            <td data-label="City" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingCity}">
+                                                <span class="bodyText dataSpace" >{!other_location.Service_Location__r.BillingCity}</span>
+                                            </td>
+
+                                            <td data-label="State" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingState}">
+                                                <span class="bodyText dataSpace" >{!other_location.Service_Location__r.BillingState}</span>
+                                            </td>
+
+                                            <td data-label="Zip" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingPostalCode}">
+                                                <span class="bodyText dataSpace">{!other_location.Service_Location__r.BillingPostalCode}</span>
+                                            </td>
+
+                                            <td data-label="Contact Phone" class="" data-value="{!other_location.Service_Location_Phone__c}">
+                                                <span class="bodyText dataSpace" >{!other_location.Service_Location_Phone__c}</span>
+                                            </td>
+
+                                            <td data-label="Specialty" class="" data-value="{!other_location.Specialties__c}">
+                                                <span class="bodyText dataSpace" >{!other_location.Specialties__c}</span>
+                                            </td>
+
+                                            <td data-label="Age Range" class="" data-value="{!other_location.treats_ages_to__c}">
+                                                <span class="bodyText dataSpace" >{!other_location.treats_ages_from__c} - {!other_location.treats_ages_to__c}</span>
+                                            </td>
+
+                                            <td data-label="Accepting" class="" data-value="{!other_location.is_accepting_new_patients__c}">
+                                                <span class="bodyText dataSpace" >
+                                                    <aura:if isTrue="{!other_location.is_accepting_new_patients__c}">
+                                                        Yes
+                                                        <aura:set attribute="else">
+                                                            No
+                                                        </aura:set>
+                                                    </aura:if>
+                                                    
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+
+                            <div>
+                                <div class="slds-col slds-size_1-of-1 footer">
+                                    <div class="paginate">
+                                        <div class="desktop">
+                                            <a class="{!'spacing bodyLink testscript_prevOther' + (v.pageNumOther == 1 ? ' hidden' : '') }" onclick="{!c.previousOtherPageClick}">Previous</a>
+                                            <span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumOther}&nbsp;of&nbsp;{!v.total_other_locations_page}</span>
+                                            <a class="{!'spacing bodyLink testscript_nextOther' + (v.total_other_locations > (v.pageNumOther * v.pageSize) ? '' : ' hidden') }" onclick="{!c.nextOtherPageClick}" >Next</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <aura:set attribute="else">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="9">No Other Locations</td>
+                                </tr>
+                            </aura:set>
+
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        <!-- END PROVIDER DETAIL SECTION -->
+
+
+
+
+
+
+        <!-- EDIT PROVIDER SECTION -->
+        <aura:if isTrue="{!!v.isLoading &amp;&amp; v.psl &amp;&amp; v.isEdit}">
+            <div class="slds-grid slds-wrap slds-gutters slds-size_1-of-1 slds-align_absolute-center slds-m-bottom_large slds-clearfix headerBackground">
+                <div class="slds-size_11-of-12 slds-col mainHeaderText">
+                    <h1 class="inverse">Edit Provider Detail</h1>
+                </div>
+                <div class="slds-size_1-of-12 slds-col mainHeaderText">
+                    <div class="slds-float_right">
+                        <button class="generalButton inverse testScript_cancelButton" onclick="{!c.cancelUpdate}">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="elementWrap slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+                <div class="slds-size_1-of-1 slds-p-bottom_medium slds-grid slds-wrap" >                 
+                    <div class="slds-size_8-of-12 slds-col generalLabelForm">
+                        Update and submit Provider details on this form to request a change.
+                    </div>
+                    <div class="slds-size_4-of-12 slds-col ">
+                        <span class="slds-float_right" title="Help">Why do I have to log a Help Request to make changes?<lightning:helptext content="{!$Label.c.Edit_Provider_Detail}" /></span>
+                    </div>               
+                </div>
+
+                <div class="slds-size_1-of-1 slds-p-bottom_medium slds-grid">
+                    <div class="slds-col slds-size_1-of-1">
+                        <div>
+                            <ul class="slds-border_bottom slds-p-bottom_x-small">
+                                <li class="header3">Provider Name</li>
+                                <li>Updates made to to this section will be applied to all records associated with this Provider.</li>
+                            </ul>
+                        </div>
+                        <div class="slds-grid slds-m-bottom_small slds-m-top_medium">
+                            <form class="slds-form_inline">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control" data-map="psl">
+                                        <ui:inputText class="generalInputForm testScript_dent_comp_first" labelClass="generalLabelForm required" label="First Name" required="true" value="{!v.psl_updates.Provider__r.first_name__c}" change="{!c.fieldChange}"></ui:inputText>
+                                    </div>
+                                </div> 
+
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <ui:inputText class="generalInputForm testScript_dent_comp_middle" labelClass="generalLabelForm" label="Middle Name" value="{!v.psl_updates.Provider__r.middle_name__c}" change="{!c.fieldChange}"></ui:inputText>
+                                    </div>
+                                </div>
+
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <ui:inputText class="generalInputForm testScript_dent_comp_last" labelClass="generalLabelForm required" label="Last Name" required="true" value="{!v.psl_updates.Provider__r.last_name__c}" change="{!c.fieldChange}"> </ui:inputText>
+                                    </div>
+                                </div>
+
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control suffix-input">
+                                        <ui:inputText class="generalInputForm testScript_dent_comp_suffix" maxlength="6" labelClass="generalLabelForm" label="Suffix" value="{!v.psl_updates.Provider__r.name_suffix__c}" change="{!c.fieldChange}"></ui:inputText>
+                                    </div>
+                                </div> 
+
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control" >
+                                        <ui:inputSelect class="generalInputForm testScript_dent_comp_title" value="{!v.psl_updates.Provider__r.Title__c}" label="Title" labelClass="generalLabelForm" change="{!c.fieldChange}">
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label=""/>
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label="Mr."/>
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label="Mrs."/>
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label="Ms."/>
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label="Prof."/>
+                                            <ui:inputSelectOption class="picklistOption" text="{!v.psl_updates.Provider__r.Title__c}" label="Dr."/>
+                                        </ui:inputSelect>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-grid slds-gutters slds-align_absolute-center slds-m-bottom_medium">
+                <aura:if isTrue="{!v.newCaseWrapper.Id}">
+                    <div class="slds-page-header slds-col slds-size_1-of-1">
+                        <div class="slds-media">
+                            <div class="slds-media__body">
+                                <c:prov_comp_File_Upload parentId="{!v.newCaseWrapper.Id}" type="Case" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <aura:set attribute="else">
+                        <div class="slds-size_1-of-2 slds-col">
+                            <div class="slds-form-element">
+                                <label class="slds-checkbox_toggle slds-grid">
+                                    <span class="slds-form-element__label slds-m-bottom_none">Upload Attachments</span>
+                                    <input type="checkbox" name="toggle-desc" aria-describedby="toggle-desc" value="on" onclick="{!c.submitWrapperCase}" />
+                                    <span id="toggle-desc" class="slds-checkbox_faux_container" aria-live="assertive">
+                                        <span class="slds-checkbox_faux"></span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </aura:set>
+                </aura:if>
+            </div>
+
+            <div class="elementWrap slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+                <!-- START CARD DETAILS -->
+                <div class="slds-size_1-of-1 slds-grid">
+                    <div class="slds-col slds-size_1-of-2">
+                        <div>
+                            <ul class="slds-border_bottom slds-p-bottom_x-small">
+                                <li class="header4">General Information</li>
+                                <li>Updates made to this section will be applied to all records associated with this Business.</li>
+                            </ul>
+                        </div>
+                        <div class="slds-m-top_medium">
+                            <dl class="slds-list_horizontal slds-wrap edit-table-general slds-m-top_medium">
+                                
+                                <dt class="slds-item_label generalLabelForm" title="Gender">Gender:</dt>
+                                <dd class="slds-item_detail bodyText" title="Gender">
+                                    <ui:inputSelect class="generalInputForm testScript_dent_comp_gender" value="{!v.psl_updates.Provider__r.gender__c}" change="{!c.fieldChange}" label="Gender" labelClass="slds-hide">
+                                        <ui:inputSelectOption class="picklistOption" text="Unknown" label="Unknown"/>
+                                        <ui:inputSelectOption class="picklistOption" text="Male" label="Male"/>
+                                        <ui:inputSelectOption class="picklistOption" text="Female" label="Female"/>
+                                    </ui:inputSelect>
+                                </dd>
+
+
+                                <dt class="slds-item_label generalLabelForm" title="Degree">Degree:</dt>
+                                <dd class="slds-item_detail bodyText" title="Degree">
+                                    <ui:inputText class="generalInputForm testScript_dent_comp_degree" value="{!v.psl_updates.Provider__r.degree__c}" change="{!c.fieldChange}" label="Degree" labelClass="slds-hide"></ui:inputText>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Education">Education:</dt>
+                                <dd class="slds-item_detail bodyText" title="Education">
+                                    <ui:inputText class="generalInputForm testScript_dent_comp_education" value="{!v.psl_updates.Provider__r.Education__c}" change="{!c.fieldChange}" label="Education" labelClass="slds-hide"></ui:inputText>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="NPI">NPI:</dt>
+                                <dd class="slds-item_detail bodyText" title="NPI">
+                                    <ui:inputText class="generalInputForm testScript_dent_comp_npi" value="{!v.psl_updates.Provider__r.npi__c}" change="{!c.fieldChange}" label="NPI" labelClass="slds-hide"></ui:inputText>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm " title="Language">Language:</dt>
+                                <dd class="slds-item_detail bodyText" title="Language">
+                                    <ui:menu >
+                                        <ui:menuTriggerLink aura:id="trigger" >
+                                            <div class="general-form-group">
+                                                <input type="text" class="fullWidth multiPicklist form-control slds-input generalInputPicklist testScript_dent_comp_language" id="actionTemp1" readOnly="true" placeholder="{!v.psl.Languages_Spoken__c}" value="{!v.psl.Languages_Spoken__c}"/>
+                                                <lightning:icon iconName="utility:down" size="xx-small" alternativeText="Expand" class="dropdownMultiIcon" />                                                         
+                                            </div>
+                                        </ui:menuTriggerLink>
+
+                                        <ui:menuList class="generalMenuList" autoPosition="false">
+                                            <aura:iteration items="{!v.languagePicklists}" var="option">
+                                                <li class="generalMenuItem uiMenuItem uiCheckboxMenuItem " role="presentation" data-aura-class="uiMenuItem uiCheckboxMenuItem">
+                                                    <span class="{!option.isChecked?'checked testClass':'testClass'}" data-value="{!option.value}" onclick="{!c.menuClick}">{!option.label}</span>
+                                                </li>
+                                            </aura:iteration>
+                                        </ui:menuList>
+                                    </ui:menu>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Cultural Competency Training">Cultural Competency Training:</dt>
+                                <dd class="slds-item_detail bodyText" title="Cultural Competency Training">
+                                    <ui:inputSelect class="generalInputForm testScript_dent_comp_competency" value="{!v.psl_updates.is_treating_special_needs_patients__c}" change="{!c.fieldChange}" label="Cultural Competency Training" labelClass="slds-hide">
+                                        <ui:inputSelectOption class="picklistOption" text="Yes" label="Yes"/>
+                                        <ui:inputSelectOption class="picklistOption" text="No" label="No"/>
+                                    </ui:inputSelect>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+
+
+                    <div class="slds-col slds-size_1-of-2">
+                        <div>
+                            <ul class="slds-border_bottom slds-p-bottom_x-small">
+                                <li class="header4">Service Office
+                                    <div class="slds-form-element slds-float_right">
+                                        <label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+                                            <span class="slds-form-element__label slds-m-bottom--none">Apply Service Office Information changes to Provider at all Locations</span>
+                                            <input name="applyToAllDentistOffice" type="checkbox" aura:id="applyToAllDentistOffice" class="testScript_dent_comp_alllocation" aria-describedby="applyToAllDentistOffice"/>
+                                            <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"/>
+                                        </label>
+                                    </div>
+                                </li>
+                                <li>&zwnj;</li>
+                            </ul>
+                        </div>
+
+                        <div class="slds-m-top_small slds-m-bottom_small">
+                            <dl class="slds-list_horizontal slds-wrap edit-table-general slds-m-top_small">
+                                <dt class="slds-item_label generalLabelForm dtExtra" title="Location">Location:</dt>
+                                <dd class="slds-item_detail bodyText ddExtra" title="Location">
+                                    <ui:outputRichText class="slds-text-longform testScript_dent_comp_office" value="{!v.psl.Service_Location__r.Address__c}"/>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Age Range From">Age Range From:</dt>
+                                <dd class="slds-item_detail bodyText" title="Age Range">
+                                    <ui:inputSelect class="generalInputForm testScript_dent_comp_age_from" value="{!v.psl_updates.treats_ages_from__c}" change="{!c.fieldChange}" label="Age Range From" labelClass="slds-hide">
+                                        <aura:iteration items="{!v.ageRanges}" var="age">
+                                            <ui:inputSelectOption class="picklistOption " text="{!age}" label="{!age}"/>
+                                        </aura:iteration>
+                                    </ui:inputSelect>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Age Range To">Age Range To:</dt>
+                                <dd class="slds-item_detail bodyText" title="Age Range">
+                                    <ui:inputSelect class="generalInputForm testScript_dent_comp_age_to" value="{!v.psl_updates.treats_ages_to__c}" change="{!c.fieldChange}" label="Age Range To" labelClass="slds-hide">
+                                        <aura:iteration items="{!v.ageRanges}" var="age">
+                                            <ui:inputSelectOption class="picklistOption " text="{!age}" label="{!age}"/>
+                                        </aura:iteration>
+                                    </ui:inputSelect>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Accepting New Patients">Accepting New Patients:</dt>
+                                <dd class="slds-item_detail bodyText" title="Accepting New Patients">
+                                    <ui:inputSelect class="generalInputForm testScript_dent_comp_accepting" value="{!v.psl_updates.is_accepting_new_patients__c}" change="{!c.fieldChange}" label="Accepting New Patients" labelClass="slds-hide">
+                                        <ui:inputSelectOption class="picklistOption" text="Yes" label="Yes"/>
+                                        <ui:inputSelectOption class="picklistOption" text="No" label="No"/>
+                                    </ui:inputSelect>
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <div>
+                            <ul class="slds-border_bottom slds-p-bottom_x-small">
+                                <li class="header4">Contact
+                                    <div class="slds-form-element slds-float_right">
+                                        <label class="slds-checkbox--toggle slds-grid slds-grid--vertical-align-center">
+                                            <span class="slds-form-element__label slds-m-bottom--none">Apply Contact Information changes to Provider at all Locations</span>
+                                            <input name="checkbox" type="checkbox" aura:id="applyToAllDentistContact" class="testScript_dent_comp_alllocationcontact" />
+                                            <span class="slds-checkbox--faux" data-check-on="On" data-check-off="Off"></span>
+                                        </label>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="slds-m-bottom_small slds-m-top_small">
+                            <dl class="slds-list_horizontal slds-wrap edit-table-general slds-m-bottom_small">
+                                <dt class="slds-item_label generalLabelForm" title="Email">Email:</dt>
+                                <dd class="slds-item_detail bodyText" title="Email">
+                                    <ui:inputText class="generalInputForm testScript_dent_comp_email" value="{!v.psl_updates.Provider__r.Email__c}" change="{!c.fieldChange}" label="Email" labelClass="slds-hide"></ui:inputText>
+                                </dd>
+
+                                <dt class="slds-item_label generalLabelForm" title="Website">Website:</dt>
+                                <dd class="slds-item_detail bodyText" title="Website">
+                                    <ui:inputText class="generalInputForm testScript_dent_comp_url" value="{!v.psl_updates.Service_Location__r.Website}" change="{!c.fieldChange}" label="Website" labelClass="slds-hide"></ui:inputText>
+                                </dd>
+                            </dl>
+                        </div>
+
+                        <div class="slds-border_bottom slds-p-bottom_x-small">
+                            <h4>Comments</h4>
+                        </div>
+                        <div class="slds-m-top_small slds-m-bottom_small">
+                            <ui:inputTextArea class="generalInputForm testScript_dent_comp_comments" cols="20" rows="2" value="{!v.psl_updates.Provider_Service_Location_Comments__c}" change="{!c.fieldChange}" label="Comments" labelClass="slds-hide"></ui:inputTextArea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large slds-clearfix">
+                <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                    <div class="slds-size_1-of-2 slds-col">
+                        <h3>Hospital and Group Affiliations</h3>
+                    </div>
+                    <div class="slds-size_1-of-2 slds-col generalLabelForm">
+                        <a onclick="{!c.addHospital}" class="slds-float_right testScript_addHospitalButton">
+                            <lightning:icon iconName="utility:new" size="medium" class="addIcon" alternativeText="Add Hospital and Group Affiliation"/>
+                            &nbsp;Add Hospital and Group Affiliation
+                        </a>
+                    </div>
+                </div>
+
+                <div class="slds-col">
+                    <table class="tableClass" id="hospitals_updates">
+                        <thead>
+                             <tr>
+                                <th class="sorted sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="hospitals_updates">
+                                    <span class="">Name</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="hospitals_updates">
+                                    <span class="">Affiliated Location</span>
+                                </th>
+                                <th class="headerText"></th>
+                             </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.hospitals_updates.length == 0}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="3">No Hospitals and Group Affiliations</td>
+                                </tr>
+                            </aura:if>
+
+                            <aura:if isTrue="{!v.hospitals_updates &amp;&amp; v.hospitals_updates.length > 0}">
+                                <aura:iteration items="{!v.hospitals_updates}" var="hospital">
+                                    <tr class="{!hospital.isDeleted ? 'deletedRow' : ''}">
+                                        <td data-label="Name" class="slds-is-sortable" data-value="{!hospital.Name}">
+                                            <ui:inputText placeholder="Name" class="generalInputForm testScript_dent_comp_host_name" value="{!hospital.Name}"></ui:inputText>
+                                        </td>
+                                        <td data-label="Affiliated Location" class="slds-is-sortable " data-value="{!hospital.Location}">
+                                            <ui:inputText placeholder="Affiliated Location" class="generalInputForm testScript_dent_comp_hosp_location" value="{!hospital.Location}"></ui:inputText>
+                                        </td>
+
+                                        <td data-label="Actions" class="slds-is-sortable ">
+                                            <a class="{!'headerLink deleteLink slds-align_absolute-center testScript_dent_comp_hosp_del ' + 'deleteLink_'+hospital.index}" data-index="{!hospital.index}" data-exists="{!hospital.exists}" onclick="{!c.deleteHospital}">
+                                                <aura:if isTrue="{!!hospital.isDeleted}">
+                                                    <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:delete" alternativeText="Delete Row"/>
+                                                    <aura:set attribute="else">
+                                                        <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:undelete" alternativeText="Undelete Row"/>
+                                                    </aura:set>
+                                                </aura:if>
+                                            </a>
+                                        </td>                                   
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+                <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                    <div class="slds-size_8-of-12 slds-col">
+                        <h3>Provider Specialties and Certifications</h3>
+                        <ui:outputRichText class="slds-text-longform" value="{!$Label.c.Specialties_Website}"/>
+                    </div>
+                    <div class="slds-size_4-of-12 slds-col generalLabelForm">
+                        <a onclick="{!c.addSpecialty}" class="slds-float_right testScript_addSpecialtyButton">
+                            <lightning:icon iconName="utility:new" size="medium" class="addIcon" alternativeText="Add Specialty and Certification"/>
+                            &nbsp;Add Provider Specialty and Certification
+                        </a>
+                    </div>
+                </div>
+
+                <div class="slds-col">
+                    <table class="tableClass" id="specialties_updates">
+                        <thead>
+                                <tr>
+                                <th class=" sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="specialties_updates">
+                                    <span class="">Specialty</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="specialties_updates">
+                                    <span class="">Certification Status</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTable}" data-tableid="specialties_updates">
+                                    <span class="">Certification Date</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="3" onclick="{!c.sortTable}" data-tableid="specialties_updates">
+                                    <span class="">Board Certified</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="4" onclick="{!c.sortTable}" data-tableid="specialties_updates">
+                                    <span class="">Board Name</span>
+                                </th>
+                                <th class="  headerText"></th>
+                                </tr>
+                        </thead>
+                        <tbody>
+                            <aura:if isTrue="{!v.specialties_updates.length == 0}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="5">No Provider Specialties and Certifications</td>
+                                </tr>
+                            </aura:if>
+                            <aura:if isTrue="{!v.specialties_updates &amp;&amp; v.specialties_updates.length > 0}">
+                                <aura:iteration items="{!v.specialties_updates}" var="specialty">
+                                    <tr class="{!specialty.isDeleted ? 'deletedRow' : ''}">
+                                        <td data-label="Specialty" class="slds-is-sortable " data-value="{!specialty.specialty}">
+                                            <span class="bodyText dataSpace">
+                                                <ui:inputText class="generalInputForm testScript_dent_comp_specialty" value="{!specialty.specialty}"></ui:inputText>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Certification Status" class="slds-is-sortable " data-value="{!specialty.certification_status}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputText class="generalInputForm testScript_dent_comp_cert_status" value="{!specialty.certification_status}"></ui:inputText>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Certification Date" class="slds-is-sortable " data-value="{!specialty.certification_date}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputDate displayDatePicker="true" blur="{!c.fixDate}" class="slds-item_detail slds-truncate testScript_dent_comp_cert_date" format="MM/DD/YYYY" value="{!specialty.certification_date}"/>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Board Certified" class="slds-is-sortable " data-value="{!specialty.board_certified}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputText class="generalInputForm testScript_dent_comp_board_cert" value="{!specialty.board_certified}"></ui:inputText>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Board Name" class="slds-is-sortable " data-value="{!specialty.board_name}">
+                                            <ui:inputText class="generalInputForm testScript_dent_comp_board_name" value="{!specialty.board_name}"></ui:inputText>
+                                        </td>
+
+                                        <td data-label="Actions" class="slds-is-sortable">
+                                            <a class="{!'headerLink deleteLink slds-align_absolute-center slds-p-right_medium testScript_dent_comp_board_del ' + 'deleteLink_'+specialty.index}" data-index="{!specialty.index}" data-exists="{!specialty.exists}" onclick="{!c.deleteSpecialty}">
+                                                <aura:if isTrue="{!!specialty.isDeleted}">
+                                                    <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:delete" alternativeText="Delete Row"/>
+                                                    <aura:set attribute="else">
+                                                        <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:undelete" alternativeText="Undelete Row"/>
+                                                    </aura:set>
+                                                </aura:if>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+                <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                    <div class="slds-size_8-of-12 slds-col">
+                        <h3>Provider Licenses</h3>
+                    </div>
+                    <div class="slds-size_4-of-12 slds-col generalLabelForm">
+                        <a onclick="{!c.addLicense}" class="slds-float_right testScript_addProviderButton">
+                            <lightning:icon iconName="utility:new" size="medium" class="addIcon" alternativeText="Add Provider License"/>
+                            &nbsp;Add Provider License
+                        </a>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <table class="tableClass" id="provider_licenses_updates">
+                        <thead>
+                            <tr >
+                                <th class=" sortable sortAscend headerText" onclick="{!c.sortTable}" data-col="0" data-tableid="provider_licenses_updates">
+                                    <span class="">License Type</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTable}" data-tableid="provider_licenses_updates">
+                                    <span class="">License Number</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTable}" data-tableid="provider_licenses_updates">
+                                    <span class="">State</span>
+                                </th>
+                                <th class="headerText"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.provider_licenses_updates.length == 0}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="9">No Provider Licenses</td>
+                                </tr>
+                            </aura:if>
+                            <aura:if isTrue="{!v.provider_licenses_updates &amp;&amp; v.provider_licenses_updates.length > 0}">
+                                <aura:iteration items="{!v.provider_licenses_updates}" var="license">
+                                    <tr class="{!license.isDeleted ? 'deletedRow' : ''}">
+                                        <td data-label="License Type" class="slds-is-sortable " data-value="{!license.license_type__c}">
+                                            <span class="bodyText dataSpace">
+                                                <ui:inputText placeholder="License Type" class="generalInputForm testScript_dent_comp_license_type" value="{!license.license_type__c}"></ui:inputText>
+                                            </span>
+                                        </td>
+                                        <td data-label="License Number" class="slds-is-sortable " data-value="{!license.license_id__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputText placeholder="License Number" class="generalInputForm testScript_dent_comp_license_id" value="{!license.license_id__c}"></ui:inputText>
+                                            </span>
+                                        </td>
+                                        <td data-label="State" class="slds-is-sortable " data-value="{!license.license_state__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputText placeholder="License State" class="generalInputForm testScript_dent_comp_license_state" value="{!license.license_state__c}"></ui:inputText>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Actions" class="slds-is-sortable" data-value="{!license.Id}">
+                                            <a class="{!'headerLink deleteLink slds-align_absolute-center slds-p-right_medium testScript_dent_comp_license_del ' + 'deleteLink_'+license.Id}" data-index="{!license.index}" data-targetid="{!license.Id}"  onclick="{!c.deleteLicense}">
+                                                <aura:if isTrue="{!!license.isDeleted}">
+                                                    <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:delete" alternativeText="Delete Row"/>
+                                                    <aura:set attribute="else">
+                                                        <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:undelete" alternativeText="Undelete Row"/>
+                                                    </aura:set>
+                                                </aura:if>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large">
+                <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                    <div class="slds-size_8-of-12 slds-col">
+                        <h3>Network Affiliations</h3>
+                    </div>
+                    <div class="slds-size_4-of-12 slds-col generalLabelForm">
+                        <a onclick="{!c.addNetwork}" class="slds-float_right testScript_addNetworkButton">
+                            <lightning:icon iconName="utility:new" size="medium" class="addIcon" alternativeText="Add Network Affiliation"/>
+                            &nbsp;Add Network Affiliation
+                        </a>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <table class="tableClass" id="network_affiliations">
+                        <thead>
+                            <tr >
+                                <th class=" sortable sortAscend headerText" onclick="{!c.sortTableNetwork}" data-edit="1" data-col="0" data-tableid="network_affiliations" data-fieldname="net_name" >
+                                    <span class="">Network</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTableNetwork}" data-edit="1"  data-tableid="network_affiliations" data-fieldname="participation_status__c" >
+                                    <span class="">Par Code</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTableNetwork}" data-edit="1" data-tableid="network_affiliations" data-fieldname="effective_date__c" >
+                                    <span class="">Effective Date*</span>
+                                </th>
+                                <th class=" sortable notSorted headerText" data-col="3" onclick="{!c.sortTableNetwork}" data-edit="1" data-tableid="network_affiliations" data-fieldname="term_date" >
+                                    <span class="">Expiration Date</span>
+                                </th>
+                                <th class="headerText"></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.psl_networks_updates.length == 0}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="9">No Network Affiliations</td>
+                                </tr>
+                            </aura:if>
+                            <aura:if isTrue="{!v.psl_networks_updates &amp;&amp; v.psl_networks_updates.length > 0}">
+                                <aura:iteration items="{!v.psl_networks_updates}" var="network_affiliation" start="{!(v.pageNumNetworkEdit - 1) * v.pageSize}" end="{!(lessthan(v.pageNumNetworkEdit * v.pageSize, v.total_psl_networks_edit) ? v.pageNumNetworkEdit * v.pageSize : v.psl_networks_updates.length)}">
+                                    <tr class="{!network_affiliation.isDeleted ? 'deletedRow' : ''}">
+                                        <td data-label="Network" class="slds-is-sortable " data-value="{!network_affiliation.network__r.Name}">
+                                            <span class="bodyText dataSpace">
+                                                <ui:inputText class="generalInputForm testScript_dent_comp_net_name" value="{!network_affiliation.net_name}"></ui:inputText>
+                                            </span>
+                                        </td>
+                                        <td data-label="Par Code" class="slds-is-sortable " data-value="{!network_affiliation.participation_status__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <!-- <ui:inputText class="generalInputForm testScript_dent_comp_net_part" value="{!network_affiliation.participation_status__c}"></ui:inputText> -->
+                                                <ui:inputSelect class="generalInputForm testScript_dent_comp_net_part" value="{!network_affiliation.participation_status__c}" >
+                                                    <ui:inputSelectOption class="picklistOption" text="PAR" label="PAR"/>
+                                                    <ui:inputSelectOption class="picklistOption" text="NON PAR" label="NON PAR"/>
+                                                </ui:inputSelect>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Effective Date" class="slds-is-sortable " data-value="{!network_affiliation.effective_date__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputDate displayDatePicker="true" class="generalInputForm testScript_dent_comp_net_effective" blur="{!c.fixDate}"  format="MM/DD/YYYY" value="{!network_affiliation.effective_date__c}"></ui:inputDate>
+                                            </span>
+                                        </td>
+                                        <td data-label="Expiration Date" class="slds-is-sortable " data-value="{!network_affiliation.termination_date__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <ui:inputDate displayDatePicker="true" blur="{!c.fixDate}" class="generalInputForm testScript_dent_comp_net_term"  format="MM/DD/YYYY" value="{!network_affiliation.termination_date__c}"></ui:inputDate>
+                                            </span>
+                                        </td>
+
+                                        <td data-label="Actions" class="slds-is-sortable" data-value="{!network_affiliation.Id}">
+                                            <a class="{!'headerLink deleteLink slds-align_absolute-center slds-p-right_medium testScript_dent_comp_net_del ' + 'deleteLink_'+network_affiliation.Id}" data-index="{!network_affiliation.index}" data-targetid="{!network_affiliation.Id}"  onclick="{!c.deleteNetwork}">
+                                                <aura:if isTrue="{!!network_affiliation.isDeleted}">
+                                                    <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:delete" alternativeText="Delete Row"/>
+                                                    <aura:set attribute="else">
+                                                        <lightning:icon class="ddIcon bodyText dataSpace" iconName="utility:undelete" alternativeText="Undelete Row"/>
+                                                    </aura:set>
+                                                </aura:if>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+
+                    <aura:if isTrue="{!v.psl_networks_updates.length > 0}">
+                        <div>
+                            <div class="slds-col slds-size_1-of-1 footer">
+                                <div class="paginate">
+                                    <div class="desktop">
+                                        <a class="{!'spacing bodyLink testscript_prevNetworkEdit' + (v.pageNumNetworkEdit == 1 ? ' hidden' : '') }" onclick="{!c.previousNetworkEditPageClick}">Previous</a>
+                                        <span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumNetworkEdit}&nbsp;of&nbsp;{!v.total_psl_networks_page}</span>
+                                        <a class="{!'spacing bodyLink testscript_nextNetworkEdit' + (v.total_psl_networks_edit > (v.pageNumNetworkEdit * v.pageSize) ? '' : ' hidden') }" onclick="{!c.nextNetworkEditPageClick}" >Next</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+                </div>
+            </div>
+
+            <div class="resultsTable slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center slds-p-bottom_large slds-clearfix">
+                <div class="slds-size_1-of-1 slds-col slds-grid slds-wrap slds-gutters">
+                    <div class="slds-size_1-of-2 slds-col">
+                        <h3>Other Locations</h3>
+                    </div>
+                    <div class="slds-size_1-of-2 slds-col ">
+                        <span class="slds-float_right slds-p-top_small">Add or remove Providers from a Location from the Location Record</span>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <table class="tableClass" id="other_locations">
+                        <thead>
+                            <tr >
+                                <th class="sorted sortable sortAscend headerText" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.Name" data-col="0" data-tableid="other_locations">
+                                     <span class="">Office Name</span>
+                                 </th>
+                                 <th class=" sortable notSorted headerText" data-col="1" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingStreet" data-tableid="other_locations">
+                                     <span class="">Address</span>
+                                 </th>
+                                 <th class=" sortable notSorted headerText" data-col="2" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingCity" data-tableid="other_locations">
+                                     <span class="">City</span>
+                                 </th>
+                                 <th class=" sortable notSorted headerText" data-col="3" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingState" data-tableid="other_locations">
+                                     <span class="">State</span>
+                                 </th>
+                                 <th class=" sortable notSorted headerText" data-col="4" onclick="{!c.sortTableOtherLocation}" data-fieldname="Service_Location__r.BillingPostalCode" data-tableid="other_locations">
+                                    <span class="">Zip</span>
+                                </th>
+                                <th class=" headerText" data-tableid="other_locations">
+                                    <span class="">Contact Phone</span>
+                                </th>
+                                <th class=" headerText " data-tableid="other_locations">
+                                    <span class="">Specialty</span>
+                                </th>
+                                <th class=" headerText" data-tableid="other_locations">
+                                    <span class="">Age Range</span>
+                                </th>
+                                <th class=" headerText" data-tableid="other_locations">
+                                    <span class=" slds-p-right_medium">Accepting New Patients</span>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <aura:if isTrue="{!v.other_locations.length == 0}">
+                                <tr>
+                                    <td class="bodyText dataSpace noResults" colspan="12">No Other Locations</td>
+                                </tr>
+                            </aura:if>
+                            <aura:if isTrue="{!v.other_locations &amp;&amp; v.other_locations.length > 0}">
+                                <aura:iteration items="{!v.other_locations}" var="other_location"  start="{!(v.pageNumOther - 1) * v.pageSize}" end="{!v.pageNumOther * v.pageSize}">
+                                    <tr>
+                                        <td data-label="Office Name" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.Name}">
+                                            <span class="bodyText dataSpace"><a href="" onclick="{!c.goToLocation}" data-targetid="{!other_location.Service_Location__r.Id}">{!other_location.Service_Location__r.Name}</a></span>
+                                        </td>
+
+                                        <td data-label="Address" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingStreet}">
+                                            <span class="bodyText dataSpace">{!other_location.Service_Location__r.BillingStreet}</span>
+                                        </td>
+
+                                        <td data-label="City" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingCity}">
+                                            <span class="bodyText dataSpace" >{!other_location.Service_Location__r.BillingCity}</span>
+                                        </td>
+
+                                        <td data-label="State" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingState}">
+                                            <span class="bodyText dataSpace" >{!other_location.Service_Location__r.BillingState}</span>
+                                        </td>
+
+                                        <td data-label="Zip" class="slds-is-sortable " data-value="{!other_location.Service_Location__r.BillingPostalCode}">
+                                            <span class="bodyText dataSpace">{!other_location.Service_Location__r.BillingPostalCode}</span>
+                                        </td>
+
+                                        <td data-label="Contact Phone" class="slds-is-sortable " data-value="{!other_location.Service_Location_Phone__c}">
+                                            <span class="bodyText dataSpace" >{!other_location.Service_Location_Phone__c}</span>
+                                        </td>
+
+                                        <td data-label="Specialty" class="slds-is-sortable " data-value="{!other_location.Specialties__c}">
+                                            <span class="bodyText dataSpace" >{!other_location.Specialties__c}</span>
+                                        </td>
+
+                                        <td data-label="Age Range" class="slds-is-sortable " data-value="{!other_location.treats_ages_to__c}">
+                                            <span class="bodyText dataSpace" >{!other_location.treats_ages_from__c} - {!other_location.treats_ages_to__c}</span>
+                                        </td>
+
+                                        <td data-label="Accepting" class="slds-is-sortable" data-value="{!other_location.is_accepting_new_patients__c}">
+                                            <span class="bodyText dataSpace" >
+                                                <aura:if isTrue="{!other_location.is_accepting_new_patients__c}">
+                                                    Yes
+                                                    <aura:set attribute="else">
+                                                        No
+                                                    </aura:set>
+                                                </aura:if>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </aura:iteration>
+                            </aura:if>
+                        </tbody>
+                    </table>
+
+                    <aura:if isTrue="{!v.other_locations.length > 0}">
+                        <div>
+                            <div class="slds-col slds-size_1-of-1 footer">
+                                <div class="paginate">
+                                    <div class="desktop">
+                                        <a class="{!'spacing bodyLink testscript_prevOther' + (v.pageNumOther == 1 ? ' hidden' : '') }" onclick="{!c.previousOtherPageClick}">Previous</a>
+                                        <span class="spacing bodyText pageNum">Page&nbsp;{!v.pageNumOther}&nbsp;of&nbsp;{!v.total_other_locations_page}</span>
+                                        <a class="{!'spacing bodyLink testscript_nextOther' + (v.total_other_locations > (v.pageNumOther * v.pageSize) ? '' : ' hidden') }" onclick="{!c.nextOtherPageClick}" >Next</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+                </div>
+            </div>
+
+            <!--Submit Footer-->
+            <div class="slds slds-size_1-of-1 slds-grid slds-wrap slds-gutters slds-align_absolute-center">
+                <div class="slds-align_absolute-center">
+                    <ul >
+                        <li class="header3 slds-align_absolute-center">Does everything look correct?</li>
+                        <li class="slds-align_absolute-center slds-p-top_small">Please make sure all information is correct and include any additional notes or instructions below.</li>
+                        <li class="slds-align_absolute-center slds-p-top_medium">
+                            <ui:inputTextArea aura:id="comments" class="generalInputForm testScript_dent_comp_notes" placeholder="Additional notes" rows="5" value="{!v.notes}"/>
+                        </li>
+                        <li class="slds-p-top_medium slds-align_absolute-center ">
+                            <button class="generalButton testScript_dent_comp_submit_change" onclick="{!c.saveDentistUpdate}">Submit Change Request</button>
+                        </li>
+                        <li class="slds-p-top_medium slds-align_absolute-center">{!$Label.c.Dentist_Processing}</li>
+                    </ul>
+                </div>
+            </div>
+            <!-- END Submit Footer -->
+        </aura:if>
+        <!-- END EDIT PROVIDER SECTION -->
+    </div>
+
+
+</aura:component>

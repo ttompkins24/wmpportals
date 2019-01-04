@@ -1,0 +1,323 @@
+<!--
+/**********************************************************************************************************************
+Name 						: wmp_comp_helpCenterLanding
+Purpose						: Help center landing component will do the following 
+								# will fetch links to faq from the related portal config
+								# will handle logic to determine if a FAQ is to be seen or not based on portal config
+								# get the related links to "other resources" from the portal config links with type "other resournces"
+Created on					: 30th September 2017
+Developed by				: Santosh Kumar Sriram
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			30th September 2017		Santosh Kumar Sriram			See header - purpose
+ 
+**********************************************************************************************************************/
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+				access="global"
+				controller="wmp_ctrl_helpCenterLanding">
+	
+	
+	<!--  attributes for the page -->
+	<aura:attribute name="bln_isError" 
+    				type="Boolean" 
+    				description="used to depict if there is an error condition" />
+    
+    
+    <aura:attribute name="str_errorMsg"
+    				type="string"
+    				description="Error message that will be displayed on the screen"
+    />
+    
+	<aura:attribute name="portalConfig"
+					type="Portal_Configuration__mdt"
+					description="the portalconfig determines what faqs are displayed on the page"
+	/>
+	
+	<aura:attribute name="portalConfigLinks"
+					type="Help_Center_Other_resource__kav[]"
+					description="the portalconfig links that are displayed in other resources section"
+	/>
+	<!-- 
+		Init method to fetch data to display on the page
+	-->
+	<aura:handler name="init" 
+    				value="{!this}" 
+    				action="{!c.doInit}" 
+    />
+    <!--  acutal div that contains all the data -->
+    <div class=" slds slds-grid slds-wrap">
+    	<!--  error container -->
+		<aura:if isTrue="{!v.bln_isError}">
+			<div class="errorContainer ">
+				<div class="errorInnerContainer">
+					<ui:message title="{!$Label.c.Error}" severity="error" closable="true">
+					<span class="errorMessage">{!v.str_errorMsg}</span>
+					</ui:message>
+				</div>
+			</div>
+		</aura:if> 
+    	<!-- header for the page -->
+    	<div class="helpCenterLanding">
+	    	<div class="headerTextWhatCanWeHelp">
+	    		<h1>{!$Label.c.What_can_we_help_you_with}</h1>
+	    	</div>
+	    	
+	    	<!--  the images and text for FAQS-->
+	    	<div class="slds-size_1-of-1 slds-grid slds-wrap">
+	    		<!-- Container for one section -->
+	    		<div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 slds-grid slds-wrap slds-p-left_medium fadSection">
+	    			<!--  Image for the section -->
+	    			<div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-5 slds-large-size_1-of-6 faqPlansCoverageImage ">
+	    			
+	    			</div>
+	    			<!-- Body of the section -->
+	    			<div class="slds-col slds-size_3-of-4 slds-medium-size_4-of-5 slds-large-size_5-of-6  slds-grid slds-wrap slds-p-left_medium">
+	    				<div class="faqLabel slds-col slds-size_1-of-1">
+		    				<h3>{!$Label.c.Plans_and_Coverage_Label}</h3>
+		    			</div>
+		    			
+		    			<!--  Surrounding text -->
+		    			<div class="faqSurroundingText slds-col slds-size_1-of-1"> 
+		    				<aura:if isTrue="{!$Locale.language eq 'en'}">
+		    					<span class="bodyText">{!v.portalConfig.Plans_and_Coverage_Text_English__c}</span>
+		    					<aura:set attribute="else">
+		    						<span class="bodyText">{!v.portalConfig.Plans_and_Coverage_Text_Spanish__c}</span>
+		    					</aura:set>
+		    				</aura:if>
+		    			</div>
+		    			
+		    			<!--  learn more link -->
+		    			<div class="bodyLink linkToFAQ boldText"
+		    				 onclick="{!c.redirectToFAQ}"
+		    				 data-articleName="{!v.portalConfig.Plans_and_Coverage_FAQ_article_name__c}"
+		    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+		    				{!$Label.c.Learn_more}
+		    			</div>
+	    			</div>
+	    		</div>
+	    		<aura:if isTrue="{!v.portalConfig.ID_card_functionality__c}">
+		    		<div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 slds-grid slds-wrap slds-p-left_medium fadSection">
+		    			<!--  Image for the section -->
+		    			<div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-5 slds-large-size_1-of-6 faqIDCardsImage ">
+		    			
+		    			</div>
+		    			<!-- Body of the section -->
+		    			<div class="slds-col slds-size_3-of-4 slds-medium-size_4-of-5 slds-large-size_5-of-6  slds-grid slds-wrap slds-p-left_medium">
+		    				<div class="faqLabel slds-col slds-size_1-of-1">
+			    				<h3>{!$Label.c.ID_Cards}</h3>
+			    			</div>
+			    			
+			    			<!--  Surrounding text -->
+			    			<div class="faqSurroundingText slds-col slds-size_1-of-1"> 
+			    					<span class="bodyText">{!$Label.c.ID_Cards_Surrounding_Text_HCL}</span>
+			    			</div>
+			    			
+			    			<!--  learn more link -->
+			    			<div class="slds-col linkToFAQ bodyLink boldText"
+			    				 onclick="{!c.redirectToFAQ}"
+			    				 data-articleName="{!v.portalConfig.ID_Card_FAQ_Article_Name__c}"
+			    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+			    				{!$Label.c.Learn_more}
+			    			</div>
+		    			</div>
+		    		
+		    		</div>
+	    		</aura:if>
+	    		
+	    		<!-- FAQ Complaints and Appeals-->
+	    		<div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 slds-grid slds-wrap slds-p-left_medium fadSection">
+	    			<!--  Image for the section -->
+	    			<div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-5 slds-large-size_1-of-6 faqComplaintsImage  ">
+	    			
+	    			</div>
+	    			<!-- Body of the section -->
+	    			<div class="slds-col slds-size_3-of-4 slds-medium-size_4-of-5 slds-large-size_5-of-6  slds-grid slds-wrap slds-p-left_medium">
+	    				<div class="faqLabel slds-col slds-size_1-of-1">
+		    				<h3>{!$Label.c.Complaints_and_Appeals}</h3>
+		    			</div>
+		    			
+		    			<!--  Surrounding text -->
+		    			<div class="faqSurroundingText slds-col slds-size_1-of-1"> 
+		    					<span class="bodyText">{!$Label.c.Complaints_and_Appeals_Surrounding_Text_HCL}</span>
+		    			</div>
+		    			<div class="slds-col linkToFAQ">
+			    			<!--  complaints and appeals links -->
+			    			<aura:if isTrue="{!$Locale.language eq 'en'}">
+			    				<!-- displaying link 1 -->
+				    			<div class=" bodyLink linkToFAQ boldText"
+				    				 onclick="{!c.redirectToFAQ}"
+				    				 data-articleName="{!v.portalConfig.Complaints_and_Appeals_FAQ_Article_name__c}"
+				    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+			    					{!v.portalConfig.Complaints_Link_1_Label_English__c}
+			    				</div>	
+			    				<!-- checking for link 2 and then displaying -->
+			    				<aura:if isTrue="{!not(empty(v.portalConfig.Complaints_Link_2_Label_English__c))}">
+			    					<div class="bodyLink linkToFAQ boldText multipleLinks"
+					    				 onclick="{!c.redirectToFAQ}"
+					    				 data-articleName="{!v.portalConfig.Complaints_Appeals_2_FAQ_Article_name__c}"
+					    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+				    					 {!v.portalConfig.Complaints_Link_2_Label_English__c}
+				    				</div>	 
+			    				</aura:if>
+			    				<!--  if spanish -->
+			    				<aura:set attribute="else">
+			    					<!-- displaying link 1 -->
+				    				<div class=" bodyLink boldText"
+					    				 onclick="{!c.redirectToFAQ}"
+					    				 data-articleName="{!v.portalConfig.Complaints_and_Appeals_FAQ_Article_name__c}"
+					    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+				    					{!v.portalConfig.Complaints_Link_1_Label_Spanish__c}
+				    				</div>	
+				    				<!-- checking for link 2 and then displaying -->
+				    				<aura:if isTrue="{!not(empty(v.portalConfig.Complaints_Link_2_Label_Spanish__c))}">
+				    					<div class=" bodyLink linkToFAQ boldText multipleLinks"
+						    				 onclick="{!c.redirectToFAQ}"
+						    				 data-articleName="{!v.portalConfig.Complaints_Appeals_2_FAQ_Article_name__c}"
+						    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+					    					{!v.portalConfig.Complaints_Link_2_Label_Spanish__c}
+					    				</div>	
+				    				</aura:if>
+			    				</aura:set>
+			    			</aura:if>
+		    			</div>
+	    			</div>
+	    		</div>
+	    		
+	    		<!--  FAQ Website Help -->
+	    		<div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-2 slds-grid slds-wrap slds-p-left_medium fadSection">
+	    			<!--  Image for the section -->
+	    			<div class="slds-col slds-size_1-of-4 slds-medium-size_1-of-5 slds-large-size_1-of-6 faqWebsiteHelpImage  ">
+	    			
+	    			</div>
+	    			<!-- Body of the section -->
+	    			<div class="slds-col slds-size_3-of-4 slds-medium-size_4-of-5 slds-large-size_5-of-6  slds-grid slds-wrap slds-p-left_medium">
+	    				<div class="slds-col slds-size_1-of-1 faqLabel">
+		    				<h3>{!$Label.c.Website_Help}</h3>
+		    			</div>
+		    			
+		    			<!--  Surrounding text -->
+		    			<div class="slds-col slds-size_1-of-1 faqSurroundingText"> 
+		    					<span class="bodyText">{!$Label.c.Website_Help_Surrounding_Text_HCL}</span>
+		    			</div>
+		    			
+		    			<!--  learn more link -->
+		    			<div class="slds-col  bodyLink boldText linkToFAQ"
+		    				 onclick="{!c.redirectToFAQ}"
+		    				 data-articleName="{!v.portalConfig.Website_FAQ_Article_Name__c}"
+		    				 data-datacategory="{!v.portalConfig.Data_category_mapping__c}">
+		    				{!$Label.c.Learn_more}
+		    			</div>
+	    			</div>
+	    		</div>
+    		</div><!-- END OF TOP SECTION WHAT CAN HELP YOU WITH -->
+			
+    		
+	    	<!--  Other resources section -->
+	    	<div class="otherResourcesSection slds-grid slds-wrap">
+	    		<div class="sectionHeaderOtherResources slds-col slds-size_1-of-1">
+	    			<h2>{!$Label.c.Other_Resources}</h2>
+	    		</div>
+	    		<!--  links for the page -->
+	    		<div class="otherResourcesLink slds-grid slds-wrap  slds-size_2-of-3 slds-medium-size_3-of-4 slds-large-size_4-of-5 slds-p-around_medium">
+		    		 <aura:iteration items="{!v.portalConfigLinks}"
+		    						var="iterating_kav"
+		    						indexVar="iterating_int"
+		    			>
+		    			 
+	    				<aura:if isTrue="{!not(empty(iterating_kav.File_1__Name__s))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  file 1 from the knowledge articles -->
+			    				<lightning:icon iconName="doctype:unknown" size="medium" /> 
+								<a href="{! '/member/servlet/fileField?field=File_1__Body__s&amp;entityId='+iterating_kav.Id}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.File_1__Name__s}" target="_blank">{!iterating_kav.File_1__Name__s}</a>
+							</div>
+							
+						</aura:if>
+							<!--  file 2 from the knowledge articles -->
+	    				<aura:if isTrue="{!not(empty(iterating_kav.File_2__Name__s))}">
+							<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 slds-float_left additionalChanges">
+			    				<lightning:icon iconName="doctype:unknown" size="medium" /> 
+								<a href="{! '/member/servlet/fileField?field=File_2__Body__s&amp;entityId='+iterating_kav.Id}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.File_2__Name__s}" target="_blank">{!iterating_kav.File_2__Name__s}</a>
+							</div>
+						</aura:if>
+							<!--  file 3 from the knowledge articles -->
+	    				<aura:if isTrue="{!not(empty(iterating_kav.File_3__Name__s))}">
+							<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 slds-float_left additionalChanges">
+			    				<lightning:icon iconName="doctype:unknown" size="medium" /> 
+								<a href="{! '/member/servlet/fileField?field=File_3__Body__s&amp;entityId='+iterating_kav.Id}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.File_3__Name__s}" target="_blank">{!iterating_kav.File_3__Name__s}</a>
+							</div>
+						</aura:if>
+							<!--  file 4 from the knowledge articles -->
+	    				<aura:if isTrue="{!not(empty(iterating_kav.File_4__Name__s))}">
+							<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 slds-float_left additionalChanges">
+			    				<lightning:icon iconName="doctype:unknown" size="medium" /> 
+								<a href="{! '/member/servlet/fileField?field=File_4__Body__s&amp;entityId='+iterating_kav.Id}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.File_4__Name__s}" target="_blank">{!iterating_kav.File_4__Name__s}</a>
+							</div>
+						</aura:if>
+							<!--  file 5 from the knowledge articles -->
+	    				<aura:if isTrue="{!not(empty(iterating_kav.File_5__Name__s))}">
+							<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2 slds-float_left additionalChanges">
+			    				<lightning:icon iconName="doctype:unknown" size="medium" /> 
+								<a href="{! '/member/servlet/fileField?field=File_5__Body__s&amp;entityId='+iterating_kav.Id}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.File_5__Name__s}" target="_blank">{!iterating_kav.File_5__Name__s}</a>
+			    			</div>
+						</aura:if>
+                         
+                         <aura:if isTrue="{!not(empty(iterating_kav.Link_1__c))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  link 1 from the knowledge articles -->
+			    				<lightning:icon iconName="action:web_link" size="medium" /> 
+								<a href="{! iterating_kav.Link_1__c}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.Link_1_Name__c}" target="_blank">{!iterating_kav.Link_1_Name__c}</a>
+							</div>
+						</aura:if>
+                         <aura:if isTrue="{!not(empty(iterating_kav.Link_2__c))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  link 2 from the knowledge articles -->
+			    				<lightning:icon iconName="action:web_link" size="medium" /> 
+								<a href="{! iterating_kav.Link_2__c}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.Link_2_Name__c}" target="_blank">{!iterating_kav.Link_2_Name__c}</a>
+							</div>
+						</aura:if>
+                         <aura:if isTrue="{!not(empty(iterating_kav.Link_3__c))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  link 3 from the knowledge articles -->
+			    				<lightning:icon iconName="action:web_link" size="medium" /> 
+								<a href="{! iterating_kav.Link_3__c}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.Link_3_Name__c}" target="_blank">{!iterating_kav.Link_3_Name__c}</a>
+							</div>
+						</aura:if>
+                         <aura:if isTrue="{!not(empty(iterating_kav.Link_4__c))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  link 4 from the knowledge articles -->
+			    				<lightning:icon iconName="action:web_link" size="medium" /> 
+								<a href="{! iterating_kav.Link_4__c}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.Link_4_Name__c}" target="_blank">{!iterating_kav.Link_4_Name__c}</a>
+							</div>
+						</aura:if>
+                         <aura:if isTrue="{!not(empty(iterating_kav.Link_5__c))}">
+			    			<div class="slds-col slds-size_1-of-1 slds-medium-size-1-of-2 slds-large-size--1-of-2  additionalChanges">
+		    				<!--  link 5 from the knowledge articles -->
+			    				<lightning:icon iconName="action:web_link" size="medium" /> 
+								<a href="{! iterating_kav.Link_5__c}" class="resourcesLinkTextDisplay bodyLink boldText" label="{!iterating_kav.Link_5_Name__c}" target="_blank">{!iterating_kav.Link_5_Name__c}</a>
+							</div>
+						</aura:if>
+		    		</aura:iteration> 
+	    		</div>
+	    	</div>
+	    	<!--  Still have questions section -->
+	    	<div class="stillHaveQuestionsSection">
+	    		<!--  the still have question section header -->
+	    		<div class="stillHaveQuestionSectionHeader">
+	    			<h2>{!$Label.c.Still_have_questions}</h2>
+	    			<br/>
+	    		</div>
+	    		
+	    		<div class="slds-align_absolute-center stillHaveQuestionsSupportingText">
+    				<span class="bodyText">{!$Label.c.Still_have_questions_Supporting_Text_HCL}</span>
+    			</div>
+    			<div class="slds-align_absolute-center contactUsButton "
+    				 onclick="{!c.redirectContactUs}">
+					<div class="contactUsText generalButton ">
+						{!$Label.c.Contact_Us}
+					</div>
+				</div>	    			
+	    	</div>
+    	</div>
+    </div>
+</aura:component>

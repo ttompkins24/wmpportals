@@ -1,0 +1,275 @@
+<aura:component extends="c:prov_comp_Provider_Common" access="global" controller="prov_ctrl_Claims_Entry">
+
+<!-- Initiailization attributes-->
+	<!-- claims entry attributes -->
+	<aura:attribute name="claim" type="Claim__c" description="holds the claim " />
+	<aura:attribute name="memCovSelected" type="Object" description="holds the selected member coverage value" />
+	<aura:attribute name="selectedRecord" type="Object" description="holds the selected record value, used for address" />
+
+	<!-- Business Information  -->
+	<aura:attribute name="serviceLocationId" type="Account" description="Id of the Service Location Account"/>
+	<aura:attribute name="providerId" type="Account" description="Id of the Provider Account"/>
+    <aura:attribute name="serviceDate" type="Date" description="date of member service"/>
+
+	<!-- Member Information attributes -->
+    <aura:attribute name="birthdate" type="Date" description="birthdate of the member"/>
+    <aura:attribute name="memberNumber" type="String" description="member number of the member"/>
+    <aura:attribute name="firstName" type="String" description="first name of the member"/>
+    <aura:attribute name="lastName" type="String" description="last name of the member"/>
+
+    <!-- functionality attributes -->
+	<aura:attribute name="useServiceDate" type="Boolean" description="when this is set to false, service date defaults to today and does not appear on the page"/>
+	<aura:attribute name="turnOffCheckButton" type="Boolean" default="true" description="when this is set to false, can click Run Check button"/>
+	<aura:attribute name="eligibilityChecked" type="Boolean" description="when this is set to false, can click Run Check button"/>
+	<aura:attribute name="lastCheckedEligibility" type="Date" description="date the elgibility was last checked"/>
+	<aura:attribute name="runCheckAgain" type="Boolean" description="when this equals true, run eligibility check again"/>
+	<aura:attribute name="showClaimsPage" type="Boolean" description="passed back to claim entry page, used to show other parts of page or not"/>
+	<aura:attribute name="hideContinue" type="Boolean" default="false" />
+	<aura:attribute name="claimType" type="String" default="Claim" description="states whether the claim is a CLAIM, PREAUTH, or REFERRAL" />
+	<aura:attribute name="referralPlans" type="String[]" />
+
+	<!-- error handling -->
+	<aura:attribute name="isError" type="Boolean" description="boolean variable that controls the visibility of the error message"/>
+	<aura:attribute name="isSuccess" type="Boolean" description="boolean variable that controls the visibility of the success message"  />
+	<aura:attribute name="str_errorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	<aura:attribute name="str_successMsg" type="String" description="success message that is displayed" default="Your record has updated" />
+	<aura:attribute name="isModalError" type="Boolean" description="boolean variable that controls the visibility of the error message"/>
+	<aura:attribute name="str_modalErrorMsg" type="String" description="error message that is displayed " default="Please review the errors below" />
+	
+	<!-- BLP picklist attributes  -->
+	<aura:attribute name="locList" type="Account[]"/>
+	<aura:attribute name="provList" type="Account[]"/>
+	<aura:attribute name="bizAcctRec" type="Account"/>
+	<aura:attribute name="locAcctRec" type="Object"/>
+	<aura:attribute name="provAcctRec" type="Object"/>
+
+  	<aura:attribute name="isOpen" type="boolean" default="false" description="controls opening the modal for selecting a plan"/>
+	<aura:attribute name="records" type="Object[]" description="the records returned from the eligibility check to be displayed in the modal" />
+	<aura:attribute name="showRadioButtons" type="Boolean" default="true" description="determines if the radio buttons should be shown to select a plan." />
+	<aura:attribute name="title" type="String" description="Title of the modal." />
+	<aura:attribute name="showActiveOnly" type="Boolean" default="false" description="used to pass variable to BLP picklist"/>
+	<aura:attribute name="callAdditionalInfo" type="Boolean" default="false"/>
+	<aura:attribute name="checkButtonDisabled" type="Boolean" default="true" />
+
+	<!-- attribute for VF page  -->
+    <aura:attribute name="vfHost" type="String" description="this hold the domain for the visualforce page"/>
+ 
+    <!-- Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+	<aura:handler name="change" value="{!v.runCheckAgain}" action="{!c.refreshCheck}" />
+	<aura:handler name="change" value="{!v.providerId}" action="{!c.updateBLP}" />
+	<aura:handler name="change" value="{!v.callAdditionalInfo}" action="{!c.getAdditionalInformation}" />
+	<aura:method name="additionalInfoMethod" action="{!c.getAdditionalInformation}" />
+
+		<!-- show search panel -->
+    <div class="slds">
+    	<iframe aura:id="vfFrame" src="{!v.vfHost + '/Provider/apex/prov_memberEligibility'}" width="1px" height="1px" frameborder="0" allowfullscreen="true"/>
+    	<div class="claimEntryMemberEligibility">
+			<aura:if isTrue="{!!v.showClaimsPage}" >
+				<h3 class="generalSpacing_top">Check Eligibility</h3>
+				<lightning:spinner variant="brand" size="large" aura:id="searchSpinnerId" class="slds-hide" alternativeText="Page loading"/>
+		    	<div class="frame">
+		    		<!-- NOTIFICATIONS -->
+					<aura:if isTrue="{!v.isError}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+								<lightning:icon size="medium" class="generalErrorIcon" iconName="utility:warning" alternativeText="Error"/>
+								<span class="errorMessage"><aura:unescapedHtml value="{!v.str_errorMsg}"/></span>
+							</ui:message>
+						</div>
+					</aura:if>
+					<aura:if isTrue="{!v.isSuccess}">
+						<div  class="headerMessageContainer ">
+							<ui:message class="successMessageWrap slds-size_1-of-1" severity="confirm" closable="true">
+								<lightning:icon size="medium" class="generalSuccessIcon" iconName="utility:success" alternativeText="Success"/>
+								<span class="successMessage"><aura:unescapedHtml value="{!v.str_successMsg}"/></span>
+							</ui:message>
+						</div>
+					</aura:if>
+
+					
+
+
+					
+		    		<div class="slds-size_1-of-3 slds-col" >
+						<h3 class="header">Provider Information</h3>
+					</div>
+
+					<c:Prov_comp_BLPpicklists 
+						locList="{!v.locList}" 
+						provList="{!v.provList}" 
+						bizAcctRec="{!v.bizAcctRec}" 
+						locAcctRec="{!v.locAcctRec}" 
+						provAcctRec="{!v.provAcctRec}" 
+						showHeaders="false" 
+						showActiveOnly="{!v.showActiveOnly}" 
+					/>
+					<br />
+
+					<div class="slds-size_1-of-3 slds-col" >
+						<h3 class="header">Member Information</h3>
+					</div>
+
+					<div class="slds-grid slds-wrap">
+						<aura:if isTrue="{!v.useServiceDate}">
+							<div class="slds-col slds-size_1-of-6">
+								<ui:inputDate aura:id="serviceDate" 
+											label="Service Date" 
+											labelClass="generalLabelForm required" 
+											required="true" 
+											class="{!'memberSearchServiceDate generalInputForm ' +  'field'}" 
+											value="{!v.serviceDate}" 
+											displayDatePicker="true" 
+											format="MM/DD/YYYY" 
+											blur="{!c.fixDate}" />
+							</div>
+						</aura:if>
+
+						<div class="slds-col slds-size_1-of-6">
+							<ui:inputDate aura:id="birthdate" 
+										required="true" 
+										label="Birthdate" 
+										labelClass="generalLabelForm required" 
+										class="{!'memberSearchBirthdate generalInputForm ' +  'field'}" 
+										displayDatePicker="true" 
+										format="MM/DD/YYYY" 
+										blur="{!c.fixDate}" 
+										value="{!v.birthdate}" />
+						</div>
+						<div class="slds-col slds-size_1-of-6">
+							<ui:inputText aura:Id="memberNumber" 
+									placeholder="Member Number" 
+									blur="{!c.checkButton}" 
+									maxlength="25" 
+									label="Member Number" 
+									labelClass="slds-col slds-size_1-of-1 generalLabelForm required" 
+									class="{!'memberSearchMemberNumber ' +  'slds-col slds-size_1-of-1 generalInputForm field'}"	  
+									value="{!v.memberNumber}"/>
+						</div>
+						<div class="slds-col slds-size_1-of-6">
+							<ui:inputText aura:Id="firstName" label="First Name" placeholder="First Name" required="false" blur="{!c.checkButton}" maxlength="40" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="{!'memberSearchFirstName ' +  'slds-col slds-size_1-of-1 generalInputForm field'}"  value="{!v.firstName}"/>
+						</div>
+						<div class="slds-col slds-size_1-of-6">
+							<ui:inputText aura:Id="lastName" label="Last Name" placeholder="Last Name" required="false" blur="{!c.checkButton}" maxlength="40" labelClass="slds-col slds-size_1-of-1 generalLabelForm" class="{!'memberSearchLastName ' +  'slds-col slds-size_1-of-1 generalInputForm field'}"	  value="{!v.lastName}"/>
+						</div>
+					</div>
+				</div>
+			</aura:if>
+			    		<!-- Modal goes here -->
+			    		<!-- TODO add padding to detail section and icon -->
+			<aura:if isTrue="{!v.isOpen}">
+				<div role="dialog" tabindex="-1" aria-labelledby="header99" class="slds-modal slds-fade-in-open ">
+					<div class="slds-modal__container">
+						<div class="slds-modal__header">
+							<button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" onclick="{!c.closeModel}">X
+								<span class="slds-assistive-text">Close</span>
+							</button>
+							<aura:if isTrue="{!v.isModalError}">
+								<div  class="headerMessageContainer ">
+									<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+										<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+										<span class="errorMessage">{!v.str_modalErrorMsg}</span>
+									</ui:message>
+								</div>
+							</aura:if>
+							<h1 id="header99" class="slds-text-heading--medium">{!v.title}</h1>
+						</div>
+						<div class="slds-modal__content slds-p-around--medium">
+							<aura:if isTrue="{!v.showRadioButtons}">  
+								<div>
+									<aura:if isTrue="{!v.claimType == 'REFERRAL'}">
+										{!$Label.c.Choose_a_plan_for_this_referral}
+									</aura:if>
+									<aura:if isTrue="{!v.claimType == 'CLAIM'}">
+										{!$Label.c.Choose_a_plan_for_this_claim}
+									</aura:if>
+									<aura:if isTrue="{!v.claimType == 'PREAUTH'}">
+										{!$Label.c.Choose_Plan_for_Authorization}
+									</aura:if>
+									<!-- {!$Label.c.Member_Eligibility_Multiple_Plans} -->
+								</div>
+								<aura:set attribute="else">
+									<aura:if isTrue="{!v.hideContinue}">  
+										<!-- <div>
+											{!$Label.c.Member_Not_Found}
+										</div> -->
+										<aura:set attribute="else">
+											<div>
+												{!$Label.c.Member_Eligibility_Single_Plan}
+											</div>
+										</aura:set>
+									</aura:if> 		
+								</aura:set>
+							</aura:if> 		
+							<aura:iteration items="{!v.records}" var="item">
+								<div class="slds-grid slds-m-around--medium cardBorder">
+									<aura:if isTrue="{!v.showRadioButtons}">  
+									<div class="slds-col slds-size_1-of-12 	radioButton ">
+										<div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center">
+											<input type="radio" class="{!item.record.memCov[0].MemberCoverageGUID__c+'radioButton  .slds-align_absolute-center'}" name="planButtons" value="{!item.record}" aura:id="{!item.record}" id="{!item.record}" onclick="{!c.onRadio}" data-index="{!item.index}"  />
+										</div>
+									</div>
+									</aura:if>
+									<div class=" cardDetail">
+										<aura:if isTrue="{!item.status == 'Eligible'}">
+											<lightning:icon size="medium" class="generalEligible" variant="inverse" iconName="utility:success" alternativeText="Eligible"/>
+										</aura:if>
+										<aura:if isTrue="{!item.status == 'Out of Network'}">
+											<lightning:icon size="medium" class="generalOutOfNetwork" variant="inverse" iconName="utility:ban" alternativeText="Out Of Network"/>
+										</aura:if>
+										<aura:if isTrue="{!item.status == 'Ineligible'}">
+											<lightning:icon size="medium" class="generalIneligible" variant="inverse" iconName="utility:error" alternativeText="Not Eligible"/>
+										</aura:if>
+										<aura:if isTrue="{!item.status == 'Not Found'}">
+											<lightning:icon size="medium" class="generalNotFound" variant="inverse" iconName="utility:clear" alternativeText="Not Found"/>
+										</aura:if>
+
+									</div>
+									<div class="slds-col slds-size_10-of-12 cardDetail">
+										
+										<ui:outputText aura:Id="detailText" class="bold" value="{!item.detailText}"/>
+										<div>
+											<aura:unescapedHtml aura:Id="planName" value="{!item.record.planType}"/>
+										</div>
+									</div>
+								</div>
+							</aura:iteration>
+						</div>
+						<div class="slds-modal__footer">
+							
+							<aura:if isTrue="{!!v.hideContinue}">
+								<div class="slds-col slds-size_1-of-1 slds-align_absolute-center">
+				            		<a class="generalButton"  onclick="{!c.onContinue}" alt="Continue">Continue</a>
+								</div>
+							</aura:if>
+							<div class="clear slds-col slds-size_1-of-1 slds-align_absolute-center">
+			                	<a class="bodyLink" onclick="{!c.closeModel}" alt="Cancel">Cancel</a>
+			    			</div>
+						</div>
+					</div>
+				</div>
+				<div class="slds-backdrop slds-backdrop--open"></div>
+			</aura:if>
+			<!-- end modal -->
+		</div>
+	</div>
+			
+				
+		<br />
+
+						
+		<aura:if isTrue="{!!v.showClaimsPage}" >
+		    <div class="slds-col slds-clearfix slds-align-middle slds-p-right_small">
+		        <button class="generalButton slds-float_right testScript_searchButton" 
+		        	disabled="{!v.checkButtonDisabled}"
+		        	onclick="{!c.runCheck}">
+		        	Check Eligibility
+		       	</button>
+		    </div>
+		</aura:if>
+
+    
+
+
+    	{!v.body}
+</aura:component>

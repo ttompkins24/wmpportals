@@ -1,0 +1,19 @@
+<aura:component access="global" 
+                extensible="true" 
+                abstract="false"
+                controller="prov_util_Cache" >
+    
+    <aura:attribute access="public" name="params" type="Object" />
+    <aura:attribute access="public" name="permissions" type="prov_util_Permissions" description="current permissions for the user" />
+    <aura:attribute access="public" name="portalConfig" type="Provider_Portal_Configuration__mdt" description="current portal configuration object" />
+    <aura:attribute access="public" name="currentContact" type="Contact" description="SFDC ID of the current contact signed in" />
+    <aura:attribute access="public" name="currentBusinessId" type="String" description="SFDC ID of the current contact signed in" />
+    <aura:attribute access="public" name="currentBusiness" type="Account" description="SFDC ID of the current contact signed in" />
+
+   
+    <aura:handler name="init" value="{!this}" action="{!c.commonInit}" />
+    <aura:handler name="change" value="{!v.testDemo}" action="{!c.itemsChange}"/>
+
+    
+    {!v.body} 
+</aura:component>

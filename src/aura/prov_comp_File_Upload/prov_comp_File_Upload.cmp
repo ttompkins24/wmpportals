@@ -1,0 +1,109 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" 
+                access="global"
+                extends="c:prov_comp_Provider_Common" 
+                controller="prov_ctrl_File_Upload">
+    
+    <aura:attribute access="private" name="attachments" type="List" default="[]" />
+    <aura:attribute access="private" name="hasAttachmentError" type="Boolean" default="false" />
+    <aura:attribute access="private" name="attachmentErrorMessage" type="Boolean" default="false" />
+    <aura:attribute access="public" name="parentId" type="String" />
+    <aura:attribute access="public" name="type" type="String" />
+    <aura:attribute access="public" name="page" type="String" />
+    <aura:attribute access="public" name="attachmentTypes" type="List" />
+    <aura:attribute access="public" name="isReferral" type="Boolean" />
+
+    <aura:handler name="init" value="{!this}"  action="{!c.init}" />
+
+
+    <!-- Attachment Upload -->
+
+    <div class="fileUploadContainer">
+        <!-- {!v.type} -->
+        <div class="slds-m-bottom_medium slds-m-top_medium frame-clear">
+                
+            <aura:if isTrue="{!v.hasAttachmentError}">
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_1-of-1">
+                        <div  class="headerMessageContainer ">
+                            <ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+                                <lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+                                <span class="errorMessage">{!v.attachmentErrorMessage}</span>
+                            </ui:message>
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+
+
+            <label class="slds-form-element__label">Supporting Documentation</label>
+            <p class="slds-align-middle">
+                Each attachment must be less than 5MB and one of our accepted file types <lightning:helptext content="{!$Label.c.Accepted_Files}" />.
+                     You can add up to 10 attachments.
+                
+                <aura:if isTrue="{!v.parentId &amp;&amp; lessthan(v.attachments.length, 10)}">
+                    <div class="slds-float__right">       
+                        <lightning:input class="testScript_claim_e_comp_files" aura:id="fileId" onchange="{!c.handleFilesChange}" type="file"  name="file" label=""  multiple="true" />
+                    </div>
+                </aura:if>
+
+                <br/><br/>
+
+                <aura:if isTrue="{!v.attachments &amp;&amp; v.attachments.length > 0}">
+
+                    <aura:iteration items="{!v.attachments}" var="attachment">
+                        <div class="slds-grid  slds-m-bottom_small slds-m-top_large">
+                            <div class="slds-size_3-of-12 slds-col">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">
+                                        Name
+                                    </label>
+                                    <div class="slds-form-element__control slds-wrap header4">
+                                        <a href="" onclick="{!c.downloadAttachment}" data-value="{!attachment.Id}">{!attachment.Name}</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <aura:if isTrue="{!v.type == 'Claim'}">
+                                <div class="slds-size_5-of-12 ">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label">Attachment Type</label>
+                                        <div class="slds-form-element__control">
+                                            <lightning:select class="generalInputPicklist uiInput--select generalLabelForm hideLabel testScript_claim_e_comp_attach_type"
+                                                        variant="label-hidden"
+                                                        onchange="{!c.updateAttachmentType}"
+                                                        value="{!attachment.attachType}" >
+                                                <aura:iteration items="{!v.attachmentTypes}" var="attachType">    
+                                                    <option class="picklistOption " value="{!attachment.Id + '---' + attachType.value}" text="{!attachType.label}"/>
+                                                </aura:iteration>
+                                            </lightning:select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aura:if>
+
+                            <div class=" slds-size_2-of-12 slds-col">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label">Upload Date</label>
+                                    <div class="slds-form-element__control header4">
+                                        <ui:outputDateTime value="{!attachment.CreatedDate}"/>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="slds-size_2-of-12  slds-text-align_center">
+                                <div class="slds-form-element ">
+                                    <label class="slds-form-element__label ">&nbsp;</label>
+                                    <div class="slds-form-element__control" data-value="{!attachment.Id}" data-index="{!attachment.index}">
+                                        <a href="" onclick="{!c.deleteAttachment}"><lightning:icon size="medium" class="addIcon" iconName="utility:delete" alternativeText="Delete"/></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:iteration>
+
+                </aura:if>
+            </p>
+        </div>
+    </div>
+                
+</aura:component>

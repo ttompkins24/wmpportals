@@ -1,0 +1,135 @@
+<!--
+/*******************************************************************************************************
+Name 						: Prov_comp_MemberEligibility_ResultsTable
+Purpose						: Displays the passed in list in a table, used for the Member Eligibility results
+Created on					: Jan 9 2018
+Developed by				: West Monroe Partners
+History
+Version#		Sprint#		Date					by  							Comments
+1.0				1.0			Jan 9 2018				West Monroe Partners			See header - purpose
+ 
+*******************************************************************************************************/
+-->
+<aura:component extends="c:prov_comp_Provider_Common" controller="Prov_ctrl_MemberEligibility" access="global">
+
+    <aura:attribute name="resultsList" type="Prov_ctrl_MemberEligibility.MemberWrapper[]" description="results list" />
+    <aura:attribute name="eligibleIneligibleTable" type="Boolean" description="When true, its the eligible or ineligibile list.  display dropdown"/>
+    <aura:attribute name="tableId" type="String" description="Id of the table"/>
+	<aura:attribute name="preAuthLabel" type="String" description="holds value of preAuth label, differs by portal"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	<div>
+		<div class="tableWrapper slds-grid slds-wrap slds-size_1-of-1 MEresultTable">
+			<table class="tableClass " id="{!v.tableId}">
+				<thead>
+					<aura:if isTrue="{!v.resultsList.length != 0}" >
+						<tr>
+							<th class="width2 testScript_header_critLine hideOnPrint" data-col="0" >&nbsp;</th>
+							<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="1" data-tableid="{!v.tableId}"><span class="fullWidth bodyText headerText">Service Date</span></th>
+							<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="2" data-tableid="{!v.tableId}"><span class="bodyText headerText">Member Name</span></th>
+							<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="3" data-tableid="{!v.tableId}"><span class="headerText bodyText">Birth Date </span></th>
+							<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="4" data-tableid="{!v.tableId}"><span class="bodyText headerText">Member Number</span></th>
+							<aura:if isTrue="{!v.eligibleIneligibleTable}" >
+								<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="5" data-tableid="{!v.tableId}"><span class="bodyText headerText">Plan Type</span></th>
+								<!-- <th class=" sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="6" data-tableid="{!v.tableId}"><span class="bodyText headerText">PCD</span></th> -->
+								<th class="width15 sortable notSorted headerText " onclick="{!c.updateColumnSorting}" data-col="6" data-tableid="{!v.tableId}"><span class="fullWidth bodyText headerText">Coverage End Date</span></th>
+								<aura:if isTrue="{!(v.permissions.preAuth == 'full' || v.permissions.claims == 'full' || 
+		                    						  v.permissions.referral == 'full' || v.permissions.brokenAppointment == 'full')}">		
+									<th class="width8 slds-text-align_center hideOnPrint"><span class="fullWidth bodyText headerText">Quick Links</span></th>
+								</aura:if>
+				             	<aura:set attribute="else">
+ 									<th class="width30 sortable notSorted headerText" onclick="{!c.updateColumnSorting}" data-col="7" data-tableid="{!v.tableId}"><span class="bodyText headerText">Reason</span></th>
+ 								</aura:set>
+							</aura:if>
+						</tr>
+					</aura:if>
+				</thead> 
+				<tbody>
+					<aura:if isTrue="{!v.resultsList.length == 0}" >
+						<td class="width50" ><span class="bodyText dataSpace">{!$Label.c.No_Results_Found}</span></td>
+					</aura:if>
+					<aura:iteration items="{!v.resultsList}" var="result">
+						<tr>
+							<td data-value="{!result.index}" data-label="Criteria Number" class="width2 hideOnPrint">
+								<span class="bodyText dataSpace" >{!result.index*1 + 1}</span>
+							</td>
+							<td data-label="Service Date" class="width15 slds-is-sortable" data-value="{!result.serviceDate}"><span class="bodyText dataSpace"  >
+								<ui:outputDate value="{!result.serviceDate}" format="MM/DD/YYYY"/>
+							</span></td>
+							<td data-value="{!result.memberNumber}" data-label="Member Number" class="width15">
+								<span class="bodyText dataSpace" >{!result.memberNumber}</span>
+							</td>
+							<td data-label="Birth Date" class="width15" data-value="{!result.birthDate}"><span class="bodyText dataSpace" >
+								<ui:outputDate value="{!result.birthDate}" format="MM/DD/YYYY"/>
+							</span></td>
+							
+							<aura:if isTrue="{!v.eligibleIneligibleTable}">
+								<td data-value="{!result.firstName + ' ' + result.lastName}" data-label="Member Name" class="width15">
+									<span class="bodyText dataSpace">
+										<a class="{!'testScript_redirect_'+result.memberProfileGuid}" data-memberguid="{!result.memberProfileGuid}"  
+													 data-uid="{!result.UniversalMemberGUID}" data-providerid="{!result.providerId}" data-planguid="{!result.planGUID}"
+													 data-slid="{!result.serviceLocationId}" data-servicedate="{!result.serviceDate}" 
+													 onclick="{!c.redirectUrl}">{!result.firstName + ' ' + result.lastName}</a></span></td>
+								<aura:set attribute="else">
+									<td data-value="{!result.firstName + ' ' + result.lastName}" data-label="Member Name" class="width15"><span class="bodyText dataSpace">{!result.firstName + ' ' + result.lastName}</span></td>
+							    </aura:set>
+							</aura:if>
+
+							<aura:if isTrue="{!v.eligibleIneligibleTable}">
+								<td data-label="Plan Type" class="width15" data-value="{!result.planType}" ><span class="bodyText dataSpace" ><aura:unescapedHtml value="{!result.planType}"/></span></td>
+								
+								<td data-label="Coverage End Date" class="width15 slds-is-sortable" data-value="{!result.termDate}"><span class="bodyText dataSpace"  >
+									<ui:outputDate value="{!result.termDate}" format="MM/DD/YYYY"/>
+								</span></td>
+
+								<!-- DROPDOWN BUTTON -->
+		                    	<aura:if isTrue="{!(v.permissions.preAuth == 'full' || v.permissions.claims == 'full' ||
+		                    			v.permissions.referral == 'full' || v.permissions.brokenAppointment == 'full')}">
+								    <td data-label="Quick Links" class="width8 hideOnPrint slds-text-align_center "> 
+								    	<div class=" dropdown  " title="Options">
+						                  <div class="slds-button slds-button_icon slds-button_icon-border-filled dropdown-toggle optionDropdown" title="Business" 
+						                  		data-toggle="dropdown"  aria-haspopup="true" aria-expanded="false" id="dropdownOptions">
+						                    	<lightning:icon iconName="utility:down" size="xx-small" />
+						                  </div>
+						                  <div class="slds-dropdown dropdown-menu slds-dropdown_right  " aria-labelledby="dropdownOptions">
+						                    <ul tabindex="-1" class="slds-dropdown__list" role="menu">
+						                    	<aura:if isTrue="{!v.permissions.claims == 'full'}">
+							                    	<li class="navDropdown-item" >
+							                    		<a class="{!'noDecoration bodyLink testScript_opt_claim_' + result.memberNumber}" onclick="{!c.startClaim}" 
+							                    				data-value="{!result.memberProfileGuid}">Start a Claim</a>
+							                    	</li>
+						                    	</aura:if>
+						                    	<aura:if isTrue="{!v.permissions.preAuth == 'full'}">
+							                    	<li class="navDropdown-item" >
+							                    		<a href="javascript:void(0);" class="{!'noDecoration bodyLink testScript_opt_preA_' + result.memberNumber}" onclick="{!c.startPreAuth}" 
+							                    				data-value="{!result.memberProfileGuid}">{!v.preAuthLabel}</a>
+							                    	</li>
+						                    	</aura:if>
+						                    	<aura:if isTrue="{!v.permissions.referral == 'full'}">
+							                    	<li class="navDropdown-item" >
+							                    		<a class="{!'noDecoration bodyLink testScript_opt_REF_' + result.memberNumber}" onclick="{!c.startReferral}" 
+							                    				data-value="{!result.memberProfileGuid}">Start a Referral</a>
+							                    	</li>
+						                    	</aura:if>
+						                    	<aura:if isTrue="{!v.permissions.brokenAppointment == 'full'}">
+							                    	<li class="navDropdown-item" >
+							                    		<a class="{!'noDecoration bodyLink testScript_opt_BA_' + result.memberNumber}" onclick="{!c.startBrokenAppt}" 
+							                    				data-value="{!result.memberProfileGuid}">Start Broken Appointment</a>
+							                    	</li>
+							                    </aura:if>
+						                    </ul>
+						                  </div>
+						                </div>
+					              	</td>
+					            </aura:if>	
+				             	<aura:set attribute="else">
+				             		<td data-label="Reason" class="width30" data-value="{!result.errorMessage}" ><span class="bodyText dataSpace" >{!result.errorMessage}</span></td>
+				             	</aura:set>
+							</aura:if>
+						</tr>
+					</aura:iteration>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</aura:component>

@@ -1,0 +1,107 @@
+.THIS .helpRequestDetailPage{
+                                padding-left:30px;
+                                border-radius: 8px;
+                    background-color: #ffffff;
+                    border: solid 2px #e3e3e4;
+                    
+                }
+
+                .THIS .helpRequestDetailPage h1 {
+                	font-size: 44px;
+                	line-height: 50px;
+                	font-weight: 600;
+                    font-family: Lato !important;
+                }
+
+                .THIS .helpRequestDetailPage h3 {
+                	font-size: 28px;
+                	line-height: 32px;
+                	font-weight: 600;
+                    font-family: Lato !important;
+                }
+
+                .THIS .helpRequestDetailPage .generalLabelForm{
+                	font-weight: 600;
+                	font-size: 16px;
+                	margin-bottom: 5px;
+                	padding-right: 5px;
+                	line-height: 20px;
+                }
+
+                .THIS .helpRequestDetailPage .bodyText{
+                	font-size: 16px;
+                	line-height: 24px;
+                }
+                
+                .THIS .helpRequestDetailPage .helpRequestBackLink {
+                                padding-left:20px;
+                }
+                
+                .THIS .helpRequestDetailPage .decreaseWidth{
+                                width:95%;
+                }
+                .THIS .helpRequestDetailPage .bodyLink{
+                                cursor: pointer !important;
+                                padding-top:20px;
+                                width:fit-content; 
+                                font-size: 16px;
+                                line-height: 24px;
+                                color: #0277bd;
+                }
+
+                .THIS .helpRequestDetailPage .breadCrumb{
+                    padding-top:20px;
+                    width:fit-content; 
+                    font-size: 16px;
+                    line-height: 24px;
+                }
+                
+                 .THIS .helpRequestDetailPage .detailsContainer{
+                                padding:20px;
+                }
+                
+                .THIS .helpRequestDetailPage .helpRequestDetailInformation{
+                                margin-top:20px;
+                                margin-bottom:10px;
+                }
+                
+                .THIS .helpRequestDetailPage .horizontalLineClass {
+                                height: 3px;
+                    border-width: 1px;
+                    border-color: #dcdcdc;
+                    width: 95%;
+                    float: left;
+                    margin-left: 10px;
+                }
+                
+                .THIS .helpRequestDetailPage .tableClass tr{
+                    border-width: 1px;
+                    border-color: #dcdcdc;
+                    width: 95%;
+                    float: left;
+                    border-style:solid;
+                    padding-left:20px;
+                }
+                
+                .THIS .helpRequestDetailPage .commentAlignAndPadding{
+                                text-align: justify !important;
+                    display: inline-block;
+                    padding: 5px 20px 30px 0px;
+                }
+                .THIS .helpRequestDetailPage .attachmentbuttonheader{
+                                padding-top:20px;
+                }
+                .THIS .helpRequestDetailPage .finalPadding{
+                                margin-bottom:30px;
+                }
+                
+                .THIS .helpRequestDetailPage .buttonStyling{
+                                float:left !important;
+                }
+                
+                .THIS .helpRequestDetailPage .additionalWidth{
+                                width:95%;
+                }
+                .THIS .helpRequestDetailPage .updateWrapper {
+                    white-space: pre-wrap;
+                }

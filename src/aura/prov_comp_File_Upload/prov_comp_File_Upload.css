@@ -1,0 +1,10 @@
+.THIS.fileUploadContainer .required-asterisk {
+    padding-right: 2px;
+    color: rgb(194, 57, 52);
+    font-weight: 700;
+}
+
+
+.THIS.fileUploadContainer .hideLabel label{
+	display: none;
+}

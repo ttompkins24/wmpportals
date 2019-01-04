@@ -1,0 +1,245 @@
+<!--
+/*******************************************************************************************************
+Name                        : prov_comp_VoidClaim_Modal
+Purpose                     : Allows users to Void a Claim in a modal popup
+Created on                  : March 2018
+Developed by                : West Monroe Partners
+History
+Version#        Sprint#     Date                    by                              Comments
+1.0             4        March 2018       West Monroe Partners            See header - purpose
+ 
+*******************************************************************************************************
+-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes"  access="global"
+	controller="prov_ctrl_Claim_Detail">
+	<aura:attribute name="closeText" type="String" default="Cancel"/>
+	<aura:attribute name="isVoidSuccess" type="Boolean" default="false"/>
+	<aura:attribute name="voidSuccessMsg" type="String"/>
+	<aura:attribute name="claimNumber" type="String"/>
+	<aura:attribute name="business" type="String"/>
+	<aura:attribute name="serviceOffice" type="String"/>
+	<aura:attribute name="provider" type="String"/>
+	<aura:attribute name="businessGuid" type="String"/>
+	<aura:attribute name="serviceOfficeGuid" type="String"/>
+	<aura:attribute name="providerGuid" type="String"/>
+	<aura:attribute name="isReqFieldError" type="Boolean" default="false"/>
+	<aura:attribute name="requiredFieldMsg" type="String" />
+	<aura:attribute name="amount" type="Decimal"/>
+	<aura:attribute name="provNPI" type="String"/>
+	<aura:attribute name="otherReason" type="String"/>
+	<aura:attribute name="fileName" type="String" default="No File Selected." />
+	<aura:attribute name="fileNames" type="List"/>
+	<aura:attribute name="caseId" type="String"  />
+	<aura:attribute name="newCaseSaved" type="Boolean" default="false"  />
+	<aura:attribute name="newCaseWrapper" type="Case"/>
+	<aura:attribute name="claimVoidReason" type="String"/>
+	<aura:attribute name="hasAttachmentError" type="Boolean" default="false" />
+  	<aura:attribute name="attachmentErrorMessage" type="Boolean" default="false" />
+  	<aura:attribute name="isProvNpiError" type="Boolean"/>
+  	<aura:attribute name="provNpiError" type="String"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:registerEvent name="modalSuccessEvent" type="c:prov_event_Claim_Modal"/>
+	
+<div class="slds">
+	<div class="voidClaimModalWrapper slds-grid slds-wrap slds-size_1-of_1">
+		<div class="popupModal">
+			<section role="dialog" style=" height:100%;" tabindex="-1" aria-labelledby="modal-heading-01" 
+		    			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open popModalInner" >
+			    <div class="slds-modal__container">
+					<header class="slds-modal__header">
+	            		<a alt="{!v.closeText}" tabindex="1" class=" floatRight"
+	                			 title="{!v.closeText}" onclick="{!c.defaultCloseVoid}" style="">
+	                        <div class="closeIconA">{!v.closeText}</div>
+	                    	
+	                    </a>
+	                    <h2  class="popupModalHeader" >Full Claim Void Request Form</h2>
+	                    <div class="slds-float_left">
+							<p>{!$Label.c.Void_Claim_Detail_Text}</p>			
+						</div>
+	                </header>
+	                <div class="slds-modal__content" id="modal-content-id-1">
+						<div class="slds-grid slds-size_1-of-1">
+							
+							<div class="slds-p-top_medium slds-col slds-size_1-of-1" >
+								<aura:if isTrue="{!v.isReqFieldError}">
+									<div  class="headerMessageContainer">
+										<ui:message class="errorMessageWrap slds-size_1-of-1" severity="error" closable="true">
+											<lightning:icon size="medium" class="generalErrorIcon" variant="inverse" iconName="utility:warning" alternativeText="Error" />
+											<span class="errorMessage">{!v.requiredFieldMsg}</span>
+										</ui:message>
+									</div>
+								</aura:if>
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label bodyText boldText" title="ClaimNumber">Claim:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="ClaimNumber">{!v.claimNumber}</dd>
+
+								</dl>			
+							</div>
+						</div>
+						<div class="slds-grid slds-size_1-of-1">
+							<div class="slds-p-top_medium slds-col slds-size_1-of-1" >
+								<dl class="slds-list_horizontal slds-wrap edit-table-general">
+									<dt class="slds-item_label bodyText boldText slds-truncate " title="Provider">Provider:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="Provider" data-value="Dentist">{!v.provider}</dd>
+									<dt class="slds-item_label bodyText boldText slds-truncate " title="Office">Office:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="Office" data-value="Office">{!v.serviceOffice}</dd>
+									<dt class="slds-item_label bodyText boldText slds-truncate " title="Business">Business:</dt>
+									<dd class="slds-item_detail slds-truncate generalLabelForm" title="Business" data-value="Business">{!v.business}</dd>
+
+								</dl>			
+							</div>
+							
+						</div>
+
+						<div class="slds-size_1-of-1">
+							<div class="slds-float_left">
+								<h3 class="slds-p-left_small slds-p-top_small">Details
+								</h3>
+							</div>
+						</div>
+
+						<!--  -->
+						<div class="slds-p-around--medium detailDiv">
+							<div class="slds-p-top_medium slds-col slds-grid slds-size_1-of-1" >
+						  		<div class="slds-size_1-of-3">
+						  			<div class="slds-form-element">
+						  				<ui:inputCurrency format="$##.00" placeholder="$0.00" aura:id="amount" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testscript_AmountInput " label="Amount" required="true" value="{!v.amount}"/>
+						  			</div>
+						  		</div>
+						  		<div class="slds-size_1-of-3">
+						  			<div class="slds-form-element">
+						  				<ui:inputNumber maxlength="10" format="##########" aura:id="provNPI" labelClass="generalLabelForm required" class="slds-col slds-size_1-of-1 generalInputForm testscript_BillingProviderInput" label="Billing Provider's NPI" placeholder="" required="true" value="{!v.provNPI}"/>
+						  				<aura:if isTrue="{!v.isProvNpiError}">
+				      						<span class="generalErrorMessage_field">{!v.provNpiError}</span>
+				      					</aura:if>
+
+						  			</div>
+						  		</div>
+							  	<div class="slds-size_1-of-3">
+						  			
+								</div>
+							</div>
+							<!-- span across with three required fields -->
+							<div>
+								<span class="slds-required">Please Check one reason for requesting the void* </span>
+
+								<fieldset class="slds-form-element">
+										<div class="slds-form-element__control slds-float_left slds-text-align_left">
+											<span class="slds-radio">
+												<input type="radio" id="Collection from Primary Health Insurance" class="testscript_radio-1" name="options" value="Collection from Primary Health Insurance" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Collection from Primary Health Insurance">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Collection from Primary Health Insurance</span>
+												</label>
+											</span>
+											<span class="slds-radio">
+												<input type="radio" id="Collection from Auto Insurance or Workers Ins. Compensation Insurance" class="testscript_radio-2" name="options" value="Collection from Auto Insurance or Workers Ins. Compensation Insurance" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Collection from Auto Insurance or Workers Ins. Compensation Insurance">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Collection from Auto Insurance or Workers Ins. Compensation Insurance</span>
+												</label>
+											</span>
+											<span class="slds-radio">
+												<input type="radio" id="Claim paid to the wrong provider"  class="testscript_radio-3" name="options" value="Claim paid to the wrong provider" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Claim paid to the wrong provider">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Claim Paid to the wrong provider</span>
+												</label>
+											</span>
+											<span class="slds-radio">
+												<input type="radio" id="Wrong Member ID on the claim" class="testscript_radio-4" name="options" value="Wrong Member ID on the claim" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Wrong Member ID on the claim">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Wrong Member ID on the claim</span>
+												</label>
+											</span>
+										</div>
+										<div class="slds-form-element__control slds-float_right slds-text-align_left">
+											<span class="slds-radio">
+												<input type="radio" id="Provider billed incorrect service date" class="testscript_radio-5" name="options" value="Provider billed incorrect service date" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Provider billed incorrect service date">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Provider billed incorrect service date</span>
+												</label>
+											</span>
+											<span class="slds-radio">
+												<input type="radio" id="Duplicate Payment" class="testscript_radio-6" name="options" value="Duplicate Payment" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Duplicate Payment">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Duplicate Payment</span>
+												</label>
+											</span>
+											<span class="slds-radio">
+												<input type="radio" id="Provider performed only a contain component of the entire service billed" class="testscript_radio-7" name="options" value="Provider performed only a certain component of the entire billed service" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Provider performed only a contain component of the entire service billed">
+													<span class="slds-radio_faux"></span>
+													<span class="radioButtonLabel">Provider performed only a contain component of the entire service billed</span>
+												</label>
+											</span>
+
+											<span class="slds-radio" >
+												<input type="radio" id="Other" class="testscript_radio-8"  name="options" value="Other" onclick="{!c.handleRadioButton}"/>
+												<label class="slds-radio__label" for="Other" >
+													<span class="slds-radio_faux" ></span>
+													<span class="radioButtonLabel">Other (please explain)</span>
+												</label>
+											</span>
+											<!-- if other radio button is checked -->
+											<aura:if isTrue="{!v.claimVoidReason == 'Other'}">
+											<span>
+												<ui:inputText aura:id="otherReason" labelClass="generalLabelForm" class="generalInputForm testscript_otherReasonInput" label="Other Reason" placeholder="" required="true" value="{!v.otherReason}"/>
+											</span>
+											</aura:if>
+										</div>
+								</fieldset>
+							</div>
+						</div>
+
+						<div class="slds-p-around--medium slds-col slds-size_1-of-1">
+							<div class="slds-float_left">
+								<h3>Attachments
+								</h3>
+							</div>
+						</div>
+						<!-- Attachment Div -->
+						<div class="slds-p-around--medium slds-col slds-size_1-of-1" >
+							<aura:if isTrue="{!v.newCaseWrapper.Id}">
+								<div class="slds-page-header slds-m-bottom_medium">
+								  	<div class="slds-media">
+									    <div class="slds-media__body">
+											<c:prov_comp_File_Upload parentId="{!v.newCaseWrapper.Id}" type="Case" />
+										</div>
+									</div>
+								</div>
+
+								<aura:set attribute="else">
+									<div class="demo-only slds-size_1-of-2">
+									  	<div class="slds-form-element">
+										    <label class="slds-checkbox_toggle slds-grid">
+										      	<span class="slds-form-element__label slds-m-bottom_none">Upload Attachments</span>
+										      	<input type="checkbox" name="checkbox" aria-describedby="toggle-desc" value="on" onclick="{!c.submitWrapperCase}" />
+											    <span id="toggle-desc" class="slds-checkbox_faux_container" aria-live="assertive">
+											        <span class="slds-checkbox_faux"></span>
+											    </span>
+										    </label>
+									  	</div>
+									</div>
+								</aura:set>
+							</aura:if>	
+						</div>
+					</div>
+					<footer class="slds-modal__footer">
+						<div class="slds-align_absolute-center" >
+							<span class="bodyText dataSpace spacing "><button onclick="{!c.defaultCloseVoid}" class="generalButton">Cancel</button></span>
+							<span class="bodyText dataSpace spacing "><button onclick="{!c.submitVoidClaim}" class="generalButton">Submit</button></span>
+						</div>
+					</footer>
+					
+				</div>
+
+			</section>
+		</div>
+	</div>
+</div>
+		
+</aura:component>

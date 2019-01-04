@@ -1,0 +1,14 @@
+.THIS.memberClaimsWrapper .lighter{
+    margin-top: 44px;
+    opacity: .2;
+    -webkit-transition: opacity .1s linear;
+    transition: opacity .1s linear;
+}
+.THIS.memberClaimsWrapper .slds-spinner:before, 
+.THIS.memberClaimsWrapper .slds-spinner:after, 
+.THIS.memberClaimsWrapper .slds-spinner__dot-a:before, 
+.THIS.memberClaimsWrapper .slds-spinner__dot-b:before, 
+.THIS.memberClaimsWrapper .slds-spinner__dot-a:after, 
+.THIS.memberClaimsWrapper .slds-spinner__dot-b:after{
+    background-color: #16325c;
+}

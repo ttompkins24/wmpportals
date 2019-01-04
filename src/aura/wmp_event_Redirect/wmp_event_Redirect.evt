@@ -1,0 +1,10 @@
+<!-- PARAMS ARE pageName, planGuid, subscriberGuid -->
+<aura:event type="APPLICATION" 
+			description="This event is fired when the community wants to be redirected. Should be handled by the wmp_comp_Navigation" 
+			access="global">
+	
+	<aura:attribute name="pageName" type="String"/>
+	<aura:attribute name="subscriberGuid" type="String"/>
+	<aura:attribute name="planGuid" type="String"/>
+	<aura:attribute name="refreshNav" type="Boolean"/>
+</aura:event>
